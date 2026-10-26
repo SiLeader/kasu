@@ -8,7 +8,7 @@ use kasu_proto::v1 as p;
 use kasu_store::{CasResult, RefState, RefUpdate};
 use tonic::Status;
 
-#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct WritePolicy {
     #[serde(deserialize_with = "byte_rules")]

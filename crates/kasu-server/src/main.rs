@@ -1,5 +1,6 @@
 use kasu_server::{
-    MetadataService, ObjectService, WebhookConfig, WebhookDispatcher, WriteService, http_router,
+    ConfigSource, MetadataService, ObjectService, WebhookConfig, WebhookSupervisor, WriteService,
+    http_router,
 };
 use std::{ffi::OsString, path::PathBuf, sync::Arc};
 
@@ -43,7 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let kasu_server::ConfiguredBackend {
         backend,
         database: meta,
-        legacy,
+        ..
     } = kasu_server::load_backend(&root, repository)
         .map_err(|error| error as Box<dyn std::error::Error>)?;
     let backend = Arc::new(backend);
@@ -54,15 +55,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .clone()
             .watch(std::time::Duration::from_millis(250), stop.clone()),
     );
-    let dispatcher = if let Some(path) = std::env::var_os("KASU_WEBHOOKS_FILE") {
-        let legacy = legacy.ok_or("KASU_WEBHOOKS_FILE configures the startup repository; pass its name or use KASU_REPOSITORIES_FILE")?;
-        let config = WebhookConfig::load(&PathBuf::from(path))?;
-        let scoped = Arc::new(backend.for_repository(&legacy.key)?);
-        let dispatcher = Arc::new(WebhookDispatcher::new(scoped, meta, config)?);
-        Some(dispatcher)
-    } else {
-        None
+    let source = ConfigSource::from_env()?;
+    let declarations = std::env::var_os("KASU_REPOSITORIES_FILE").map(PathBuf::from);
+    if let Some(path) = &declarations {
+        let declared = kasu_server::load_repositories_file(path)?;
+        let report = kasu_server::sync_repositories(
+            backend.registry().store().as_ref(),
+            &declared,
+            source,
+            now(),
+        )?;
+        tracing::info!(?report, "repositories file synchronized");
+    }
+    let declarations = declarations.map(|path| {
+        tokio::spawn(follow_repositories_file(
+            backend.clone(),
+            path,
+            source,
+            stop.clone(),
+        ))
+    });
+    let mut settings = match std::env::var_os("KASU_WEBHOOKS_FILE") {
+        Some(path) => WebhookConfig::load(&PathBuf::from(path))?,
+        None => WebhookConfig::default(),
     };
+    if let Ok(url) = std::env::var("KASU_PUBLIC_URL") {
+        settings.public_url = url;
+    }
+    let supervisor = Arc::new(WebhookSupervisor::new(backend.clone(), meta, settings)?);
     fn address(
         value: Option<&std::ffi::OsString>,
         default: &str,
@@ -76,7 +96,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let grpc = address(addresses.first(), "127.0.0.1:50051")?;
     let http = tokio::net::TcpListener::bind(address(addresses.get(1), "127.0.0.1:50080")?).await?;
     let grpc_listener = tokio::net::TcpListener::bind(grpc).await?;
-    let dispatcher = dispatcher.map(|dispatcher| tokio::spawn(dispatcher.run(stop)));
+    let dispatcher = tokio::spawn(supervisor.run(stop));
     tracing::info!(grpc=%grpc_listener.local_addr()?,http=%http.local_addr()?,"kasu metadata server listening");
     let grpc_service = tonic::transport::Server::builder()
         .add_service(ObjectService::new(backend.clone()).into_server())
@@ -88,9 +108,67 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         result=tokio::signal::ctrl_c()=>result.map_err(Into::into),
     };
     let _ = shutdown.send(true);
-    if let Some(dispatcher) = dispatcher {
-        dispatcher.await?;
-    }
+    dispatcher.await?;
     registry.await?;
+    if let Some(task) = declarations {
+        task.await?;
+    }
     result
+}
+fn now() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or_default()
+}
+/// Re-read the declaration on SIGHUP and on a polling interval. A file that
+/// fails to parse keeps the current registry state.
+async fn follow_repositories_file(
+    backend: Arc<kasu_server::Backend>,
+    path: PathBuf,
+    source: ConfigSource,
+    mut shutdown: tokio::sync::watch::Receiver<bool>,
+) {
+    let interval = std::env::var("KASU_REPOSITORIES_POLL_MS")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .filter(|v| (100..=3_600_000).contains(v))
+        .unwrap_or(30_000);
+    let mut hangup = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::hangup()).ok();
+    loop {
+        tokio::select! {
+            _ = tokio::time::sleep(std::time::Duration::from_millis(interval)) => {}
+            _ = async { match &mut hangup { Some(s) => { s.recv().await; } None => std::future::pending().await } } => {}
+            _ = shutdown.changed() => return,
+        }
+        let backend = backend.clone();
+        let path = path.clone();
+        let result = tokio::task::spawn_blocking(move || {
+            let declared = kasu_server::load_repositories_file(&path)?;
+            kasu_server::sync_repositories(
+                backend.registry().store().as_ref(),
+                &declared,
+                source,
+                now(),
+            )
+        })
+        .await;
+        match result {
+            Ok(Ok(report))
+                if report
+                    != kasu_server::SyncReport {
+                        unchanged: report.unchanged,
+                        undeclared: report.undeclared,
+                        ..Default::default()
+                    } =>
+            {
+                tracing::info!(?report, "repositories file synchronized")
+            }
+            Ok(Ok(_)) => {}
+            Ok(Err(error)) => {
+                tracing::warn!(message=%error.message(),"repositories file was not applied")
+            }
+            Err(_) => tracing::error!("repositories file worker failed"),
+        }
+    }
 }

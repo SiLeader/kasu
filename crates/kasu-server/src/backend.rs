@@ -104,7 +104,11 @@ impl Backend {
     }
     pub fn with_limits(mut self, limits: crate::ServerLimits) -> Result<Self, tonic::Status> {
         limits.validate()?;
-        self.runtime = crate::admission::Runtime::new(limits, self.runtime.stats.clone());
+        self.runtime = crate::admission::Runtime::with_metrics(
+            limits,
+            self.runtime.stats.clone(),
+            self.runtime.metric_repositories.clone(),
+        );
         Ok(self)
     }
     pub fn metrics(&self) -> String {
@@ -170,6 +174,26 @@ impl Backend {
     }
     /// Per-repository admission; see `ServerLimits`.
     pub(crate) async fn admit(self) -> Result<Self, tonic::Status> {
+        let repo = &self.context().repo;
+        tracing::Span::current().record("kasu.repository", repo.record.key.to_string());
+        self.runtime
+            .admit_repository(&repo.record.key, &repo.record.name, &repo.config.limits)
+            .await?;
+        Ok(self)
+    }
+    /// Export these repositories' names as metric labels; every other
+    /// repository is reported as "other" to bound label cardinality.
+    pub fn with_repository_metrics(mut self, names: &[RepoName]) -> Result<Self, tonic::Status> {
+        if names.len() > 256 {
+            return Err(tonic::Status::invalid_argument(
+                "at most 256 repositories can be metric labels",
+            ));
+        }
+        self.runtime = crate::admission::Runtime::with_metrics(
+            self.runtime.limits.clone(),
+            self.runtime.stats.clone(),
+            names.iter().map(RepoName::normalized).collect(),
+        );
         Ok(self)
     }
     fn context(&self) -> &crate::registry::RepoContext {

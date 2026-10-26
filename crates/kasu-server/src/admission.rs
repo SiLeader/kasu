@@ -5,8 +5,9 @@ use axum::{
     response::IntoResponse,
 };
 use http_body::{Body as HttpBody, Frame, SizeHint};
+use kasu_core::RepoKey;
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, HashMap},
     convert::Infallible,
     future::Future,
     net::{IpAddr, SocketAddr},
@@ -36,6 +37,12 @@ pub struct ServerLimits {
     pub token_burst: u32,
     pub max_clients: usize,
     pub idle_ms: u64,
+    /// Concurrent requests one repository may run (default: half of
+    /// `active`); capped per repository by its own configuration. Requests
+    /// queued on a busy repository release their server-wide slot meanwhile.
+    pub per_repository_active: Option<usize>,
+    /// Requests one repository may queue (default: a quarter of `pending`).
+    pub per_repository_pending: Option<usize>,
 }
 impl Default for ServerLimits {
     fn default() -> Self {
@@ -50,6 +57,8 @@ impl Default for ServerLimits {
             token_burst: 2000,
             max_clients: 4096,
             idle_ms: 60000,
+            per_repository_active: None,
+            per_repository_pending: None,
         }
     }
 }
@@ -61,6 +70,8 @@ impl ServerLimits {
             || !(1..=30000).contains(&self.queue_timeout_ms)
             || !(1..=65536).contains(&self.max_clients)
             || !(1000..=3600000).contains(&self.idle_ms)
+            || !(1..=self.active).contains(&self.repository_active())
+            || !(1..=self.pending).contains(&self.repository_pending())
             || [
                 self.client_rate_per_second,
                 self.client_burst,
@@ -73,6 +84,14 @@ impl ServerLimits {
             return Err(Status::invalid_argument("invalid server admission limits"));
         }
         Ok(())
+    }
+    pub fn repository_active(&self) -> usize {
+        self.per_repository_active
+            .unwrap_or_else(|| (self.active / 2).max(1))
+    }
+    pub fn repository_pending(&self) -> usize {
+        self.per_repository_pending
+            .unwrap_or_else(|| (self.pending / 4).max(1))
     }
     pub fn load(path: &std::path::Path) -> Result<Self, Status> {
         use std::io::Read;
@@ -109,18 +128,164 @@ pub(crate) struct Runtime {
     pending: Arc<Semaphore>,
     scrapes: Arc<Semaphore>,
     buckets: Mutex<BTreeMap<Identity, Bucket>>,
+    repositories: Mutex<HashMap<RepoKey, Arc<RepositorySlots>>>,
+    /// Normalized names exported as metric labels; others aggregate as "other".
+    pub metric_repositories: std::collections::BTreeSet<String>,
+    repository_counters: Mutex<BTreeMap<String, [u64; 2]>>,
     pub stats: Arc<ServerStats>,
 }
+struct RepositorySlots {
+    slots: Arc<Semaphore>,
+    limit: usize,
+    waiting: AtomicUsize,
+    label: String,
+}
+const MAX_REPOSITORY_SLOTS: usize = 65_536;
 impl Runtime {
     pub fn new(limits: ServerLimits, stats: Arc<ServerStats>) -> Arc<Self> {
+        Self::with_metrics(limits, stats, Default::default())
+    }
+    pub fn with_metrics(
+        limits: ServerLimits,
+        stats: Arc<ServerStats>,
+        metric_repositories: std::collections::BTreeSet<String>,
+    ) -> Arc<Self> {
         Arc::new(Self {
             active: Arc::new(Semaphore::new(limits.active)),
             pending: Arc::new(Semaphore::new(limits.pending)),
             scrapes: Arc::new(Semaphore::new(2)),
             limits,
             buckets: Mutex::new(BTreeMap::new()),
+            repositories: Mutex::new(HashMap::new()),
+            metric_repositories,
+            repository_counters: Mutex::new(BTreeMap::new()),
             stats,
         })
+    }
+    fn count_repository(&self, label: &str, rejected: bool) {
+        if let Ok(mut counters) = self.repository_counters.lock() {
+            counters.entry(label.to_owned()).or_default()[usize::from(rejected)] += 1;
+        }
+    }
+    fn repository_slots(
+        &self,
+        key: &RepoKey,
+        label: String,
+        limit: usize,
+    ) -> Result<Arc<RepositorySlots>, Status> {
+        let mut repositories = self
+            .repositories
+            .lock()
+            .map_err(|_| Status::internal("admission lock failed"))?;
+        if let Some(slots) = repositories.get(key)
+            && slots.limit == limit
+            && slots.label == label
+        {
+            return Ok(slots.clone());
+        }
+        if repositories.len() >= MAX_REPOSITORY_SLOTS {
+            repositories.retain(|_, s| Arc::strong_count(s) > 1 || Arc::strong_count(&s.slots) > 1);
+        }
+        // A changed limit takes effect for new requests; running ones keep
+        // the permits of the previous semaphore until they finish.
+        let slots = Arc::new(RepositorySlots {
+            slots: Arc::new(Semaphore::new(limit)),
+            limit,
+            waiting: AtomicUsize::new(0),
+            label,
+        });
+        repositories.insert(key.clone(), slots.clone());
+        Ok(slots)
+    }
+    /// Take a slot of `key` for the current request. Queued requests release
+    /// their server-wide slot while waiting, so one busy repository cannot
+    /// occupy the whole server.
+    pub(crate) async fn admit_repository(
+        &self,
+        key: &RepoKey,
+        name: &kasu_core::RepoName,
+        limits: &crate::registry::RepositoryLimits,
+    ) -> Result<(), Status> {
+        let Ok(lease) = LEASE.try_with(Clone::clone) else {
+            return Ok(());
+        };
+        if lease
+            .0
+            .repository
+            .lock()
+            .map_err(|_| Status::internal("admission lock failed"))?
+            .is_some()
+        {
+            return Ok(());
+        }
+        let normalized = name.normalized();
+        let label = if self.metric_repositories.contains(&normalized) {
+            normalized
+        } else {
+            "other".to_owned()
+        };
+        let active = limits
+            .active
+            .unwrap_or(usize::MAX)
+            .min(self.limits.repository_active());
+        let pending = limits
+            .pending
+            .unwrap_or(usize::MAX)
+            .min(self.limits.repository_pending());
+        let slots = self.repository_slots(key, label.clone(), active)?;
+        let permit = match slots.slots.clone().try_acquire_owned() {
+            Ok(permit) => permit,
+            Err(_) => {
+                if slots.waiting.fetch_add(1, Ordering::AcqRel) >= pending {
+                    slots.waiting.fetch_sub(1, Ordering::AcqRel);
+                    self.count_repository(&label, true);
+                    return Err(Status::resource_exhausted(
+                        "repository request queue is full",
+                    ));
+                }
+                // Dropping the permit here is what frees the server-wide slot.
+                let released = lease
+                    .0
+                    .active
+                    .lock()
+                    .map_err(|_| Status::internal("admission lock failed"))?
+                    .take()
+                    .is_some();
+                let timeout = Duration::from_millis(self.limits.queue_timeout_ms);
+                let waited =
+                    tokio::time::timeout(timeout, slots.slots.clone().acquire_owned()).await;
+                slots.waiting.fetch_sub(1, Ordering::AcqRel);
+                let permit = match waited {
+                    Ok(Ok(permit)) => permit,
+                    Ok(Err(_)) => return Err(Status::unavailable("admission closed")),
+                    Err(_) => {
+                        self.count_repository(&label, true);
+                        return Err(Status::resource_exhausted(
+                            "repository queue deadline exceeded",
+                        ));
+                    }
+                };
+                if released {
+                    let active = tokio::time::timeout(timeout, self.active.clone().acquire_owned())
+                        .await
+                        .map_err(|_| Status::resource_exhausted("request queue deadline exceeded"))?
+                        .map_err(|_| Status::unavailable("admission closed"))?;
+                    *lease
+                        .0
+                        .active
+                        .lock()
+                        .map_err(|_| Status::internal("admission lock failed"))? = Some(active);
+                }
+                permit
+            }
+        };
+        self.count_repository(&label, false);
+        *lease
+            .0
+            .repository
+            .lock()
+            .map_err(|_| Status::internal("admission lock failed"))? = Some(permit);
+        Ok(())
     }
     fn bucket(&self, key: Identity, now: Instant) -> Result<Arc<Semaphore>, Status> {
         let client = matches!(key, Identity::Client(_));
@@ -209,7 +374,8 @@ impl Runtime {
         attempt.stats.active.fetch_add(1, Ordering::Relaxed);
         Ok(RequestLease(Arc::new(LeaseInner {
             _identity: Some(identity),
-            _active: Some(active),
+            active: Mutex::new(Some(active)),
+            repository: Mutex::new(None),
             attempt,
         })))
     }
@@ -223,12 +389,34 @@ impl Runtime {
         attempt.stats.active.fetch_add(1, Ordering::Relaxed);
         Ok(RequestLease(Arc::new(LeaseInner {
             _identity: None,
-            _active: Some(permit),
+            active: Mutex::new(Some(permit)),
+            repository: Mutex::new(None),
             attempt,
         })))
     }
     pub fn metrics(&self) -> String {
         let mut text = self.stats.render();
+        text.push_str(concat!(
+            "# TYPE kasu_server_repository_requests_total counter\n",
+            "# TYPE kasu_server_repository_rejected_total counter\n",
+            "# TYPE kasu_server_repository_active gauge\n",
+        ));
+        let mut active = BTreeMap::<String, usize>::new();
+        if let Ok(repositories) = self.repositories.lock() {
+            for slots in repositories.values() {
+                *active.entry(slots.label.clone()).or_default() +=
+                    slots.limit - slots.slots.available_permits();
+            }
+        }
+        if let Ok(counters) = self.repository_counters.lock() {
+            for (label, [admitted, rejected]) in counters.iter() {
+                text.push_str(&format!(
+                    "kasu_server_repository_requests_total{{repository=\"{label}\"}} {}\nkasu_server_repository_rejected_total{{repository=\"{label}\"}} {rejected}\nkasu_server_repository_active{{repository=\"{label}\"}} {}\n",
+                    admitted + rejected,
+                    active.get(label).copied().unwrap_or_default()
+                ));
+            }
+        }
         text.push_str(&format!(
             "kasu_server_active {}\nkasu_server_pending {}\nkasu_server_metrics_active {}\nkasu_server_client_entries {}\n",
             self.limits.active - self.active.available_permits(),
@@ -444,7 +632,8 @@ impl Drop for Attempt {
 pub(crate) struct RequestLease(Arc<LeaseInner>);
 struct LeaseInner {
     _identity: Option<OwnedSemaphorePermit>,
-    _active: Option<OwnedSemaphorePermit>,
+    active: Mutex<Option<OwnedSemaphorePermit>>,
+    repository: Mutex<Option<OwnedSemaphorePermit>>,
     attempt: Arc<Attempt>,
 }
 tokio::task_local! {static LEASE:RequestLease;}
@@ -835,6 +1024,79 @@ mod tests {
         drop(held);
         assert!(r.bucket(b, now + Duration::from_secs(10)).is_ok());
         assert_eq!(r.buckets.lock().unwrap().len(), 1);
+    }
+    #[tokio::test]
+    async fn a_busy_repository_queues_without_holding_server_slots() {
+        let r = runtime(ServerLimits {
+            active: 2,
+            per_identity_active: 8,
+            pending: 8,
+            queue_timeout_ms: 2000,
+            per_repository_active: Some(1),
+            per_repository_pending: Some(1),
+            ..Default::default()
+        });
+        let busy = RepoKey::generate().unwrap();
+        let quiet = RepoKey::generate().unwrap();
+        let name = kasu_core::RepoName::new("team/busy").unwrap();
+        let limits = crate::registry::RepositoryLimits::default();
+        let slots = r.bucket(Identity::Operator, Instant::now()).unwrap();
+        let lease = |r: Arc<Runtime>, slots: Arc<Semaphore>| async move {
+            r.acquire(slots, r.stats.begin(false, "Log")).await.unwrap()
+        };
+        // The first busy request runs; the second queues on the repository.
+        let first = lease(r.clone(), slots.clone()).await;
+        LEASE
+            .scope(first.clone(), r.admit_repository(&busy, &name, &limits))
+            .await
+            .unwrap();
+        let second = lease(r.clone(), slots.clone()).await;
+        assert_eq!(r.active.available_permits(), 0);
+        let queued = tokio::spawn({
+            let r = r.clone();
+            let (busy, name, limits) = (busy.clone(), name.clone(), limits.clone());
+            let second = second.clone();
+            async move {
+                LEASE
+                    .scope(second, r.admit_repository(&busy, &name, &limits))
+                    .await
+            }
+        });
+        // Queuing released the server-wide slot, so another repository runs.
+        while r.active.available_permits() == 0 {
+            tokio::task::yield_now().await;
+        }
+        let third = lease(r.clone(), slots.clone()).await;
+        LEASE
+            .scope(third.clone(), r.admit_repository(&quiet, &name, &limits))
+            .await
+            .unwrap();
+        // The repository queue is bounded independently of the server queue.
+        let fourth =
+            tokio::time::timeout(Duration::from_millis(50), lease(r.clone(), slots.clone())).await;
+        assert!(fourth.is_err(), "server slots are all in use");
+        drop(third);
+        let fourth = lease(r.clone(), slots.clone()).await;
+        assert_eq!(
+            LEASE
+                .scope(fourth.clone(), r.admit_repository(&busy, &name, &limits))
+                .await
+                .unwrap_err()
+                .message(),
+            "repository request queue is full"
+        );
+        drop(fourth);
+        // Finishing the running request admits the queued one, which takes a
+        // server slot again before it proceeds.
+        drop(first);
+        queued.await.unwrap().unwrap();
+        assert_eq!(r.active.available_permits(), 1);
+        drop(second);
+        assert_eq!(r.active.available_permits(), 2);
+        assert!(
+            r.metrics()
+                .contains("kasu_server_repository_rejected_total{repository=\"other\"} 1")
+        );
     }
     #[tokio::test]
     async fn bounded_queue_timeout_and_cancellation_release_permits() {

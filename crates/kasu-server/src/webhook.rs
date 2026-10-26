@@ -16,7 +16,7 @@ use std::{
 };
 use tonic::Status;
 
-#[derive(Clone, serde::Deserialize)]
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct WebhookEndpoint {
     pub id: String,
@@ -26,7 +26,10 @@ pub struct WebhookEndpoint {
 #[derive(Clone, serde::Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct WebhookConfig {
+    /// Clone URL of the startup repository's endpoints in `endpoints`.
     pub repository_url: String,
+    /// Base URL for clone URLs derived from current repository names.
+    pub public_url: String,
     pub default_branch: String,
     pub endpoints: Vec<WebhookEndpoint>,
     pub poll_interval_ms: u64,
@@ -39,6 +42,7 @@ impl Default for WebhookConfig {
     fn default() -> Self {
         Self {
             repository_url: String::new(),
+            public_url: String::new(),
             default_branch: "main".into(),
             endpoints: vec![],
             poll_interval_ms: 100,
@@ -71,6 +75,31 @@ fn valid_url(text: &str, repository: bool) -> bool {
             && u.fragment().is_none()
             && (!repository || u.query().is_none())
     })
+}
+pub(crate) fn validate_endpoints(
+    endpoints: &[WebhookEndpoint],
+    allow_empty: bool,
+) -> Result<(), Status> {
+    if (!allow_empty && endpoints.is_empty()) || endpoints.len() > 32 {
+        return Err(Status::invalid_argument("expected 1..32 webhook endpoints"));
+    }
+    let mut names = BTreeSet::new();
+    for e in endpoints {
+        if e.id.is_empty()
+            || e.id.len() > 128
+            || !e
+                .id
+                .bytes()
+                .all(|b| b.is_ascii_alphanumeric() || b"._-".contains(&b))
+            || !names.insert(&e.id)
+            || !valid_url(&e.url, false)
+        {
+            return Err(Status::invalid_argument(
+                "invalid or duplicate webhook endpoint",
+            ));
+        }
+    }
+    Ok(())
 }
 #[derive(Default, Clone)]
 struct Paths {
@@ -313,12 +342,15 @@ impl Backend {
             }
             _ => event.old.is_some() && event.new.is_some() && event.old != event.new,
         };
-        let name = self.record().name.as_str();
+        // GitHub-style owner/name: single-segment names keep the historical owner.
+        let full_name = self.record().name.as_str();
+        let (owner, name) = full_name.rsplit_once('/').unwrap_or(("kasu", full_name));
+        let full_name = format!("{owner}/{name}");
         let html = config.repository_url.trim_end_matches(".git");
         let payload = json!({"ref":String::from_utf8_lossy(&event.name),"before":event.old.unwrap_or(GitOid([0;20])).to_string(),"after":event.new.unwrap_or(GitOid([0;20])).to_string(),
             "created":event.old.is_none(),"deleted":event.new.is_none(),"forced":forced,"size":size,"distinct_size":size,"commits":commits,
             "head_commit":new.map(|id|self.commit_payload(id,config,true,&Paths::default())).transpose()?,
-            "repository":{"name":name,"full_name":format!("kasu/{name}"),"html_url":html,"url":html,"clone_url":config.repository_url,"git_url":config.repository_url,"default_branch":config.default_branch},
+            "repository":{"name":name,"full_name":full_name,"html_url":html,"url":html,"clone_url":config.repository_url,"git_url":config.repository_url,"default_branch":config.default_branch},
             "pusher":{"name":String::from_utf8_lossy(&event.actor)},"sender":{"login":"kasu"},
             "kasu":{"sequence":event.sequence,"ref_base64":base64::engine::general_purpose::STANDARD.encode(&event.name),"time":event.time,"commits_truncated":size>2048,"final_path_bytes":final_paths.raw()}});
         let body = serde_json::to_vec(&payload)
@@ -388,8 +420,6 @@ impl WebhookDispatcher {
         config: WebhookConfig,
     ) -> Result<Self, Status> {
         if !valid_url(&config.repository_url, true)
-            || config.endpoints.is_empty()
-            || config.endpoints.len() > 32
             || !(10..=60_000).contains(&config.poll_interval_ms)
             || !(1..=30_000).contains(&config.timeout_ms)
             || config.retry_base_ms == 0
@@ -399,22 +429,9 @@ impl WebhookDispatcher {
         {
             return Err(Status::invalid_argument("invalid webhook configuration"));
         }
-        let mut names = BTreeSet::new();
+        validate_endpoints(&config.endpoints, false)?;
         let mut endpoints = Vec::new();
         for e in &config.endpoints {
-            if e.id.is_empty()
-                || e.id.len() > 128
-                || !e
-                    .id
-                    .bytes()
-                    .all(|b| b.is_ascii_alphanumeric() || b"._-".contains(&b))
-                || !names.insert(&e.id)
-                || !valid_url(&e.url, false)
-            {
-                return Err(Status::invalid_argument(
-                    "invalid or duplicate webhook endpoint",
-                ));
-            }
             let secret = e
                 .secret_file
                 .as_ref()
@@ -578,6 +595,181 @@ impl WebhookDispatcher {
             if result.is_err() {
                 tracing::error!("webhook worker stopped unexpectedly");
             }
+        }
+    }
+}
+
+struct Running {
+    version: u64,
+    stop: tokio::sync::watch::Sender<bool>,
+    task: tokio::task::JoinHandle<()>,
+}
+/// Runs one dispatcher per repository with webhook endpoints. A rename,
+/// configuration or state change restarts that repository's dispatcher with
+/// the current name and endpoints; Archived and Deleting repositories stop.
+/// Cursors are stored per repository key, so restarts resume delivery.
+pub struct WebhookSupervisor {
+    backend: Arc<Backend>,
+    store: Arc<dyn WebhookStore>,
+    settings: WebhookConfig,
+    interval: Duration,
+}
+impl WebhookSupervisor {
+    /// `settings` supplies delivery settings and `public_url`; its endpoints
+    /// and `repository_url`, if any, belong to the startup repository.
+    pub fn new(
+        backend: Arc<Backend>,
+        store: Arc<dyn WebhookStore>,
+        settings: WebhookConfig,
+    ) -> Result<Self, Status> {
+        if !settings.endpoints.is_empty() && backend.legacy.is_none() {
+            return Err(Status::invalid_argument(
+                "webhook endpoints in KASU_WEBHOOKS_FILE require a startup repository",
+            ));
+        }
+        if !settings.public_url.is_empty() && !valid_url(&settings.public_url, true) {
+            return Err(Status::invalid_argument("invalid webhook public_url"));
+        }
+        validate_endpoints(&settings.endpoints, true)?;
+        Ok(Self {
+            backend,
+            store,
+            settings,
+            interval: Duration::from_secs(1),
+        })
+    }
+    pub fn with_interval(mut self, interval: Duration) -> Self {
+        self.interval = interval;
+        self
+    }
+    /// The dispatcher configuration for `record`, or None without endpoints.
+    pub fn repository_config(
+        &self,
+        record: &RepositoryRecord,
+    ) -> Result<Option<WebhookConfig>, Status> {
+        if matches!(
+            record.state,
+            RepositoryState::Archived | RepositoryState::Deleting
+        ) {
+            return Ok(None);
+        }
+        let legacy = self.backend.legacy.as_ref() == Some(&record.key);
+        let mut endpoints = crate::RepositoryConfig::parse(&record.config)?.webhooks;
+        if legacy {
+            endpoints.extend(self.settings.endpoints.iter().cloned());
+        }
+        if endpoints.is_empty() {
+            return Ok(None);
+        }
+        let mut config = self.settings.clone();
+        config.endpoints = endpoints;
+        config.repository_url = if legacy && !self.settings.repository_url.is_empty() {
+            self.settings.repository_url.clone()
+        } else if !self.settings.public_url.is_empty() {
+            format!(
+                "{}/{}.git",
+                self.settings.public_url.trim_end_matches('/'),
+                record.name
+            )
+        } else {
+            return Err(Status::invalid_argument(
+                "repository webhooks require public_url to derive the clone URL",
+            ));
+        };
+        // A legacy webhooks file may name a default branch the registry never saw.
+        if !(legacy && record.default_branch == kasu_store::DEFAULT_BRANCH) {
+            config.default_branch = String::from_utf8_lossy(&record.default_branch).into_owned();
+        }
+        Ok(Some(config))
+    }
+    fn records(&self) -> Result<Vec<RepositoryRecord>, Status> {
+        let registry = self.backend.registry().store();
+        let mut out = Vec::new();
+        let mut after = None;
+        loop {
+            let page = registry
+                .list_repositories(after.as_ref(), 256)
+                .map_err(status)?;
+            let Some(last) = page.last() else {
+                return Ok(out);
+            };
+            after = Some(last.key.clone());
+            out.extend(page);
+        }
+    }
+    pub async fn run(self: Arc<Self>, mut shutdown: tokio::sync::watch::Receiver<bool>) {
+        let mut running = std::collections::HashMap::<RepoKey, Running>::new();
+        loop {
+            let this = self.clone();
+            match crate::admission::blocking(move || this.records()).await {
+                Ok(Ok(records)) => {
+                    let mut desired = std::collections::HashSet::new();
+                    for record in records {
+                        let config = match self.repository_config(&record) {
+                            Ok(Some(config)) => config,
+                            Ok(None) => continue,
+                            Err(error) => {
+                                tracing::warn!(repository=%record.key,message=%error.message(),"repository webhooks are not dispatched");
+                                continue;
+                            }
+                        };
+                        desired.insert(record.key.clone());
+                        if running
+                            .get(&record.key)
+                            .is_some_and(|r| r.version == record.version)
+                        {
+                            continue;
+                        }
+                        if let Some(old) = running.remove(&record.key) {
+                            let _ = old.stop.send(true);
+                            let _ = old.task.await;
+                        }
+                        let dispatcher = self.backend.for_repository(&record.key).and_then(|b| {
+                            WebhookDispatcher::new(Arc::new(b), self.store.clone(), config)
+                        });
+                        match dispatcher {
+                            Ok(dispatcher) => {
+                                let (stop, receiver) = tokio::sync::watch::channel(false);
+                                let task = tokio::spawn(Arc::new(dispatcher).run(receiver));
+                                running.insert(
+                                    record.key.clone(),
+                                    Running {
+                                        version: record.version,
+                                        stop,
+                                        task,
+                                    },
+                                );
+                            }
+                            Err(error) => {
+                                tracing::warn!(repository=%record.key,message=%error.message(),"invalid repository webhook configuration")
+                            }
+                        }
+                    }
+                    let stale: Vec<_> = running
+                        .keys()
+                        .filter(|key| !desired.contains(*key))
+                        .cloned()
+                        .collect();
+                    for key in stale {
+                        if let Some(old) = running.remove(&key) {
+                            let _ = old.stop.send(true);
+                            let _ = old.task.await;
+                        }
+                    }
+                }
+                Ok(Err(error)) => {
+                    tracing::warn!(code=?error.code(),"webhook supervisor cannot list repositories")
+                }
+                Err(_) => tracing::error!("webhook supervisor worker failed"),
+            }
+            tokio::select! {
+                _ = tokio::time::sleep(self.interval) => {}
+                _ = shutdown.changed() => break,
+            }
+        }
+        for (_, old) in running {
+            let _ = old.stop.send(true);
+            let _ = old.task.await;
         }
     }
 }

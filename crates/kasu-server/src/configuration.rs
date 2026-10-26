@@ -136,6 +136,16 @@ pub fn load_backend(
     if let Some(path) = std::env::var_os("KASU_SERVER_LIMITS_FILE") {
         backend = backend.with_limits(crate::ServerLimits::load(&PathBuf::from(path))?)?;
     }
+    if let Some(names) = std::env::var_os("KASU_METRICS_REPOSITORIES") {
+        let names = names
+            .to_str()
+            .ok_or("KASU_METRICS_REPOSITORIES must be UTF-8")?
+            .split(',')
+            .filter(|n| !n.trim().is_empty())
+            .map(|n| RepoName::new(n.trim()))
+            .collect::<Result<Vec<_>, _>>()?;
+        backend = backend.with_repository_metrics(&names)?;
+    }
     Ok(ConfiguredBackend {
         backend,
         database,

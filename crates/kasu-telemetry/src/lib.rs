@@ -219,7 +219,7 @@ pub fn server_span<'a>(
     transport: &'static str,
     get: impl Fn(&str) -> Option<&'a str>,
 ) -> Span {
-    let span = tracing::info_span!(target:"kasu_telemetry",parent:None,"server_request",method,transport,otel.kind="server",otel.status_code=Empty,kasu.code=Empty);
+    let span = tracing::info_span!(target:"kasu_telemetry",parent:None,"server_request",method,transport,otel.kind="server",otel.status_code=Empty,kasu.code=Empty,kasu.repository=Empty);
     let context = TraceContextPropagator::new().extract_with_context(
         &Context::new(),
         &Incoming {

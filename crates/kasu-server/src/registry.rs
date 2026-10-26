@@ -14,10 +14,31 @@ const MAX_CACHED_NAMES: usize = 65_536;
 
 /// Repository-scoped configuration stored in the registry record. Every value
 /// is bounded by the corresponding server-wide setting.
-#[derive(Clone, Debug, Default, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct RepositoryConfig {
+    /// Intersected with the server policy and the account's grant.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub write_policy: Option<crate::WritePolicy>,
+    /// Push webhook endpoints notified for this repository's ref changes.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub webhooks: Vec<crate::WebhookEndpoint>,
+    #[serde(skip_serializing_if = "RepositoryLimits::is_empty")]
+    pub limits: RepositoryLimits,
+}
+/// Per-repository admission, capped by `ServerLimits::per_repository_*`.
+#[derive(Clone, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct RepositoryLimits {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub active: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pending: Option<usize>,
+}
+impl RepositoryLimits {
+    fn is_empty(&self) -> bool {
+        self.active.is_none() && self.pending.is_none()
+    }
 }
 impl RepositoryConfig {
     pub fn parse(bytes: &[u8]) -> Result<Self, Status> {
@@ -26,6 +47,45 @@ impl RepositoryConfig {
         }
         serde_json::from_slice(bytes)
             .map_err(|_| Status::internal("invalid stored repository configuration"))
+    }
+    /// Parse untrusted configuration (Admin API or repositories file).
+    pub fn parse_request(bytes: &[u8]) -> Result<Self, Status> {
+        if bytes.len() > kasu_store::MAX_REPOSITORY_CONFIG_BYTES {
+            return Err(Status::invalid_argument(
+                "repository configuration exceeds limit",
+            ));
+        }
+        let config: Self = if bytes.is_empty() {
+            Self::default()
+        } else {
+            serde_json::from_slice(bytes)
+                .map_err(|_| Status::invalid_argument("invalid repository configuration"))?
+        };
+        config.validate()?;
+        Ok(config)
+    }
+    pub fn validate(&self) -> Result<(), Status> {
+        if let Some(policy) = &self.write_policy {
+            crate::accounts::validate_policy(policy)?;
+        }
+        crate::webhook::validate_endpoints(&self.webhooks, true)?;
+        if self.limits.active.is_some_and(|n| !(1..=4096).contains(&n))
+            || self
+                .limits
+                .pending
+                .is_some_and(|n| !(1..=65536).contains(&n))
+        {
+            return Err(Status::invalid_argument("invalid repository limits"));
+        }
+        Ok(())
+    }
+    /// The stored form: empty for the default configuration.
+    pub fn encode(&self) -> Vec<u8> {
+        if *self == Self::default() {
+            Vec::new()
+        } else {
+            serde_json::to_vec(self).expect("repository configuration serializes")
+        }
     }
 }
 
