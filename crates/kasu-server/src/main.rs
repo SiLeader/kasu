@@ -1,6 +1,6 @@
 use kasu_server::{
-    ConfigSource, MetadataService, ObjectService, WebhookConfig, WebhookSupervisor, WriteService,
-    http_router,
+    AdminService, ConfigSource, MetadataService, ObjectService, WebhookConfig, WebhookSupervisor,
+    WriteService, http_router,
 };
 use std::{ffi::OsString, path::PathBuf, sync::Arc};
 
@@ -96,12 +96,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let grpc = address(addresses.first(), "127.0.0.1:50051")?;
     let http = tokio::net::TcpListener::bind(address(addresses.get(1), "127.0.0.1:50080")?).await?;
     let grpc_listener = tokio::net::TcpListener::bind(grpc).await?;
+    let purge_interval = std::env::var("KASU_PURGE_INTERVAL_MS")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .filter(|v| (100..=86_400_000).contains(v))
+        .unwrap_or(60_000);
+    let purge = tokio::spawn(backend.clone().purge_loop(
+        std::time::Duration::from_millis(purge_interval),
+        stop.clone(),
+    ));
     let dispatcher = tokio::spawn(supervisor.run(stop));
     tracing::info!(grpc=%grpc_listener.local_addr()?,http=%http.local_addr()?,"kasu metadata server listening");
     let grpc_service = tonic::transport::Server::builder()
         .add_service(ObjectService::new(backend.clone()).into_server())
         .add_service(WriteService::new(backend.clone()).into_server())
-        .add_service(MetadataService::new(backend.clone()).into_server());
+        .add_service(MetadataService::new(backend.clone()).into_server())
+        .add_service(AdminService::new(backend.clone()).into_server());
     let result: Result<(), Box<dyn std::error::Error>> = tokio::select! {
         result=grpc_service.serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(grpc_listener))=>result.map_err(Into::into),
         result=axum::serve(http,http_router(backend).into_make_service_with_connect_info::<std::net::SocketAddr>())=>result.map_err(Into::into),
@@ -109,6 +119,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     let _ = shutdown.send(true);
     dispatcher.await?;
+    purge.await?;
     registry.await?;
     if let Some(task) = declarations {
         task.await?;

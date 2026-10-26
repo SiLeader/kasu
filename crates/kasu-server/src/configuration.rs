@@ -136,6 +136,27 @@ pub fn load_backend(
     if let Some(path) = std::env::var_os("KASU_SERVER_LIMITS_FILE") {
         backend = backend.with_limits(crate::ServerLimits::load(&PathBuf::from(path))?)?;
     }
+    let seconds = |name: &str| -> Result<Option<u64>, BoxError> {
+        std::env::var_os(name)
+            .map(|v| {
+                v.to_str()
+                    .and_then(|v| v.parse().ok())
+                    .filter(|v| *v <= 100 * 365 * 24 * 3600)
+                    .ok_or_else(|| format!("{name} must be a number of seconds").into())
+            })
+            .transpose()
+    };
+    let mut lifecycle = crate::Lifecycle::default();
+    if let Some(ttl) = seconds("KASU_REPOSITORY_ALIAS_TTL_SECS")? {
+        lifecycle.alias_ttl = (ttl > 0).then(|| std::time::Duration::from_secs(ttl));
+    }
+    if let Some(retention) = seconds("KASU_DELETED_REF_LOG_RETENTION_SECS")? {
+        lifecycle.ref_log_retention = std::time::Duration::from_secs(retention);
+    }
+    if std::env::var_os("KASU_REPOSITORIES_FILE").is_some() {
+        lifecycle.config_source = Some(crate::ConfigSource::from_env()?);
+    }
+    backend = backend.with_lifecycle(lifecycle);
     if let Some(names) = std::env::var_os("KASU_METRICS_REPOSITORIES") {
         let names = names
             .to_str()

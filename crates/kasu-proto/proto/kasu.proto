@@ -97,3 +97,44 @@ message FindChangesetResponse { optional bytes id = 1; }
 
 message BlobMetadata { bytes id = 1; uint64 size = 2; bytes git_oid = 3; }
 message BlobMetadataResponse { repeated BlobMetadata blobs = 1; }
+
+// Repository administration. Names are the external identity; key is the
+// immutable internal identity and never changes on rename.
+service Admin {
+  rpc CreateRepository(CreateRepositoryRequest) returns (Repository);
+  rpc GetRepository(GetRepositoryRequest) returns (Repository);
+  rpc ListRepositories(ListRepositoriesRequest) returns (ListRepositoriesResponse);
+  rpc UpdateRepository(UpdateRepositoryRequest) returns (Repository);
+  rpc RenameRepository(RenameRepositoryRequest) returns (Repository);
+  rpc DeleteRepository(DeleteRepositoryRequest) returns (Repository);
+  rpc ForkRepository(ForkRepositoryRequest) returns (Repository);
+  rpc GetRepositoryUsage(GetRepositoryRequest) returns (RepositoryUsage);
+}
+enum RepositoryState { ACTIVE = 0; READ_ONLY = 1; ARCHIVED = 2; DELETING = 3; }
+message Repository {
+  string name = 1; bytes key = 2; RepositoryState state = 3; bytes default_branch = 4;
+  uint32 git_commit_rule = 5; uint64 config_version = 6;
+  // JSON object: write_policy, webhooks, limits. Empty means the defaults.
+  string config_json = 7;
+  int64 created_at = 8; bytes created_by = 9; repeated string former_names = 10;
+  // True when an idempotent request returned the result of an earlier one.
+  bool replayed = 11;
+}
+message CreateRepositoryRequest { string name = 1; bytes default_branch = 2; string config_json = 3; bytes idempotency_key = 4; }
+message GetRepositoryRequest { string name = 1; }
+message ListRepositoriesRequest { string prefix = 1; string cursor = 2; uint32 limit = 3; }
+message ListRepositoriesResponse { repeated Repository repositories = 1; string cursor = 2; }
+// Compare-and-swap on config_version; unset fields are unchanged.
+message UpdateRepositoryRequest {
+  string name = 1; uint64 expected_config_version = 2;
+  optional string config_json = 3; optional RepositoryState state = 4; optional bytes default_branch = 5;
+}
+message RenameRepositoryRequest { string name = 1; string new_name = 2; bool keep_alias = 3; }
+message DeleteRepositoryRequest { string name = 1; }
+// Creates new_name sharing every object reachable from source's ref, which
+// becomes the new repository's ref of the same name. Retrying with the same
+// idempotency key resumes an interrupted fork.
+message ForkRepositoryRequest { string source = 1; bytes ref = 2; string new_name = 3; bytes idempotency_key = 4; }
+// Logical size of the objects reachable from the repository's refs. Shared
+// objects count fully in every repository that has them.
+message RepositoryUsage { string name = 1; uint64 changesets = 2; uint64 trees = 3; uint64 blobs = 4; uint64 blob_bytes = 5; bool complete = 6; }

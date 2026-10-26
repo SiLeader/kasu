@@ -29,7 +29,9 @@ mod git_ssh;
 pub use git_ssh::*;
 
 mod accounts;
+mod admin;
 pub use accounts::*;
+pub use admin::*;
 
 mod read_scope;
 mod registry;

@@ -787,6 +787,14 @@ fn operation(path: &str, query: Option<&str>, grpc: bool) -> &'static str {
             "Land" => "Land",
             "GetTrees" => "GetTrees",
             "GetBlobs" => "GetBlobs",
+            "CreateRepository" => "CreateRepository",
+            "GetRepository" => "GetRepository",
+            "ListRepositories" => "ListRepositories",
+            "UpdateRepository" => "UpdateRepository",
+            "RenameRepository" => "RenameRepository",
+            "DeleteRepository" => "DeleteRepository",
+            "ForkRepository" => "ForkRepository",
+            "GetRepositoryUsage" => "GetRepositoryUsage",
             _ => "Unknown",
         };
     }
@@ -811,6 +819,14 @@ fn operation(path: &str, query: Option<&str>, grpc: bool) -> &'static str {
         "/v1/update-ref" => "UpdateRef",
         "/v1/land" => "Land",
         "/v1/guarded-land" => "GuardedLand",
+        "/v1/admin/create-repository" => "CreateRepository",
+        "/v1/admin/get-repository" => "GetRepository",
+        "/v1/admin/list-repositories" => "ListRepositories",
+        "/v1/admin/update-repository" => "UpdateRepository",
+        "/v1/admin/rename-repository" => "RenameRepository",
+        "/v1/admin/delete-repository" => "DeleteRepository",
+        "/v1/admin/fork-repository" => "ForkRepository",
+        "/v1/admin/repository-usage" => "GetRepositoryUsage",
         "/metrics" => "Metrics",
         p if p.ends_with("/info/refs") => {
             if query == Some("service=git-receive-pack") {

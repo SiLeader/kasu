@@ -29,6 +29,8 @@ pub struct RepositoryRecord {
     pub deleted_at: i64,
     /// Mutable rows and indexes of a Deleting repository have been removed.
     pub purged: bool,
+    /// The audit ref logs were removed after their retention period.
+    pub logs_purged: bool,
     /// Earlier primary names, oldest first. Account grants match these as well,
     /// so a rename never removes access; aliases are never matched.
     pub former_names: Vec<RepoName>,
@@ -50,6 +52,7 @@ impl RepositoryRecord {
             creation_key: Vec::new(),
             deleted_at: 0,
             purged: false,
+            logs_purged: false,
             former_names: Vec::new(),
             version: 0,
         }
@@ -86,7 +89,7 @@ impl RepositoryRecord {
         {
             return Err(invalid("repository record exceeds limit"));
         }
-        if self.purged && self.state != RepositoryState::Deleting {
+        if (self.purged || self.logs_purged) && self.state != RepositoryState::Deleting {
             return Err(invalid("only deleted repositories can be purged"));
         }
         Ok(())
@@ -107,6 +110,7 @@ impl Canonical for RepositoryRecord {
         out.bytes(&self.creation_key);
         out.i64(self.deleted_at);
         out.byte(u8::from(self.purged));
+        out.byte(u8::from(self.logs_purged));
         out.len(self.former_names.len());
         for name in &self.former_names {
             out.bytes(name.as_str().as_bytes());
@@ -129,6 +133,11 @@ impl Canonical for RepositoryRecord {
             creation_key: input.bytes()?.to_vec(),
             deleted_at: input.i64()?,
             purged: match input.byte()? {
+                0 => false,
+                1 => true,
+                _ => return Err(invalid("invalid repository purge flag")),
+            },
+            logs_purged: match input.byte()? {
                 0 => false,
                 1 => true,
                 _ => return Err(invalid("invalid repository purge flag")),

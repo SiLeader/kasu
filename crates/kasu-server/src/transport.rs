@@ -45,6 +45,7 @@ impl axum::response::IntoResponse for HttpError {
             tonic::Code::Unauthenticated => StatusCode::UNAUTHORIZED,
             tonic::Code::ResourceExhausted => StatusCode::TOO_MANY_REQUESTS,
             tonic::Code::FailedPrecondition => StatusCode::PRECONDITION_FAILED,
+            tonic::Code::AlreadyExists | tonic::Code::Aborted => StatusCode::CONFLICT,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         };
         (
@@ -89,7 +90,7 @@ macro_rules! endpoints {
             Ok(Json(result))
         })*
         pub fn http_router(state:Arc<Backend>)->Router {
-            Router::new()$(.route($path,post($method)))*.route("/metrics",get(server_metrics)).layer(axum::extract::DefaultBodyLimit::max(16*1024*1024)).with_state(state.clone()).merge(crate::write_http_router(state.clone())).merge(crate::git_http_router(state.clone())).layer(crate::ServerLayer::http(state))
+            Router::new()$(.route($path,post($method)))*.route("/metrics",get(server_metrics)).layer(axum::extract::DefaultBodyLimit::max(16*1024*1024)).with_state(state.clone()).merge(crate::write_http_router(state.clone())).merge(crate::admin_http_router(state.clone())).merge(crate::git_http_router(state.clone())).layer(crate::ServerLayer::http(state))
         }
     }
 }

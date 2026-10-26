@@ -23,6 +23,21 @@ impl ProjectionId {
         hex::encode(self.encode())
     }
 }
+/// Key prefixes of the Git OID, publication and reachability indexes of every
+/// projection of `repo`; the length-prefixed key keeps other repositories out.
+pub fn repository_index_prefixes(repo: &[u8]) -> Vec<Vec<u8>> {
+    let mut prefixes = Vec::new();
+    for (kind, separator) in [(0u8, "/"), (1, "")] {
+        let mut encoded = Encoder::default();
+        encoded.byte(kind);
+        encoded.bytes(repo);
+        let namespace = hex::encode(encoded.0);
+        for family in ["git/oid/v1", "git/published/v1", "git/reachability/v1"] {
+            prefixes.push(format!("{family}/{namespace}{separator}").into_bytes());
+        }
+    }
+    prefixes
+}
 impl Canonical for ProjectionId {
     fn encode_to(&self, out: &mut Encoder) {
         out.byte(u8::from(self.path.is_some()));
@@ -132,6 +147,15 @@ impl GitIndex<'_> {
             self.repo.associate_changeset(&self.projection.repo, id)?;
         }
         Ok(())
+    }
+    /// Make `oid` of `source` resolvable in this projection without copying
+    /// its stored bytes. Callers associate commit changesets first.
+    pub fn copy_record(&self, source: &GitIndex<'_>, oid: GitOid) -> Result<OidRecord> {
+        let record = source.require(oid)?;
+        self.repo
+            .meta
+            .put_if_absent(&self.key(oid), &record.encode())?;
+        Ok(record)
     }
     fn publication_key(&self, oid: GitOid) -> Vec<u8> {
         format!("git/published/v1/{}/{oid}", self.projection.namespace()).into_bytes()
