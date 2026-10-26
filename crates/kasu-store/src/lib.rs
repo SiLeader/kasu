@@ -11,7 +11,9 @@ pub use postgres::{PostgresOptions, PostgresStore};
 mod s3;
 #[cfg(feature = "s3")]
 pub use s3::{S3BlobStore, S3Options};
+mod registry;
 mod sqlite;
+pub use registry::*;
 mod tree_membership;
 mod webhook;
 pub use webhook::*;
@@ -26,6 +28,22 @@ pub use sqlite::SqliteStore;
 pub trait MetaStore: Send + Sync {
     fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>>;
     fn put_if_absent(&self, key: &[u8], value: &[u8]) -> Result<()>;
+    /// Remove up to `limit` keys that start with `prefix` and return the count.
+    /// Only indexes of deleted repositories are discarded this way.
+    fn delete_prefix(&self, _prefix: &[u8], _limit: usize) -> Result<usize> {
+        Err(invalid("backend does not support prefix deletion"))
+    }
+}
+/// The exclusive upper bound of keys with `prefix`, or None when unbounded.
+pub fn prefix_end(prefix: &[u8]) -> Option<Vec<u8>> {
+    let mut end = prefix.to_vec();
+    while let Some(last) = end.pop() {
+        if last != u8::MAX {
+            end.push(last + 1);
+            return Some(end);
+        }
+    }
+    None
 }
 pub trait BlobStore: Send + Sync {
     // Bytes on disk and wire are identical zstd frames.
@@ -176,6 +194,16 @@ impl Repository<'_> {
             return Err(Error::NotFound(format!("blob {id} in repository")));
         }
         Ok(())
+    }
+    /// Key prefixes of every membership index owned by `repo`.
+    pub fn membership_prefixes(repo: &[u8]) -> Vec<Vec<u8>> {
+        let mut encoded = kasu_core::Encoder::default();
+        encoded.bytes(repo);
+        let prefix = ObjectId::hash(&encoded.0);
+        ["blob", "changeset", "tree"]
+            .iter()
+            .map(|kind| format!("repo/{kind}/v1/{prefix}/").into_bytes())
+            .collect()
     }
     fn membership_key(repo: &[u8], id: ChangesetId) -> Vec<u8> {
         let mut encoded = kasu_core::Encoder::default();

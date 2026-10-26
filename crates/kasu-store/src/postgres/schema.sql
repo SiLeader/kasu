@@ -31,3 +31,18 @@ CREATE TABLE IF NOT EXISTS kasu.webhook_state (
     PRIMARY KEY(repo,consumer,stream),
     CHECK ((sequence IS NULL AND body IS NULL) OR (sequence>cursor AND body IS NOT NULL))
 );
+CREATE TABLE IF NOT EXISTS kasu.repository_records (
+    key BYTEA PRIMARY KEY CHECK(octet_length(key) BETWEEN 1 AND 256), record BYTEA NOT NULL,
+    state SMALLINT NOT NULL CHECK(state BETWEEN 0 AND 3), version BIGINT NOT NULL CHECK(version>0)
+);
+CREATE TABLE IF NOT EXISTS kasu.repository_names (
+    name TEXT PRIMARY KEY, key BYTEA NOT NULL REFERENCES kasu.repository_records(key),
+    alias BOOLEAN NOT NULL, expires_at BIGINT
+);
+CREATE INDEX IF NOT EXISTS repository_names_key ON kasu.repository_names(key);
+CREATE TABLE IF NOT EXISTS kasu.repository_log_counter (singleton BOOLEAN PRIMARY KEY DEFAULT TRUE CHECK(singleton), value BIGINT NOT NULL CHECK(value>=0));
+INSERT INTO kasu.repository_log_counter VALUES (TRUE,0) ON CONFLICT DO NOTHING;
+CREATE TABLE IF NOT EXISTS kasu.repository_log (
+    seq BIGINT PRIMARY KEY CHECK(seq>0), key BYTEA NOT NULL, event TEXT NOT NULL, actor BYTEA NOT NULL, time BIGINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS immutable_key_prefix ON kasu.immutable (substring(key from 1 for 96));

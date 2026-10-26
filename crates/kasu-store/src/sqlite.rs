@@ -1,4 +1,5 @@
 use crate::*;
+mod registry;
 mod webhook;
 use rusqlite::{Connection, OptionalExtension, TransactionBehavior, params};
 use std::{
@@ -32,6 +33,9 @@ impl SqliteStore {
           CREATE INDEX IF NOT EXISTS git_ref_log_repo ON git_ref_log(repo,seq);
           CREATE TABLE IF NOT EXISTS land_results (repo BLOB NOT NULL, key BLOB NOT NULL, fingerprint BLOB NOT NULL, response BLOB NOT NULL, PRIMARY KEY(repo,key)) WITHOUT ROWID;
           CREATE TABLE IF NOT EXISTS webhook_state (repo BLOB NOT NULL, consumer TEXT NOT NULL, stream INTEGER NOT NULL, cursor INTEGER NOT NULL, sequence INTEGER, body BLOB, attempts INTEGER NOT NULL DEFAULT 0, retry_at_ms INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(repo,consumer,stream)) WITHOUT ROWID;").map_err(storage_error)?;
+        connection
+            .execute_batch(registry::SCHEMA)
+            .map_err(storage_error)?;
         Ok(Self {
             connection: Mutex::new(connection),
         })
@@ -93,6 +97,17 @@ impl MetaStore for SqliteStore {
         }
         Ok(())
     }
+    fn delete_prefix(&self, prefix: &[u8], limit: usize) -> Result<usize> {
+        if prefix.is_empty() {
+            return Err(invalid("refusing to delete every immutable key"));
+        }
+        self.lock()?
+            .execute(
+                "DELETE FROM immutable WHERE key IN (SELECT key FROM immutable WHERE key>=?1 AND (?2 IS NULL OR key<?2) LIMIT ?3)",
+                params![prefix, prefix_end(prefix), limit.min(i64::MAX as usize) as i64],
+            )
+            .map_err(storage_error)
+    }
 }
 impl RefStore for SqliteStore {
     fn land_record(&self, repo: &[u8], key: &[u8]) -> Result<Option<LandRecord>> {
@@ -114,6 +129,7 @@ impl RefStore for SqliteStore {
         let tx = connection
             .transaction_with_behavior(TransactionBehavior::Immediate)
             .map_err(storage_error)?;
+        registry::require_writable(&tx, repo)?;
         if let Some(record) = read_land(&tx, repo, key)? {
             if record.fingerprint != commit.record.fingerprint {
                 return Err(invalid("Land key was used for a different request"));
@@ -221,6 +237,7 @@ impl RefStore for SqliteStore {
         let tx = conn
             .transaction_with_behavior(TransactionBehavior::Immediate)
             .map_err(storage_error)?;
+        registry::require_writable(&tx, repo)?;
         let mut result = Vec::new();
         for update in updates {
             let actual = resolve(&tx, repo, &update.name)?;
@@ -363,6 +380,7 @@ impl GitRefStore for SqliteStore {
         let tx = conn
             .transaction_with_behavior(TransactionBehavior::Immediate)
             .map_err(storage_error)?;
+        registry::require_writable(&tx, repo)?;
         let mut native_states = Vec::new();
         let mut git_states = Vec::new();
         for update in native {
@@ -480,6 +498,7 @@ impl GitRefStore for SqliteStore {
         let tx = conn
             .transaction_with_behavior(TransactionBehavior::Immediate)
             .map_err(storage_error)?;
+        registry::require_writable(&tx, repo)?;
         let mut result = Vec::new();
         for update in updates {
             let actual = resolve_git(&tx, repo, &update.name)?;

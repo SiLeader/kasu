@@ -2,6 +2,7 @@ use crate::*;
 use ::postgres::{Client, Config, GenericClient, Row, Transaction, config::SslMode};
 use rustls::pki_types::{CertificateDer, pem::PemObject};
 use std::{collections::BTreeSet, path::PathBuf, sync::Mutex, time::Duration};
+mod registry;
 mod webhook;
 
 /// Connection settings are intentionally not Debug: the DSN can contain a password.
@@ -386,6 +387,22 @@ impl MetaStore for PostgresStore {
             Ok(())
         })
     }
+    fn delete_prefix(&self, prefix: &[u8], limit: usize) -> Result<usize> {
+        if prefix.is_empty() {
+            return Err(invalid("refusing to delete every immutable key"));
+        }
+        let indexed = &prefix[..prefix.len().min(registry::KEY_INDEX_BYTES)];
+        let end = prefix_end(indexed);
+        self.client(|client| {
+            let deleted = client
+                .execute(
+                    "DELETE FROM kasu.immutable WHERE id IN (SELECT id FROM kasu.immutable WHERE substring(key from 1 for 96)>=$1 AND ($2::BYTEA IS NULL OR substring(key from 1 for 96)<$2) AND substring(key from 1 for $3)=$4 LIMIT $5)",
+                    &[&indexed, &end, &(prefix.len() as i32), &prefix, &(limit.min(i64::MAX as usize) as i64)],
+                )
+                .map_err(pg_error)?;
+            usize::try_from(deleted).map_err(|_| invalid("deleted row count exceeds range"))
+        })
+    }
 }
 impl RefStore for PostgresStore {
     fn capabilities(&self) -> RefCapabilities {
@@ -444,6 +461,7 @@ impl RefStore for PostgresStore {
         }
         self.client(|client| {
             let mut tx = client.transaction().map_err(pg_error)?;
+            registry::require_writable(&mut tx, repo)?;
             let repo = scope(&mut tx, repo)?;
             tx.execute(
                 "INSERT INTO kasu.land_claims(repo,key) VALUES ($1,$2) ON CONFLICT DO NOTHING",
@@ -534,6 +552,7 @@ impl GitRefStore for PostgresStore {
         }
         self.client(|client| {
             let mut tx = client.transaction().map_err(pg_error)?;
+            registry::require_writable(&mut tx, repo)?;
             let repo = scope(&mut tx, repo)?;
             lock_refs(
                 &mut tx,

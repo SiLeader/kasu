@@ -443,6 +443,7 @@ pub(crate) fn status(error: core::Error) -> tonic::Status {
         core::Error::Denied(message) => tonic::Status::permission_denied(message),
         core::Error::Invalid(message) => tonic::Status::invalid_argument(message),
         core::Error::NotFound(message) => tonic::Status::not_found(message),
+        core::Error::Precondition(message) => tonic::Status::failed_precondition(message),
         other => {
             tracing::error!(error=%other,"metadata operation failed");
             tonic::Status::internal("storage operation failed")

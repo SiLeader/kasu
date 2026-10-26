@@ -10,6 +10,7 @@ bstr.workspace = true
 hex.workspace = true
 thiserror.workspace = true
 sha1.workspace = true
+getrandom.workspace = true
 
 [dev-dependencies]
 proptest.workspace = true
