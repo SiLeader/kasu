@@ -84,6 +84,13 @@ proptest! {
             expected.sort();
             prop_assert_eq!(ops.merge_bases(ids[head],ids[b]).unwrap(), expected);
         }
+        for a in 0..ids.len() {
+            for b in [None, Some(head), Some(a / 2)] {
+                let excluded = b.map(|b| closure[b].clone()).unwrap_or_default();
+                let expected: BTreeSet<_> = closure[a].difference(&excluded).map(|i| ids[*i]).collect();
+                prop_assert_eq!(ops.ancestors_excluding(ids[a], b.map(|b| ids[b])).unwrap(), expected);
+            }
+        }
     }
 }
 

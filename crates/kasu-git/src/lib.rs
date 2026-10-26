@@ -8,6 +8,7 @@ pub use derived::*;
 pub use index::*;
 pub use object::*;
 pub use path::*;
+pub use reachability::ReachableSet;
 pub use refs::*;
 
 mod pack;

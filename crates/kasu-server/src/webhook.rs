@@ -270,20 +270,10 @@ impl Backend {
         let (old, old_tree) = self.event_target(event.old)?;
         let (new, new_tree) = self.event_target(event.new)?;
         let final_paths = self.changed_paths(old_tree, new_tree)?;
-        let mut previous = BTreeSet::new();
-        let mut pending: Vec<_> = old.into_iter().collect();
-        while let Some(id) = pending.pop() {
-            if previous.insert(id) {
-                pending.extend(ops.ctx.repo.changeset(id).map_err(status)?.parents);
-            }
-        }
-        let mut added = BTreeSet::new();
-        let mut pending: Vec<_> = new.into_iter().collect();
-        while let Some(id) = pending.pop() {
-            if !previous.contains(&id) && added.insert(id) {
-                pending.extend(ops.ctx.repo.changeset(id).map_err(status)?.parents);
-            }
-        }
+        let added = match new {
+            Some(new) => ops.ancestors_excluding(new, old).map_err(status)?,
+            None => BTreeSet::new(),
+        };
         let mut ordered = added
             .iter()
             .map(|id| {

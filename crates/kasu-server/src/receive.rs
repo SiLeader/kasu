@@ -8,7 +8,7 @@ use kasu_core::{GitKind, GitOid, GitRef, Tree, TreeId};
 use kasu_git::*;
 use kasu_ingest::Importer;
 use kasu_store::*;
-use std::{collections::BTreeSet, sync::Arc};
+use std::sync::Arc;
 use tonic::Status;
 
 enum PreparedRef {
@@ -255,9 +255,9 @@ impl Backend {
             projection,
         };
         let stage = || -> kasu_core::Result<()> {
-            let public = reachable(&index, public_roots(&refs), &BTreeSet::new())?;
+            let public = ReachableSet::new(&index, public_roots(&refs))?;
             for oid in &q.shallow {
-                if !public.contains(oid) || index.object(*oid)?.0 != GitKind::Commit {
+                if !public.contains(*oid)? || index.object(*oid)?.0 != GitKind::Commit {
                     return Err(kasu_core::invalid("unavailable shallow boundary"));
                 }
             }
@@ -265,7 +265,7 @@ impl Backend {
                 Default::default()
             } else {
                 decode_received_pack(q.pack, &self.receive_limits, &|oid| {
-                    if !public.contains(&oid) {
+                    if !public.contains(oid)? {
                         return Ok(None);
                     }
                     let (kind, bytes) = index.object(oid)?;
@@ -319,13 +319,13 @@ impl Backend {
                 &|oid| {
                     if let Some(object) = objects.get(&oid) {
                         Ok((object.kind, object.bytes.to_vec()))
-                    } else if public.contains(&oid) {
+                    } else if public.contains(oid)? {
                         index.object(oid)
                     } else {
                         Err(kasu_core::invalid("missing or unavailable push dependency"))
                     }
                 },
-                &public,
+                &|oid| public.contains(oid),
             )?;
             Ok(())
         };

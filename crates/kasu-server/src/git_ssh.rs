@@ -301,6 +301,7 @@ pub fn serve_git_ssh(
         output.flush().map_err(storage_error)?;
     }
     let mut ack_sent = false;
+    let mut public = None;
     loop {
         let Some(packet) = packet(input, &mut budget)? else {
             return Err(invalid("SSH negotiation ended before done"));
@@ -313,12 +314,16 @@ pub fn serve_git_ssh(
             && let Some(raw) = packet[4..].strip_prefix(b"have ")
         {
             let oid = oid_from_hex(raw.strip_suffix(b"\n").unwrap_or(raw))?;
-            if index.find_changeset(oid)?.is_some()
-                && authorized(&index, &public_roots(&refs), oid)?
-            {
-                write_packet(output, format!("ACK {oid}\n").as_bytes()).map_err(storage_error)?;
-                output.flush().map_err(storage_error)?;
-                ack_sent = true;
+            if index.find_changeset(oid)?.is_some() {
+                if public.is_none() {
+                    public = Some(ReachableSet::new(&index, public_roots(&refs))?);
+                }
+                if authorized(&index, public.as_ref().unwrap(), oid)? {
+                    write_packet(output, format!("ACK {oid}\n").as_bytes())
+                        .map_err(storage_error)?;
+                    output.flush().map_err(storage_error)?;
+                    ack_sent = true;
+                }
             }
         }
         bytes.extend(packet);

@@ -459,48 +459,14 @@ pub fn reachable(
 pub fn public_roots(refs: &[ResolvedRef]) -> BTreeSet<GitOid> {
     refs.iter().filter_map(|r| r.oid).collect()
 }
-pub fn authorized(index: &GitIndex<'_>, roots: &BTreeSet<GitOid>, oid: GitOid) -> Result<bool> {
-    if roots.contains(&oid) || index.is_published(oid)? {
-        return Ok(true);
-    }
-    let Some(record) = index.find(oid)? else {
-        return Ok(false);
-    };
-    if let NativeTarget::Commit(target) = record.native
-        && index.projection.path.is_none()
-    {
-        let engine = kasu_derived::Engine::standard();
-        let ops = kasu_ops::Operations {
-            engine: &engine,
-            ctx: kasu_derived::Ctx {
-                repo: kasu_store::Repository {
-                    meta: index.repo.meta,
-                    blobs: index.repo.blobs,
-                },
-            },
-        };
-        for root in roots {
-            let (leaf, kind) = peel(index, *root)?;
-            if kind == GitKind::Commit
-                && let Some(head) = index.find_changeset(leaf)?
-                && ops.is_ancestor(target, head)?
-            {
-                return Ok(true);
-            }
-        }
-        return Ok(false);
-    }
-    let mut seen = BTreeSet::new();
-    let mut pending: Vec<_> = roots.iter().copied().collect();
-    while let Some(id) = pending.pop() {
-        if id == oid {
-            return Ok(true);
-        }
-        if seen.insert(id) {
-            pending.extend(object_links(index, id, true)?);
-        }
-    }
-    Ok(false)
+/// Whether `oid` is explicitly published or reachable from the public roots.
+/// Build `public` once per request; each check is then an index lookup.
+pub fn authorized(
+    index: &GitIndex<'_>,
+    public: &ReachableSet<'_, '_>,
+    oid: GitOid,
+) -> Result<bool> {
+    Ok(index.is_published(oid)? || public.contains(oid)?)
 }
 fn commit_parents(index: &GitIndex<'_>, oid: GitOid) -> Result<Vec<GitOid>> {
     let (kind, raw) = index.object(oid)?;
@@ -513,33 +479,14 @@ fn commit_parents(index: &GitIndex<'_>, oid: GitOid) -> Result<Vec<GitOid>> {
         .map(|p| oid_from_hex(p))
         .collect()
 }
-fn authorize_wants(index: &GitIndex<'_>, roots: &BTreeSet<GitOid>, wants: &[GitOid]) -> Result<()> {
-    let denied = || Error::Denied("requested object is not public".into());
-    let mut pending = BTreeSet::new();
+fn authorize_wants(
+    index: &GitIndex<'_>,
+    public: &ReachableSet<'_, '_>,
+    wants: &[GitOid],
+) -> Result<()> {
     for oid in wants {
-        if roots.contains(oid) || index.is_published(*oid)? {
-            continue;
-        }
-        let record = index.find(*oid)?.ok_or_else(denied)?;
-        if record.native.kind() == GitKind::Commit {
-            if !authorized(index, roots, *oid)? {
-                return Err(denied());
-            }
-        } else {
-            pending.insert(*oid);
-        }
-    }
-    // Checkout can request thousands of promised blobs together. Traverse the
-    // public graph once for the batch, rather than once for every requested blob.
-    let mut seen = BTreeSet::new();
-    let mut stack: Vec<_> = roots.iter().copied().collect();
-    while !pending.is_empty() {
-        let Some(oid) = stack.pop() else {
-            return Err(denied());
-        };
-        pending.remove(&oid);
-        if !pending.is_empty() && seen.insert(oid) {
-            stack.extend(object_links(index, oid, true)?);
+        if !authorized(index, public, *oid)? {
+            return Err(Error::Denied("requested object is not public".into()));
         }
     }
     Ok(())
@@ -550,13 +497,14 @@ pub fn plan_fetch(
     q: &FetchRequest,
 ) -> Result<FetchPlan> {
     validate_fetch(q)?;
-    let roots = public_roots(refs);
-    authorize_wants(index, &roots, &q.wants)?;
+    let public = ReachableSet::new(index, public_roots(refs))?;
+    authorize_wants(index, &public, &q.wants)?;
     let mut common = Vec::new();
+    let mut seen_haves = BTreeSet::new();
     for oid in &q.haves {
-        if index.find_changeset(*oid)?.is_some()
-            && authorized(index, &roots, *oid)?
-            && !common.contains(oid)
+        if seen_haves.insert(*oid)
+            && index.find_changeset(*oid)?.is_some()
+            && authorized(index, &public, *oid)?
         {
             common.push(*oid);
         }

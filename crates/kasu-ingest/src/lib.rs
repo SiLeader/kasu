@@ -71,7 +71,7 @@ impl Importer<'_> {
                 let object = source.find_object(id).map_err(git_error)?;
                 Ok((from_gix_kind(object.kind), object.data.to_vec()))
             },
-            &BTreeSet::new(),
+            &|_| Ok(false),
         )?;
         let mut projected = Vec::new();
         for (name, oid) in refs {
@@ -109,7 +109,7 @@ impl Importer<'_> {
         &self,
         roots: Vec<(GitOid, Option<GitKind>)>,
         find: &dyn Fn(GitOid) -> Result<(GitKind, Vec<u8>)>,
-        trusted: &BTreeSet<GitOid>,
+        trusted: &dyn Fn(GitOid) -> Result<bool>,
     ) -> Result<(usize, usize)> {
         let ctx = Ctx {
             repo: Repository {
@@ -142,7 +142,7 @@ impl Importer<'_> {
             {
                 return Err(invalid("Git object hash or dependency type mismatch"));
             }
-            if trusted.contains(&oid) {
+            if trusted(oid)? {
                 let record = self.index.require(oid)?;
                 if record.native.kind() != kind || self.index.object(oid)?.1 != *raw {
                     return Err(invalid("trusted Git object mismatch"));

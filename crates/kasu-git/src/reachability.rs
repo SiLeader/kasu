@@ -385,6 +385,45 @@ impl<'a, 'b> Sets<'a, 'b> {
     }
 }
 
+/// Membership in the union of the object closures of `roots`.
+///
+/// Closures come from the persistent incremental index, so construction costs
+/// only the history added since the roots were last indexed, and each lookup is
+/// a bounded trie descent per distinct root instead of a whole-graph walk.
+pub struct ReachableSet<'a, 'b> {
+    sets: std::cell::RefCell<Sets<'a, 'b>>,
+    roots: Vec<Root>,
+}
+impl<'a, 'b> ReachableSet<'a, 'b> {
+    pub fn new(index: &'a GitIndex<'b>, roots: impl IntoIterator<Item = GitOid>) -> Result<Self> {
+        let mut sets = Sets::new(index);
+        let mut closures = Vec::new();
+        for oid in roots.into_iter().collect::<BTreeSet<_>>() {
+            let root = sets.closure(oid)?;
+            if !closures.contains(&root) {
+                closures.push(root);
+            }
+        }
+        Ok(Self {
+            sets: std::cell::RefCell::new(sets),
+            roots: closures,
+        })
+    }
+    pub fn contains(&self, oid: GitOid) -> Result<bool> {
+        let mut sets = self.sets.borrow_mut();
+        // Closures only contain indexed objects; new push objects skip the trie.
+        if self.roots.is_empty() || sets.index.find(oid)?.is_none() {
+            return Ok(false);
+        }
+        for root in &self.roots {
+            if sets.contains(Some(*root), oid, 0)? {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+}
+
 pub(crate) fn reachable_difference(
     index: &GitIndex<'_>,
     wants: &[GitOid],
