@@ -29,6 +29,9 @@ GitOps ツールが kasu のリポジトリを通常の Git リポジトリと�
 
 ### トランスポートと認証
 - Smart HTTP（`GET /info/refs?service=...`, `POST /git-upload-pack`, `POST /git-receive-pack`）。
+  URL は `https://host/<repo-name>.git`。`<repo-name>` は `/` を含み得る（`team-a/infra`）。名前規則で `-` 単独セグメントと
+  HTTP ルート名を禁止し、射影 URL（`/-/path/`）・API ルートと曖昧にならないようにする（06）。改名後の旧 URL は alias で解決する。
+- SSH はクライアントが送る `git-upload-pack '<repo-name>.git'` の引数からリポジトリを解決する（起動時に固定しない）。
 - `Git-Protocol: version=2` ヘッダを解釈し、v2 と v0/v1 で **別々の capability 表・状態機械** を実装する。
   - v0/v1: ref 広告、`multi_ack_detailed` / `no-done` を含む ACK 状態機械、`side-band-64k`, `ofs-delta`, `shallow`, `include-tag`,
     `allow-tip-sha1-in-want` / `allow-reachable-sha1-in-want`（認可スコープ内）。
@@ -74,8 +77,11 @@ kasu-changeset <ChangesetId>          # 追跡用ヘッダ（任意・規則に�
 - マージ Changeset: 第二親以降は `parent` 行として出力するだけでよく、tree は `RootTree` から決まる。
 
 ### OID 索引とスコープ
-- `(repo, git_oid) -> (kind, native ref)` を **リポジトリ単位** で持つ。グローバル索引を直接 want 解決に使わない（他リポジトリのオブジェクト露出防止）。
-- 射影リポジトリは別 OID 空間（SubKey = ProjectionId）。
+- `(repo, git_oid) -> (kind, native ref)` を **リポジトリ単位**（`RepoKey`）で持つ。グローバル索引を直接 want 解決に使わない（他リポジトリのオブジェクト露出防止）。
+- 合成 commit は Changeset 内容のみから決まるため、フォーク等で同じ Changeset を持つリポジトリ同士では同じ Git OID になる。
+  OID が同じでも、want / have / thin pack 基底の解決は当該リポジトリの索引だけで行う。
+- 合成規則のバージョンはリポジトリ作成時にレジストリへ記録して固定する。
+- 射影リポジトリは別 OID 空間（SubKey = ProjectionId = `RepoKey` + 射影パス）。
 
 ### Git ref 射影
 ネイティブ ref（Changeset のみを指す）とは別に、Git 公開用の ref 表現を持つ。
@@ -128,11 +134,13 @@ GitOps コントローラーは通常リポジトリ全体を取得するため�
 ## Push 受信（receive-pack）
 
 1. pack を受信・検証（`gix` でパース、オブジェクト数・サイズ上限、zlib bomb 対策）。**接続性チェック**（新 ref 先頭から
-   既存オブジェクトまで欠落がないこと）と型チェックを ref 更新前に完了する。
+   既存オブジェクトまで欠落がないこと）と型チェックを ref 更新前に完了する。thin pack の基底と「既存オブジェクト」は
+   当該リポジトリの OID 索引に載ったものだけを認める（他リポジトリにだけある OID への依存は欠落として拒否）。
 2. 新規 commit を **トポロジカル順（親が先）** に処理: 第一親の tree と自身の tree を diff → `FileChange` 列に変換し、
    raw commit / 必要なら raw tree を保存して Changeset を作成（blob は BlobStore へ）。
 3. ポリシー検査:
-   - 許可 ref（例: `refs/heads/main`, `refs/heads/image-updates/*`）。
+   - 許可 ref（例: `refs/heads/main`, `refs/heads/image-updates/*`）。サーバー全体 policy とリポジトリ policy・アカウント grant の積。
+   - リポジトリが `ReadOnly` / `Archived` / `Deleting` でないこと（ref CAS と同じ Tx で再確認）。
    - **ディレクトリ ACL は `旧 ref の tree → 新 ref の tree` の最終差分で判定** する（マージの第二親経由で
      未許可の変更が入るのを防ぐため、各 commit の第一親差分だけで判定しない）。
    - non-fast-forward（force push）はデフォルト禁止、ref パターン単位で許可可能（Flux Image Automation の
@@ -153,6 +161,8 @@ GitOps コントローラーは通常リポジトリ全体を取得するため�
 - ref_log（02 参照、ref CAS と同一トランザクションで追記）を tail して、GitHub 互換 `push` イベント
   （`ref`, `before`, `after`, `commits[].added/modified/removed`）を送信。取りこぼしなし・少なくとも 1 回配信。
 - ArgoCD はこれで `modified` パスに基づくリフレッシュ判定ができる。Flux には Receiver（generic / github 形式）向けに送信。
+- endpoint はリポジトリごとに設定する。dispatcher は全 Active リポジトリの ref_log を巡回し、cursor は
+  `(RepoKey, endpoint, stream)` ごとに永続化する。payload の `repository` はレジストリの現在名から生成する。
 
 ## 互換性テスト
 

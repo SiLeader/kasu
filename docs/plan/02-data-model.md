@@ -4,8 +4,24 @@
 
 - ネイティブの content address は **BLAKE3**（`ObjectId = [u8; 32]`）。Git 互換用の SHA-1 OID は別の索引/Derived Data で併記（04 参照）。
 - 全ての不変オブジェクトは「ハッシュ → バイト列」の put-if-absent で保存し、上書きしない。
+- 不変オブジェクトは **全リポジトリで共有** する。リポジトリから見える範囲は「所属索引」で決まる（後述「リポジトリと所属」）。
 - **パス・人名・メールアドレス・メッセージはすべてバイト列**（`BString` 相当）として扱う。Git は非 UTF-8 を許容するため、
   `String` を使うと往復一致が壊れる。表示時にのみ lossy 変換する。
+
+## リポジトリと所属
+
+詳細は 06 を参照。
+
+```
+RepoKey  = 不変の内部キー（新規: "r1\0" + 16 バイト乱数 / 既存移行: 旧リポジトリ名バイト列）。再利用しない
+RepoName = 外部名（`team-a/infra` 等）。改名可能。repo_names で RepoKey に解決
+所属索引 = repo/<kind>/v1/<RepoKey>/<id> -> ()      # kind = changeset / tree / blob
+```
+
+- 永続キー・Derived Data の SubKey（`ProjectionId` 等）・読み取り scope 名前空間は全て `RepoKey` を使い、名前は使わない。
+- Changeset / Tree / Blob の作成時に、作成先リポジトリへの所属を put-if-absent で追加する。読み取り・親参照・
+  merge / rebase の入力は当該リポジトリの所属オブジェクトに限る。
+- 共有ストアに存在しても所属のないオブジェクトは「存在しない」と同じに扱う（存在オラクル防止。06）。
 
 ## Blob
 
@@ -74,8 +90,8 @@ RootTree(cs) = apply(EmptyTree,                  cs.changes)   if cs.parents is 
 ネイティブ ref はシンプルに保ち、Git 固有の ref 表現（tag オブジェクト・非 commit ターゲット）は 04 の **Git ref 射影** で扱う。
 
 ```
-refs テーブル: (repo, name) -> (target: ChangesetId, version: u64)
-ref_log    : (repo, seq) -> (name, old, new, actor, time)   # 同一トランザクションで追記（Webhook のアウトボックス兼用）
+refs テーブル: (repo: RepoKey, name) -> (target: ChangesetId, version: u64)
+ref_log    : (repo: RepoKey, seq) -> (name, old, new, actor, time)   # 同一トランザクションで追記（Webhook のアウトボックス兼用）
 ```
 
 - 更新は CAS（`expected` 一致時のみ）。Changeset 作成とは独立。
@@ -87,7 +103,7 @@ ref_log    : (repo, seq) -> (name, old, new, actor, time)   # 同一トランザ
 | 能力 | 必須 | 用途 |
 |---|---|---|
 | 単一 ref CAS + ref_log 追記の原子性 | ○ | 通常の ref 更新、Webhook 配信の取りこぼし防止 |
-| 複数 ref のトランザクション CAS | 任意 | Git `atomic` push。非対応バックエンドでは `atomic` を広告しない |
+| 複数 ref のトランザクション CAS | 任意 | Git `atomic` push。非対応バックエンドでは `atomic` を広告しない。対象は同一リポジトリ内の ref に限る |
 | 変更フィード（ref_log の tail） | ○ | Webhook / Eager Derived Data のトリガ |
 
 ref_log 追記と CAS を同一トランザクションにするため、**ref 系テーブルだけは** 単一パーティション内のトランザクションを要求する。
@@ -111,7 +127,8 @@ trait DerivedData: Sized + Encode + Decode {
 }
 ```
 
-- 保存キー: `derived/<NAME>@<VERSION>/<ChangesetId>/<SubKey>`（不変・冪等）。
+- 保存キー: `derived/<NAME>@<VERSION>/<ChangesetId>/<SubKey>`（不変・冪等）。Changeset 内容のみで決まる型は
+  リポジトリ間で共有し、リポジトリ固有の型（Git OID 等）は SubKey に `RepoKey` を含める。
 - **SubKey** によって `Blame(cs, path)` や射影ごとの Git OID のような部分キーを持てる。Lazy 型は要求されたキーのみ計算し、
   リポジトリ全体を実体化しない。
 - 計算スケジューラは依存グラフ（型間 + 親方向）を辿り、未計算の境界から **古い方へ向かって反復的に** 計算（再帰しない）。

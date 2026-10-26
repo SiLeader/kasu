@@ -65,6 +65,29 @@
 ### M11 以降: 拡張
 - G5（partial clone）、G6（パス射影リポジトリ、SSH、LFS）、ディレクトリ ACL、仮想化チェックアウト（FUSE）、CopyDetect / PathIndex。
 - 着地後テスト / デプロイ前テストのための仕組み（Metadata API 上の自動 bisect / revert bot のリファレンス実装）。
+- M12 完了後のマルチリポジトリ拡張: `ForkRepository`、共有オブジェクトのオフライン mark-and-sweep 回収、リポジトリ単位の容量クォータ。
+
+### M12: マルチリポジトリ（3〜4 週）
+詳細は 06 を参照。既存の単一リポジトリ運用を壊さない順序で段階的に入れる。
+
+1. **レジストリと移行**: `RepositoryStore`（SQLite / PostgreSQL）、名前規則、`RepoKey`、既存リポジトリを legacy キーで登録する
+   `migrate-registry` と互換起動モード。
+2. **要求ごとの解決**: `Backend` から固定 `repository` を除き `RepoContext` を導入。Metadata / Writer / Objects / Git HTTP / SSH の
+   全経路でレジストリ解決 → 所属判定。不可視リポジトリ・未所属 ID を `NotFound` に統一。`UploadBlobs` / thin pack の存在オラクル対策。
+3. **リポジトリ単位設定と認可**: `KASU_REPOSITORIES_FILE`、アカウント grant（glob・最具体一致）、射影アカウントの
+   `(repository, path)` 化、WritePolicy / Webhook / 上限のリポジトリ単位化と全体設定との積。旧形式設定の読み替え。
+4. **Admin API とライフサイクル**: Create / Get / List / Update / Rename（alias）/ Delete（2 段階削除）、`kasu repo`、`kasu clone`、
+   `kasu-ingest --create`。
+5. **cache / daemon / 運用**: 複数リポジトリ対応の cache / daemon（(repo, id) 所属ヒット）、リポジトリ単位の admission 公平性、
+   メトリクスラベルの許可リスト、論理サイズ集計。
+
+- 完了条件:
+  - 既存単一リポジトリのデータを移行後、全 Git OID・Derived Data キー・webhook cursor・Land 冪等結果が不変。
+  - 1 server 上の複数リポジトリ（共有 blob・フォーク相当の共有 Changeset を含む）で、全 RPC / Git fetch / push / Objects /
+    cache 経由の取得が他リポジトリ専用オブジェクトを返さず、未所属と不存在が区別できないことのプロパティテスト。
+  - 改名後の旧 URL clone、削除 → 同名再作成で旧データが見えないこと、削除中の Land / push が確定しないことのシミュレーション。
+  - ArgoCD / Flux が同一 server の別リポジトリをそれぞれ同期し、Webhook がリポジトリごとに正しく届く kind E2E。
+  - 1 リポジトリへの過負荷中も他リポジトリの応答が上限内であることの負荷試験。
 
 > M4 を早期に置くのは、GitOps 互換が本プロジェクト固有の価値であり、ネイティブクライアント（M8）なしでも
 > 「Git から取り込んで GitOps に配信する」ユースケースで単独利用可能になるため。
@@ -77,7 +100,8 @@
 | ゴールデン | Changeset ID、Git commit/tree OID の固定値 |
 | 差分テスト | `git` 本体との結果比較（log, blame, merge-base --all, diff） |
 | ファジング | pack パーサ、pkt-line パーサ、protobuf 入力（`cargo-fuzz`） |
-| 決定的シミュレーション | `kasu-sim`: ストレージ/ネットワーク障害注入、並行 CAS / Land、キャッシュ階層障害 |
+| 決定的シミュレーション | `kasu-sim`: ストレージ/ネットワーク障害注入、並行 CAS / Land、キャッシュ階層障害、リポジトリ削除・改名と並行する書き込み |
+| 隔離 | 複数リポジトリ間で所属外オブジェクト・不可視リポジトリが全経路（API / Git / Objects / cache）で漏れないこと |
 | E2E | 互換性マトリクスの git CLI / go-git / ArgoCD / Flux / Image Updater / Image Automation（kind） |
 | ベンチ | Changeset 作成・Derived Data 計算・pack 生成スループット・pack サイズ（`criterion`） |
 
@@ -94,3 +118,7 @@
 | 複数 ref トランザクション非対応バックエンド | `atomic` push 不可 | RefStore 能力モデルで広告を切り替え |
 | Git クライアントの多様な capability / バージョン差 | 想定外のネゴシエーション | バージョン付き互換性マトリクス、完全実装まで capability を広告しない |
 | SHA-1 依存 | 将来の SHA-256 移行 | OID 型を抽象化し `object-format` を将来追加可能に |
+| リポジトリ間の情報漏えい | 他リポジトリのオブジェクト・存在の露出 | 所属索引による可視性、未所属＝不存在の統一エラー、dedup 判定をリポジトリ所属で行う、隔離プロパティテスト |
+| 名前ベースのキーによる改名・再作成の不整合 | 権限の取り違え・旧データの復活 | 不変・非再利用の `RepoKey`。既存データは legacy キーで書き換えずに移行 |
+| noisy neighbor | 1 リポジトリの負荷が全体を劣化 | リポジトリ単位の admission 上限と公平配分 |
+| 共有オブジェクトの回収 | 削除後もストレージが減らない | 初期は許容（メンテナンス不要を優先）。必要時にオフライン mark-and-sweep |

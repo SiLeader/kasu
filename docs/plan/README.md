@@ -13,6 +13,7 @@ kasu は Anthropic の社内 VCS **Scion**（参考: <https://www.anthropic.com/
 | [03-protocols-and-api.md](03-protocols-and-api.md) | ネイティブ RPC・オブジェクト取得プロトコル・クライアント |
 | [04-git-compat.md](04-git-compat.md) | Git 互換レイヤー（Smart HTTP, upload-pack/receive-pack, GitOps 対応） |
 | [05-roadmap.md](05-roadmap.md) | マイルストーン・テスト戦略・リスク |
+| [06-multi-repository.md](06-multi-repository.md) | 1 サーバーでの複数リポジトリ管理（レジストリ・隔離・権限・ライフサイクル） |
 
 ## ゴール
 
@@ -21,6 +22,8 @@ kasu は Anthropic の社内 VCS **Scion**（参考: <https://www.anthropic.com/
    ArgoCD・Flux が無改造で同期できることを受け入れ基準とする。
 3. GitOps の書き戻し（Argo CD Image Updater, Flux Image Automation 等）向けに、限定的な **push** をサポートする。
 4. 全てのリポジトリ問い合わせ（diff, blame, path history, merge-base, ancestry）を API として公開する。
+5. 1 つのサーバー（クラスタ）で **複数リポジトリ** をホストする。リポジトリ間で権限・ref・Git OID 空間・設定を分離しつつ、
+   不変オブジェクトはストレージ上で共有する（06）。
 
 ## 非ゴール
 
