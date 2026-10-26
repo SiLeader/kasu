@@ -45,6 +45,11 @@ impl BlobStore for FsBlobStore {
         }
         let parent = path.parent().unwrap();
         fs::create_dir_all(parent).map_err(storage_error)?;
+        // Persist the shard's entry before publishing an object in it. Sync even
+        // if another writer created the shard but has not synced the root yet.
+        fs::File::open(&self.root)
+            .and_then(|dir| dir.sync_all())
+            .map_err(storage_error)?;
         let mut tmp = tempfile::NamedTempFile::new_in(parent).map_err(storage_error)?;
         tmp.write_all(bytes).map_err(storage_error)?;
         tmp.as_file().sync_all().map_err(storage_error)?;

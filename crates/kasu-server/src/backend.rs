@@ -281,23 +281,30 @@ impl Backend {
             .diff(a, b, &paths, q.content)
             .map_err(status)?
             .into_iter()
-            .map(|f| p::FileDiff {
-                path: f.path.as_bytes().to_vec(),
-                before: f.before.map(entry),
-                after: f.after.map(entry),
-                binary: f.binary,
-                edits: f
-                    .edits
-                    .into_iter()
-                    .map(|e| p::ContentEdit {
-                        before_start: e.before_start,
-                        after_start: e.after_start,
-                        before: e.before,
-                        after: e.after,
-                    })
-                    .collect(),
+            .map(|f| {
+                for value in f.before.iter().chain(f.after.iter()) {
+                    if let Some(blob) = value.blob() {
+                        self.grant_read_blob(blob)?;
+                    }
+                }
+                Ok(p::FileDiff {
+                    path: f.path.as_bytes().to_vec(),
+                    before: f.before.map(entry),
+                    after: f.after.map(entry),
+                    binary: f.binary,
+                    edits: f
+                        .edits
+                        .into_iter()
+                        .map(|e| p::ContentEdit {
+                            before_start: e.before_start,
+                            after_start: e.after_start,
+                            before: e.before,
+                            after: e.after,
+                        })
+                        .collect(),
+                })
             })
-            .collect();
+            .collect::<Result<Vec<_>, tonic::Status>>()?;
         Ok(p::DiffResponse { files })
     }
     pub fn blame(&self, q: p::PathRequest) -> Result<p::BlameResponse, tonic::Status> {

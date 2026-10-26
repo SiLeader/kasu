@@ -858,6 +858,26 @@ async fn directory_read_views_filter_metadata_objects_and_writer_blob_references
         TreeEntry::SubTree(id) => id,
         _ => panic!(),
     };
+    for bytes in [b"diff-before".as_slice(), b"diff-after"] {
+        let id = repo.put_blob(bytes).unwrap();
+        repo.associate_blob(b"repo", id).unwrap();
+    }
+    let before = f
+        .state
+        .create_changeset(create(
+            vec![head.id.clone()],
+            b"app/public/diff-only",
+            b"diff-before",
+        ))
+        .unwrap();
+    let after = f
+        .state
+        .create_changeset(create(
+            vec![before.id.clone()],
+            b"app/public/diff-only",
+            b"diff-after",
+        ))
+        .unwrap();
     let limited = || RepositoryAccount {
         name: "limited".into(),
         token: "limited-pat".into(),
@@ -890,6 +910,59 @@ async fn directory_read_views_filter_metadata_objects_and_writer_blob_references
     let mut metadata = MetadataClient::connect(endpoint.clone()).await.unwrap();
     let mut objects = ObjectsClient::connect(endpoint.clone()).await.unwrap();
     let mut writer = WriterClient::connect(endpoint).await.unwrap();
+    // Diff alone must grant both historical and current blobs, without first
+    // reading a changeset, root tree, or file in this scope.
+    for bytes in [b"diff-before".as_slice(), b"diff-after"] {
+        assert_eq!(
+            metadata
+                .get_blob_metadata(request(
+                    "limited-pat",
+                    p::ObjectRequest {
+                        repo: b"repo".to_vec(),
+                        ids: vec![ObjectId::hash(bytes).0.to_vec()],
+                    }
+                ))
+                .await
+                .unwrap_err()
+                .code(),
+            tonic::Code::NotFound
+        );
+    }
+    let diff_only = metadata
+        .diff(request(
+            "limited-pat",
+            p::DiffRequest {
+                repo: b"repo".to_vec(),
+                base: before.id,
+                head: after.id,
+                paths: vec![],
+                content: false,
+            },
+        ))
+        .await
+        .unwrap()
+        .into_inner();
+    assert_eq!(diff_only.files.len(), 1);
+    for bytes in [b"diff-before".as_slice(), b"diff-after"] {
+        let query = p::ObjectRequest {
+            repo: b"repo".to_vec(),
+            ids: vec![ObjectId::hash(bytes).0.to_vec()],
+        };
+        metadata
+            .get_blob_metadata(request("limited-pat", query.clone()))
+            .await
+            .unwrap();
+        let mut stream = objects
+            .get_blobs(request("limited-pat", query))
+            .await
+            .unwrap()
+            .into_inner();
+        let mut compressed = vec![];
+        while let Some(chunk) = stream.message().await.unwrap() {
+            compressed.extend(chunk.data);
+        }
+        assert_eq!(decompress(&compressed).unwrap(), bytes);
+    }
     let q = p::ChangesetRequest {
         repo: b"repo".to_vec(),
         id: head.id.clone(),
