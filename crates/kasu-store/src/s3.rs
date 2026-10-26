@@ -36,7 +36,7 @@ pub struct S3BlobStore {
     timeout: Duration,
 }
 // This cap covers zstd's bounded overhead while preventing unbounded compressed input.
-const MAX_FRAME: usize = MAX_OBJECT_SIZE as usize + 1024 * 1024;
+const MAX_FRAME: usize = MAX_COMPRESSED_OBJECT_SIZE;
 impl S3BlobStore {
     pub fn connect(options: S3Options) -> Result<Self> {
         if options.bucket.is_empty()

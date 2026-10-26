@@ -65,9 +65,7 @@ impl Remote {
                 },
             )?,
             repo,
-            authorization: token
-                .map(|token| format!("Bearer {token}").parse())
-                .transpose()?,
+            authorization: token.map(kasu_object::bearer).transpose()?,
         })
     }
     pub fn request<T>(&self, value: T) -> Request<T> {

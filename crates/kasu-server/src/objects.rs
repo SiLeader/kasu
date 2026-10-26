@@ -10,7 +10,7 @@ use tonic::{Request, Response, Status};
 
 pub const OBJECT_CHUNK_BYTES: usize = 64 * 1024;
 pub const OBJECT_BATCH_LIMIT: usize = 128;
-const MAX_COMPRESSED_BYTES: usize = kasu_store::MAX_OBJECT_SIZE as usize + 1024 * 1024;
+const MAX_COMPRESSED_BYTES: usize = kasu_store::MAX_COMPRESSED_OBJECT_SIZE;
 
 #[derive(Clone)]
 pub struct ObjectService {

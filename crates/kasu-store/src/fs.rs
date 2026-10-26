@@ -1,8 +1,8 @@
-use crate::{BlobStore, decompress, storage_error};
+use crate::{BlobStore, MAX_COMPRESSED_OBJECT_SIZE, decompress, storage_error};
 use kasu_core::{Error, ObjectId, Result, invalid};
 use std::{
     fs,
-    io::Write,
+    io::{Read, Write},
     path::{Path, PathBuf},
 };
 
@@ -23,13 +23,25 @@ impl FsBlobStore {
 }
 impl BlobStore for FsBlobStore {
     fn get_compressed(&self, id: ObjectId) -> Result<Vec<u8>> {
-        fs::read(self.path(id)).map_err(|error| {
+        let file = fs::File::open(self.path(id)).map_err(|error| {
             if error.kind() == std::io::ErrorKind::NotFound {
                 Error::NotFound(id.to_string())
             } else {
                 storage_error(error)
             }
-        })
+        })?;
+        if file.metadata().map_err(storage_error)?.len() > MAX_COMPRESSED_OBJECT_SIZE as u64 {
+            return Err(invalid("compressed object too large"));
+        }
+        // Also bound the read: a file can grow after the metadata check.
+        let mut bytes = Vec::new();
+        file.take(MAX_COMPRESSED_OBJECT_SIZE as u64 + 1)
+            .read_to_end(&mut bytes)
+            .map_err(storage_error)?;
+        if bytes.len() > MAX_COMPRESSED_OBJECT_SIZE {
+            return Err(invalid("compressed object too large"));
+        }
+        Ok(bytes)
     }
     fn put_compressed(&self, id: ObjectId, bytes: &[u8]) -> Result<()> {
         let raw = decompress(bytes)?;

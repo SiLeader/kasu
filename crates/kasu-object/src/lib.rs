@@ -9,7 +9,7 @@ use tracing::{Instrument, instrument::WithSubscriber};
 
 pub const CHUNK_BYTES: usize = 64 * 1024;
 pub const BATCH_LIMIT: usize = 128;
-pub const MAX_FRAME_BYTES: usize = kasu_store::MAX_OBJECT_SIZE as usize + 1024 * 1024;
+pub const MAX_FRAME_BYTES: usize = kasu_store::MAX_COMPRESSED_OBJECT_SIZE;
 pub const LAYER_HEADER: &str = "x-kasu-object-layer";
 pub fn token_eq(a: &[u8], b: &[u8]) -> bool {
     use subtle::ConstantTimeEq;
@@ -67,9 +67,12 @@ pub fn bearer(token: &str) -> Result<MetadataValue<Ascii>, Status> {
     if token.is_empty() || token.len() > 4096 {
         return Err(Status::invalid_argument("empty object token"));
     }
-    format!("Bearer {token}")
+    let mut value: MetadataValue<Ascii> = format!("Bearer {token}")
         .parse()
-        .map_err(|_| Status::invalid_argument("invalid object token"))
+        .map_err(|_| Status::invalid_argument("invalid object token"))?;
+    // Preserve redaction through request cloning and conversion to HTTP headers.
+    value.set_sensitive(true);
+    Ok(value)
 }
 pub async fn connect(endpoint: &str) -> Result<Channel, Status> {
     let error = |_: String| Status::unavailable("object endpoint connection failed");
@@ -291,4 +294,25 @@ pub fn validate(kind: Kind, id: ObjectId, bytes: &[u8]) -> Result<(), Status> {
         Tree::decode(&raw).map_err(|_| Status::data_loss("invalid canonical tree"))?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bearer_credentials_are_redacted_in_requests_and_http_headers() {
+        let secret = "regression-secret-token";
+        let value = bearer(secret).unwrap();
+        let mut request = Request::new(());
+        request
+            .metadata_mut()
+            .insert("authorization", value.clone());
+        assert!(!format!("{request:?}").contains(secret));
+        let headers = request.metadata().clone().into_headers();
+        assert!(!format!("{headers:?}").contains(secret));
+        assert!(headers["authorization"].is_sensitive());
+        assert_eq!(value.to_str().unwrap(), format!("Bearer {secret}"));
+        assert!(authorized(&value, Some(&value.clone())));
+    }
 }

@@ -327,6 +327,30 @@ impl Fixture {
     }
 }
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn checkout_rejects_remote_control_directories() {
+    for path in [
+        b"app/.git/config".as_slice(),
+        b"app/nested/.GiT/hooks/pre-commit",
+        b"app/nested/.kasu/state.json",
+    ] {
+        let f = Fixture::new().await;
+        f.remote_change(path, b"untrusted control file");
+        let output = f
+            .cli(
+                &f.root,
+                &[
+                    "checkout", "main", "work", "--server", &f.url, "--repo", "repo", "--sparse",
+                    "app",
+                ],
+            )
+            .await;
+        assert!(!output.status.success(), "{path:?}");
+        assert!(String::from_utf8_lossy(&output.stderr).contains("repository path collides"));
+        assert!(!f.root.join("work").exists());
+    }
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn real_cli_sparse_checkout_amend_rebase_land_and_metadata_queries() {
     let f = Fixture::new().await;
     let wc = f.checkout("work", "app").await;

@@ -3,6 +3,27 @@ use kasu_store::*;
 use std::sync::{Arc, Barrier};
 
 #[test]
+fn oversized_local_frames_are_rejected_before_reading_or_decompression() {
+    let dir = tempfile::tempdir().unwrap();
+    let blobs = FsBlobStore::open(dir.path()).unwrap();
+    let id = blobs.put(b"small object").unwrap();
+    let hex = id.to_string();
+    let path = dir.path().join(&hex[..2]).join(&hex[2..]);
+    // A sparse file exercises the on-disk limit without allocating a huge payload.
+    std::fs::OpenOptions::new()
+        .write(true)
+        .open(&path)
+        .unwrap()
+        .set_len(MAX_COMPRESSED_OBJECT_SIZE as u64 + 1)
+        .unwrap();
+    for result in [blobs.get_compressed(id), blobs.get(id)] {
+        assert!(
+            matches!(result, Err(Error::Invalid(message)) if message == "compressed object too large")
+        );
+    }
+}
+
+#[test]
 fn immutable_and_compressed_objects_survive_reopen() {
     let dir = tempfile::tempdir().unwrap();
     let db = dir.path().join("meta.db");

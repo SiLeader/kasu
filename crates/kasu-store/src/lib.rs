@@ -45,6 +45,7 @@ pub trait BlobStore: Send + Sync {
     }
 }
 pub const MAX_OBJECT_SIZE: u64 = 256 * 1024 * 1024;
+pub const MAX_COMPRESSED_OBJECT_SIZE: usize = MAX_OBJECT_SIZE as usize + 1024 * 1024;
 pub fn compress(raw: &[u8]) -> Result<Vec<u8>> {
     if raw.len() as u64 > MAX_OBJECT_SIZE {
         return Err(invalid("object too large"));
@@ -53,6 +54,9 @@ pub fn compress(raw: &[u8]) -> Result<Vec<u8>> {
 }
 pub fn decompress(bytes: &[u8]) -> Result<Vec<u8>> {
     use std::io::Read;
+    if bytes.len() > MAX_COMPRESSED_OBJECT_SIZE {
+        return Err(invalid("compressed object too large"));
+    }
     let decoder = zstd::stream::read::Decoder::new(bytes).map_err(storage_error)?;
     let mut out = Vec::new();
     decoder

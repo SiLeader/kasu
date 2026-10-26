@@ -83,7 +83,11 @@ RPC と Linux working copy ではバイト列を保持します。
 checkout は既存の destination を上書きせず、一時 directory の完成後に公開します。
 更新は排他ロックを取得し、未 commit の変更や未追跡ファイルとの衝突を拒否します。
 親 directory は descriptor から `NOFOLLOW` でたどり、symlink を通じた書き込みを防ぎます。
-`.kasu` と大文字・小文字違いの root パスは予約します。
+`.kasu` と `.git` は、Unicode を含む大文字・小文字違いや HFS+ が無視する不可視文字を挟んだ
+別表記も含めて全階層で予約します。
+リポジトリの内容から管理用の設定や Git フックを配置したり、ネストした
+working copy を偽装したりできないよう、checkout・更新時に拒否します。
+`.gitignore`、`.gitmodules`、`.kasu-gitlink` はこの予約には含みません。
 
 複数ファイルの更新は、staging／backup と fsync 済みジャーナルを使います。
 途中終了時は次の起動で旧状態へ戻し、状態ファイルの保存後なら新状態を確定します。

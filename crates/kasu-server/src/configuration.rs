@@ -22,10 +22,13 @@ pub fn load_backend(
         (Some(path), Err(std::env::VarError::NotPresent)) => {
             Some(kasu_object::read_token(&PathBuf::from(path))?)
         }
-        (None, Ok(value)) if !value.is_empty() => Some(value),
+        (None, Ok(value)) if !value.is_empty() => {
+            kasu_object::bearer(&value)?;
+            Some(value)
+        }
         (None, Ok(_)) => return Err("KASU_TOKEN must not be empty".into()),
         (None, Err(std::env::VarError::NotPresent)) => None,
-        (_, Err(error)) => return Err(error.into()),
+        (_, Err(_)) => return Err("KASU_TOKEN must be UTF-8".into()),
     };
     let mut backend = Backend::new(repository, database.clone(), blobs, database.clone(), token);
     if let Some(path) = std::env::var_os("KASU_WRITE_POLICY_FILE") {

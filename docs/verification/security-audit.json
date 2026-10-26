@@ -1,0 +1,106 @@
+{
+  "status": "completed",
+  "scope": "Rust workspace, native CLI, Git and native transports, object/cache/storage boundaries, automation client and CI configuration",
+  "findings": [
+    {
+      "id": "control-directory-write",
+      "impact": "Repository entries could install Git control files or nested kasu working-copy metadata. Apple filesystem aliases could bypass ASCII-only checks.",
+      "fix": "Reserve .git and .kasu at every path component, including HFS ignorable characters and Unicode case-fold aliases. Validate before checkout mutation.",
+      "tests": [
+        "control_names_are_reserved_as_complete_components_only",
+        "hfs_control_directory_aliases_are_reserved",
+        "unicode_casefold_control_directory_aliases_are_reserved",
+        "transition_rejects_repository_control_paths_before_writing",
+        "checkout_rejects_remote_control_directories"
+      ],
+      "compatibility": "Repositories containing reserved control components are rejected; ordinary byte paths, .gitignore and .gitmodules remain supported."
+    },
+    {
+      "id": "credential-debug-output",
+      "impact": "Outgoing gRPC authorization metadata could expose bearer tokens in debug output.",
+      "fix": "Mark bearer metadata sensitive and reuse the common constructor in the CLI.",
+      "tests": [
+        "bearer_credentials_are_redacted_in_requests_and_http_headers"
+      ]
+    },
+    {
+      "id": "credential-startup-error",
+      "impact": "A non-UTF-8 KASU_TOKEN was included in the propagated environment error.",
+      "fix": "Use a fixed error message and validate environment tokens before starting listeners.",
+      "tests": [
+        "invalid_environment_tokens_fail_without_disclosing_their_contents"
+      ]
+    },
+    {
+      "id": "unbounded-local-frame-read",
+      "impact": "Oversized local compressed objects were fully allocated before downstream size checks.",
+      "fix": "Share the 257 MiB compressed-object cap across storage and transport; check file metadata, bound the read, and reject oversized input before decompression.",
+      "tests": [
+        "oversized_local_frames_are_rejected_before_reading_or_decompression"
+      ],
+      "compatibility": "Oversized compressed representations are rejected even if their decompressed contents would fit."
+    }
+  ],
+  "reviewed_boundaries": [
+    "Bearer/Basic authentication, account and hop credential separation, scoped native reads and Git projections",
+    "Write-policy intersection, ref/path permissions, object membership and guarded publication",
+    "Canonical decoding, pkt-line/pack framing, delta expansion limits and compressed object validation",
+    "CLI checkout path validation, no-follow filesystem operations, transaction recovery and virtual lower-tree validation",
+    "Cache scope, snapshot manifest/frame bounds, daemon socket ownership and private directory checks",
+    "PostgreSQL TLS and parameterized queries, S3 TLS and bounded frame retrieval",
+    "Webhook URL validation, redirect policy and signatures; automation transport bounds and redirect rejection",
+    "Admission capacity, cancellation and request budgets; CI permissions and dependency policy"
+  ],
+  "validation": {
+    "dependency_policy": "cargo deny check passed (duplicate-version warnings only)",
+    "targeted_regressions": "passed",
+    "python_automation": "7 tests passed",
+    "format_and_diff": "passed",
+    "workspace_all_features": "passed: 225 tests, 0 failures, 21 ignored; the final CLI Unicode alias additions were subsequently validated by the native unit suite and complete Linux CLI suite",
+    "linux_cli": "passed: 24 tests, 0 failures, 1 privileged FUSE test ignored",
+    "clippy": "passed: workspace, all targets, all features, warnings denied",
+    "build": "passed: cargo build --workspace --locked"
+  },
+  "limitations": [
+    "This is a source and regression-test audit, not a guarantee that all vulnerabilities are absent.",
+    "Tests requiring PostgreSQL/S3 services, privileged FUSE mounts, root OpenSSH, external Git clients or pinned external repositories are not included in the normal workspace test run.",
+    "APFS Kelvin-sign and long-s aliases were reproduced on the host; HFS ignorable-character checks have portable regression coverage, not a mounted HFS filesystem test."
+  ],
+  "source_sha256": {
+    "crates/kasu-cli/src/lib.rs": "20daa31ccd45bff6c05b11ae4b40196bd75c9432ec37d79a32ffe11e5f36649a",
+    "crates/kasu-cli/src/remote.rs": "6de889f6daafbf7787c1e6b869964f259dafd27b0664adc1e976a82196254893",
+    "crates/kasu-cli/src/working.rs": "ab575266f70057de8b8c2ff5dcd9672c10ff523c1499c33eb4f52f6b41e154ac",
+    "crates/kasu-cli/tests/e2e.rs": "61437e802b9141ca0b890383ea89f3a9490294722b2d24abc14aca42e846203d",
+    "crates/kasu-object/src/lib.rs": "8100a1b2cfb5d96e4a5b6a828c8289b312907e5f960f3eb4fb8f4af7039f6a52",
+    "crates/kasu-server/src/configuration.rs": "07cb59a9085f8414982c87bc5243221b052e004069369482a59d0b116fbfbd2b",
+    "crates/kasu-server/src/objects.rs": "978965f156cd71a6bdd411942f144023c882f9138fd7b4c66041532e04589e94",
+    "crates/kasu-server/tests/runtime.rs": "d0daf1bfaba3c66296b52aa712265f9c065b6132b78b3704ec6c674c6503a580",
+    "crates/kasu-store/src/fs.rs": "512e88e224d5a60265bef9408d8bd9a2db7245ef22e45b7d69950d3b5999ce69",
+    "crates/kasu-store/src/lib.rs": "6e634f5cbc8d6d5dd27c7a20da8aa180ba9c67a446b0e8418a8e4afb1d3fa8c7",
+    "crates/kasu-store/src/s3.rs": "487fadb25af4a3447692082480a922d2c97f6b812f4a4701b722ef1b50e64c6e",
+    "crates/kasu-store/tests/storage.rs": "877b8af5c0c4388dbb0996275a2fdf2ae21a0d49521d55f9bb6d34656d245726",
+    "docs/native-cli.md": "cd3c2e1d9c2a239592c69461fe1014abbea161b1ef7feca549cffc2a6249d7a2"
+  },
+  "validation_logs": {
+    "workspace": {
+      "path": "/private/tmp/kasu-security-workspace.log",
+      "sha256": "e0be3bf9de427e3dbcee3d85da0d73571327988a678de2f53f83606d07c0ce87"
+    },
+    "linux-cli": {
+      "path": "/private/tmp/kasu-security-linux-cli.log",
+      "sha256": "72ff5db83dd47fc53b71a2e00221a80c39d127aea8e74d69cb8b889b3a5e6604"
+    },
+    "clippy": {
+      "path": "/private/tmp/kasu-security-clippy.log",
+      "sha256": "7182cbabbc97b66235a73438550ea197562d599922ce555e016a139f7558f323"
+    },
+    "build": {
+      "path": "/private/tmp/kasu-security-build.log",
+      "sha256": "b2a084cabb91ebc8f7e83fc34e101a89119f8012675ca92e8ab4e99f54c8e734"
+    },
+    "deny": {
+      "path": "/private/tmp/kasu-security-deny.log",
+      "sha256": "55517ce24094df9ab771ecc510c03651bb1035dee6601cf8c9e5abf4cb847f17"
+    }
+  }
+}

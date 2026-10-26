@@ -470,6 +470,39 @@ impl WorkingCopy {
 mod tests {
     use super::*;
     use kasu_store::BlobStore;
+    #[test]
+    fn transition_rejects_repository_control_paths_before_writing() {
+        for path in [
+            b".git/config".as_slice(),
+            b"nested/.GiT/hooks/pre-commit",
+            b"nested/.git",
+            b"nested/.kasu/state.json",
+            b"nested/.KASU/state.json",
+            "nested/.g\u{200c}it/config".as_bytes(),
+            "nested/.ka\u{feff}su/state.json".as_bytes(),
+            "nested/.Kaſu/state.json".as_bytes(),
+            ".Kasu/state.json".as_bytes(),
+            ".kaſu/state.json".as_bytes(),
+        ] {
+            let (temp, mut copy, _, new) = fixture();
+            let state_before = std::fs::read(temp.path().join(".kasu/state.json")).unwrap();
+            let mut snapshot = copy.state.snapshot().unwrap();
+            snapshot.insert(path.to_vec(), new);
+            assert!(
+                copy.transition(snapshot, copy.state.clone()).is_err(),
+                "{path:?}"
+            );
+            assert_eq!(std::fs::read(temp.path().join("app/a")).unwrap(), b"old");
+            assert_eq!(
+                std::fs::read(temp.path().join(".kasu/state.json")).unwrap(),
+                state_before
+            );
+            assert!(!temp.path().join(".git").exists());
+            assert!(!temp.path().join("nested").exists());
+            assert!(!temp.path().join(".kasu/transaction.json").exists());
+        }
+    }
+
     fn fixture() -> (tempfile::TempDir, WorkingCopy, Entry, Entry) {
         let temp = tempfile::tempdir().unwrap();
         let root = Root::open(temp.path()).unwrap();

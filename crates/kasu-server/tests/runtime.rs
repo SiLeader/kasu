@@ -112,6 +112,33 @@ fn list_refs() -> p::ListRefsRequest {
     }
 }
 
+#[test]
+fn invalid_environment_tokens_fail_without_disclosing_their_contents() {
+    use std::os::unix::ffi::OsStringExt;
+    for token in [
+        b"secret-token-prefix\xff".to_vec(),
+        b"secret-token-prefix\ninvalid".to_vec(),
+        vec![b'x'; 4097],
+    ] {
+        let dir = tempfile::tempdir().unwrap();
+        let output = std::process::Command::new(env!("CARGO_BIN_EXE_kasu-server"))
+            .env_clear()
+            .env("KASU_TOKEN", std::ffi::OsString::from_vec(token.clone()))
+            .arg(dir.path())
+            // An invalid address also prevents this test from starting a server
+            // if token validation regresses.
+            .args(["repo", "invalid-listen-address"])
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(stderr.contains("KASU_TOKEN must be UTF-8") || stderr.contains("object token"));
+        assert!(!stderr.contains("secret-token-prefix"));
+        assert!(!output.stderr.windows(token.len()).any(|part| part == token));
+        assert!(output.stdout.is_empty());
+    }
+}
+
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn bearer_basic_and_both_transports_share_one_token_budget() {
     let f = Fixture::new(ServerLimits {
