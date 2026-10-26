@@ -5,7 +5,7 @@ WebhookStore と S3 の BlobStore を有効にします。
 `kasu-server`／`kasu-ingest` の同じ feature から利用できます。
 
 ```sh
-RUSTC_WRAPPER= cargo build -p kasu-server -p kasu-ingest --features production --bins --locked
+cargo build -p kasu-server -p kasu-ingest --features production --bins --locked
 
 export KASU_POSTGRES_DSN_FILE=/run/secrets/kasu-postgres
 export KASU_S3_BUCKET=my-kasu-bucket

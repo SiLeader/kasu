@@ -121,8 +121,8 @@ PAT 更新と再起動後の再送・ref log をテストしました。
 テストは認可機能の動作検証で、セキュリティ監査は今回の範囲に含めていません。
 
 ```sh
-RUSTC_WRAPPER= cargo test -p kasu-server --lib accounts --locked
-RUSTC_WRAPPER= cargo test -p kasu-server --test accounts --test git_ssh --locked
+cargo test -p kasu-server --lib accounts --locked
+cargo test -p kasu-server --test accounts --test git_ssh --locked
 docker build -f tools/ssh/Dockerfile -t kasu:ssh-test .
 docker run --rm --network none --entrypoint /out/accounts-test kasu:ssh-test
 docker run --rm --network none kasu:ssh-test

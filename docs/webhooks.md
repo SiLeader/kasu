@@ -64,8 +64,8 @@ endpoint は最大32件、鍵は1〜65,536バイトです。
 大規模履歴での生成時間とメモリ使用量の評価は継続課題です。
 
 ```sh
-RUSTC_WRAPPER= cargo test -p kasu-store --test webhook --locked
-RUSTC_WRAPPER= cargo test -p kasu-server --test webhook --locked
+cargo test -p kasu-store --test webhook --locked
+cargo test -p kasu-server --test webhook --locked
 ```
 
 RFC 4231 の署名、再オープン・独立接続、HTTP 500・timeout 後の同一本文／ID、

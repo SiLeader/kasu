@@ -40,8 +40,8 @@ Rust stable、C コンパイラ（SQLite／zstd のビルド用）、`protoc`、
 このリポジトリの root で、完全な履歴を持つ既存の Git リポジトリを取り込み、サーバーを起動します。
 
 ```sh
-RUSTC_WRAPPER= cargo run -p kasu-ingest -- /path/to/source.git /path/to/kasu-data my-repo
-KASU_TOKEN=dev-token RUSTC_WRAPPER= cargo run -p kasu-server -- /path/to/kasu-data my-repo
+cargo run -p kasu-ingest -- /path/to/source.git /path/to/kasu-data my-repo
+KASU_TOKEN=dev-token cargo run -p kasu-server -- /path/to/kasu-data my-repo
 ```
 
 既定の待ち受け先は gRPC が `127.0.0.1:50051`、HTTP が `127.0.0.1:50080` です。別のターミナルから Git で読み取れます。
@@ -54,7 +54,7 @@ git -c http.extraHeader='Authorization: Bearer dev-token' clone --depth=1 http:/
 ネイティブの working copy を使う場合は CLI をビルドし、同じサーバーへ接続します。`main` は取り込んだリポジトリにあるブランチ名に置き換えてください。
 
 ```sh
-RUSTC_WRAPPER= cargo build -p kasu-cli --locked
+cargo build -p kasu-cli --locked
 export KASU_SERVER=http://127.0.0.1:50051
 export KASU_REPO=my-repo
 export KASU_TOKEN=dev-token
@@ -82,18 +82,18 @@ export KASU_TOKEN=dev-token
 ## 開発
 
 ```sh
-RUSTC_WRAPPER= cargo fmt --all -- --check
-RUSTC_WRAPPER= cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
-RUSTC_WRAPPER= cargo test --workspace --all-targets --all-features --locked
-RUSTC_WRAPPER= cargo deny check
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo test --workspace --all-targets --all-features --locked
+cargo deny check
 ```
 
-`cargo deny` には `cargo-deny` が必要です。外部サービスや fixture が必要なテストは、各ガイドの手順で実行します。sandbox 内で Cargo を実行する際は、親ディレクトリから継承する sccache 設定を変更せず、`RUSTC_WRAPPER` を空にして無効化します。
+`cargo deny` には `cargo-deny` が必要です。外部サービスや fixture が必要なテストは、各ガイドの手順で実行します。
 
 10 万 Changeset の履歴ベンチマークは、明示的に有効化した場合のみ実行し、計測時間を CSV で出力します。
 
 ```sh
-KASU_BENCH_HISTORY=1 RUSTC_WRAPPER= cargo bench -p kasu-ops --bench history
+KASU_BENCH_HISTORY=1 cargo bench -p kasu-ops --bench history
 ```
 
 ## ライセンス

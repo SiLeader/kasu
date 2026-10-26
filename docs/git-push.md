@@ -104,11 +104,11 @@ force 許可でもパス ACL は迂回できません。
 ## 再実行と現在の残作業
 
 ```sh
-RUSTC_WRAPPER= cargo test -p kasu-git --test pack_input --test receive --locked
-RUSTC_WRAPPER= cargo test -p kasu-server --test push --locked
+cargo test -p kasu-git --test pack_input --test receive --locked
+cargo test -p kasu-server --test push --locked
 docker build -f tools/git-compat/Dockerfile -t kasu:atomic-test .
 go -C tools/git-compat build -o /tmp/kasu-go-git-compat .
-KASU_GO_GIT_PUSH_CLIENT=/tmp/kasu-go-git-compat RUSTC_WRAPPER= \
+KASU_GO_GIT_PUSH_CLIENT=/tmp/kasu-go-git-compat \
   cargo test -p kasu-server --test push --locked -- --include-ignored
 ```
 

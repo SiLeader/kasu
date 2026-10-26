@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- 背景の角丸四角形用グラデーション -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#222327" />
+      <stop offset="100%" stop-color="#0c0d0f" />
+    </linearGradient>
+
+    <!-- 右上への分岐用グラデーション -->
+    <linearGradient id="topBranch" x1="160" y1="250" x2="340" y2="130" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F1E5D6" />
+      <stop offset="40%" stop-color="#FF9B42" />
+      <stop offset="100%" stop-color="#FF5C00" />
+    </linearGradient>
+
+    <!-- 右下への分岐用グラデーション -->
+    <linearGradient id="botBranch" x1="160" y1="250" x2="340" y2="330" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F1E5D6" />
+      <stop offset="45%" stop-color="#FFA24C" />
+      <stop offset="100%" stop-color="#FF5C00" />
+    </linearGradient>
+
+    <!-- ノードの穴をくり抜くためのマスク -->
+    <mask id="cutouts">
+      <!-- 白い部分は描画され、黒い部分は透明にくり抜かれます -->
+      <rect width="500" height="500" fill="white" />
+      <circle cx="160" cy="130" r="12.5" fill="black" />
+      <circle cx="160" cy="250" r="12.5" fill="black" />
+      <circle cx="160" cy="370" r="12.5" fill="black" />
+      <circle cx="340" cy="130" r="12.5" fill="black" />
+    </mask>
+
+    <!-- アイコン全体にわずかな深みを持たせるドロップシャドウ -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <!-- キャンバス全体の背景（純黒） -->
+  <rect width="500" height="500" fill="transparent" />
+  
+  <!-- 中央のダークグレイの角丸四角形 (Squircle) -->
+  <rect x="40" y="40" width="420" height="420" rx="90" fill="url(#bgGrad)" stroke="#26282D" stroke-width="1.5" />
+
+  <!-- アイコン本体の描画グループ (マスクとシャドウを適用) -->
+  <g mask="url(#cutouts)" filter="url(#shadow)">
+    
+    <!-- === ライン描画 === -->
+    <!-- 右上への分岐ライン -->
+    <line x1="160" y1="250" x2="340" y2="130" stroke="url(#topBranch)" stroke-width="24" stroke-linecap="round" />
+    
+    <!-- 右下への分岐ライン (ベジェ曲線で滑らかに曲がるパス) -->
+    <path d="M 160 250 L 240 290 Q 270 305 300 305 L 315 305 Q 340 305 340 330" fill="none" stroke="url(#botBranch)" stroke-width="24" stroke-linecap="butt" />
+    
+    <!-- 左のメイン縦ライン (円のフチまで届くように長めに描画) -->
+    <line x1="160" y1="110" x2="160" y2="390" stroke="#F1E5D6" stroke-width="24" stroke-linecap="round" />
+
+    <!-- === ノード(円)描画 === -->
+    <!-- 左側 3つのノード -->
+    <circle cx="160" cy="130" r="24" stroke="#F1E5D6" stroke-width="24" fill="none" />
+    <circle cx="160" cy="250" r="24" stroke="#F1E5D6" stroke-width="24" fill="none" />
+    <circle cx="160" cy="370" r="24" stroke="#F1E5D6" stroke-width="24" fill="none" />
+    
+    <!-- 右上のノード -->
+    <circle cx="340" cy="130" r="24" stroke="#FF5C00" stroke-width="24" fill="none" />
+
+    <!-- 右下の矢印とオープンノード (マスクの影響を受けない形状) -->
+    <polygon points="310,329 370,329 340,357" fill="#FF5C00" stroke="#FF5C00" stroke-width="2" stroke-linejoin="round" />
+    <path d="M 319,358 A 24,24 0 1,0 361,358" fill="none" stroke="#FF5C00" stroke-width="24" stroke-linecap="round" />
+    
+  </g>
+</svg>

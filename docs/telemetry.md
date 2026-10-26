@@ -104,9 +104,9 @@ subscriber を独自に構成する場合も、公開された span／injection 
 `http_router`、権威サーバーの各 `into_server()`、cache／daemon の `Service::into_server()` は既に組み込み済みです。
 
 ```sh
-RUSTC_WRAPPER= cargo test -p kasu-telemetry --locked
-RUSTC_WRAPPER= cargo build -p kasu-server -p kasu-cli -p kasu-cache -p kasu-daemon -p kasu-ingest --locked
-RUSTC_WRAPPER= cargo build -p kasu-telemetry --example inspect_otlp --locked
+cargo test -p kasu-telemetry --locked
+cargo build -p kasu-server -p kasu-cli -p kasu-cache -p kasu-daemon -p kasu-ingest --locked
+cargo build -p kasu-telemetry --example inspect_otlp --locked
 python3 tools/telemetry/verify.py --out /tmp/kasu-telemetry
 ```
 

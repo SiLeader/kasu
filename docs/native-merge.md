@@ -44,8 +44,8 @@ author と message を保持し、committer を置き換え、親を `[onto]` �
 検証:
 
 ```sh
-RUSTC_WRAPPER= cargo test -p kasu-ops --test merge --locked
-RUSTC_WRAPPER= cargo test -p kasu-ops --test rewrite --locked
+cargo test -p kasu-ops --test merge --locked
+cargo test -p kasu-ops --test rewrite --locked
 ```
 
 挿入・削除・置換の位置境界144通りと追加 fixture を Git の `merge-file` と比較しています。

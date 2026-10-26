@@ -107,8 +107,8 @@ Backend、実 gRPC、HTTP JSON の結果も一致します。
 [比較結果とソースのハッシュ](simulations/blame-lineage/summary.json) を保存しています。
 
 ```sh
-RUSTC_WRAPPER= cargo test -p kasu-derived --test lineage --locked
-KASU_CAPTURE_DIR=/tmp/kasu-lineage-evidence RUSTC_WRAPPER= \
+cargo test -p kasu-derived --test lineage --locked
+KASU_CAPTURE_DIR=/tmp/kasu-lineage-evidence \
   cargo test -p kasu-server --test metadata --locked
 docker build -f tools/git-compat/Dockerfile -t kasu:lineage-test .
 ```

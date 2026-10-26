@@ -19,7 +19,7 @@ MergeBase は同じ tip、自分自身が祖先の tip、分岐、無関係な r
 取り込み前には全 ref の固定値と strict fsck、取り込み後には commit／object 数を確認します。
 
 ```sh
-KASU_OSS_REPO=/path/to/pinned-TestGitRepository.git RUSTC_WRAPPER= \
+KASU_OSS_REPO=/path/to/pinned-TestGitRepository.git \
   cargo test -p kasu-server --test oss_metadata --locked -- --ignored --nocapture
 ```
 

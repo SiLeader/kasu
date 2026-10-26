@@ -4,8 +4,8 @@
 ビルドには Rust stable、C コンパイラ、`protoc` が必要です。
 
 ```sh
-RUSTC_WRAPPER= cargo run -p kasu-ingest -- /path/to/repo.git /path/to/kasu-data my-repo
-KASU_TOKEN=dev-token RUSTC_WRAPPER= cargo run -p kasu-server -- /path/to/kasu-data my-repo
+cargo run -p kasu-ingest -- /path/to/repo.git /path/to/kasu-data my-repo
+KASU_TOKEN=dev-token cargo run -p kasu-server -- /path/to/kasu-data my-repo
 ```
 
 既定の待ち受けは gRPC `127.0.0.1:50051`、HTTP `127.0.0.1:50080` です。

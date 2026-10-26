@@ -91,8 +91,8 @@ macOS の実 Metadata／Writer／ACL の16テスト、実 CLI の12 E2E も通�
 [CLI](first-parent-skip-v2/cli-tests.log) に記録しています。
 
 ```sh
-RUSTC_WRAPPER= cargo test -p kasu-ops --test first_parent --test operations --locked
-KASU_BENCH_DIVERGENT_HISTORY=1 RUSTC_WRAPPER= \
+cargo test -p kasu-ops --test first_parent --test operations --locked
+KASU_BENCH_DIVERGENT_HISTORY=1 \
   cargo bench -p kasu-ops --bench divergent_history --locked
 docker build -f tools/history-benchmark/Dockerfile -t kasu:skip-v2-test .
 docker run --rm --network none kasu:skip-v2-test

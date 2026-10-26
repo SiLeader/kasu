@@ -138,6 +138,6 @@ CI job や実デプロイ先への自動接続、OIDC、分散した journal 保
 
 ```sh
 python3 -m unittest discover -s tools/automation -v
-RUSTC_WRAPPER= cargo test -p kasu-server --test automation --locked
+cargo test -p kasu-server --test automation --locked
 docker build -f tools/automation/Dockerfile -t kasu:automation-test .
 ```

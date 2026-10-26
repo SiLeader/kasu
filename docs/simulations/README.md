@@ -4,7 +4,7 @@
 本番の `Backend::prepare_land`／`commit_land` と実 SQLite WAL／synchronous=FULL、FS／zstd を使っています。
 
 ```sh
-RUSTC_WRAPPER= cargo run --release --locked -p kasu-sim -- --seed 42 --clients 1000
+cargo run --release --locked -p kasu-sim -- --seed 42 --clients 1000
 ```
 
 1,000クライアントは同じ ref と基底から開始します。全件の最初の prepare を済ませてから、
@@ -49,7 +49,7 @@ cache の既存 HTTP/2 接続を含めて終了した後、各ノードの10要�
 
 ```sh
 KASU_CACHE_CAPTURE="$PWD/docs/simulations/cache-1000.json" \
-  RUSTC_WRAPPER= cargo test -p kasu-cache --test layers thousand_clients --locked
+  cargo test -p kasu-cache --test layers thousand_clients --locked
 ```
 
 この記録は単一 repo・小さい1オブジェクトでの fan-in と障害時の経路を検証します。
@@ -71,7 +71,7 @@ blocking worker の IO 完了を待つ間は executor を runnable に保ち、�
 回路遮断器が OS 時計を使っていた問題は、仮想時刻だけでは cooldown が解除されない回帰テストで再現し、修正しました。
 
 ```sh
-RUSTC_WRAPPER= cargo run --release --locked -p kasu-sim -- \
+cargo run --release --locked -p kasu-sim -- \
   --scenario cache --seed 42 --clients 1000
 ```
 

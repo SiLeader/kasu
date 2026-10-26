@@ -85,7 +85,7 @@ Docker 内と macOS のストレージ条件が異なるため、OS 間の優劣
 ## 再実行
 
 ```sh
-KASU_BENCH_DIVERGENT_HISTORY=1 RUSTC_WRAPPER= \
+KASU_BENCH_DIVERGENT_HISTORY=1 \
   cargo bench -p kasu-ops --bench divergent_history --locked \
   > /tmp/history-macos.csv 2> /tmp/history-macos.log
 

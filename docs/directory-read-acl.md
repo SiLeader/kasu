@@ -116,8 +116,8 @@ root／部分祖先／非 UTF-8 のフィルタリング、既知の元 Tree／B
 実 CLI は sparse 指定なしで checkout→commit→Land を行い、非公開 Blob の無取得とサーバー上の内容保持を照合しました。
 
 ```sh
-RUSTC_WRAPPER= cargo test -p kasu-server --test accounts --locked
-RUSTC_WRAPPER= cargo test -p kasu-cli --test e2e --locked
+cargo test -p kasu-server --test accounts --locked
+cargo test -p kasu-cli --test e2e --locked
 docker build -f tools/ssh/Dockerfile -t kasu:read-acl-test .
 docker run --rm --network none --entrypoint /out/accounts-test kasu:read-acl-test
 docker run --rm --network none --entrypoint /out/cli-e2e-test kasu:read-acl-test --skip virtual_mount

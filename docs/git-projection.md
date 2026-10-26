@@ -91,8 +91,8 @@ ArgoCD v3.5.6／Flux v2.9.6 にパス射影 URL を設定した [kind E2E](gitop
 [通信と同期結果](../crates/kasu-git/tests/fixtures/clients/path-projection-kind/gitops-kind-summary.json) を保存しています。
 
 ```sh
-RUSTC_WRAPPER= cargo test -p kasu-git --test path_projection --locked
-KASU_CAPTURE_DIR=/tmp/kasu-path-traces RUSTC_WRAPPER= \
+cargo test -p kasu-git --test path_projection --locked
+KASU_CAPTURE_DIR=/tmp/kasu-path-traces \
   cargo test -p kasu-server --test git_http path_projection --locked
 docker build -f tools/git-compat/Dockerfile -t kasu:path-projection-test .
 ```

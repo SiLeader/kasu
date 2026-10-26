@@ -64,9 +64,9 @@ macOS の [Git テスト](pack-reachability-git.log) と [実 HTTP テスト](pa
 固定 Go クライアントを外部指定する ignored テストはこの実行には含みません。
 
 ```sh
-RUSTC_WRAPPER= cargo test -p kasu-git --locked
-RUSTC_WRAPPER= cargo test -p kasu-server --test git_http --test push --locked
-RUSTC_WRAPPER= cargo clippy -p kasu-git -p kasu-ingest --all-targets --locked -- -D warnings
+cargo test -p kasu-git --locked
+cargo test -p kasu-server --test git_http --test push --locked
+cargo clippy -p kasu-git -p kasu-ingest --all-targets --locked -- -D warnings
 docker build -f tools/git-compat/Dockerfile -t kasu:reachability-test .
 ```
 

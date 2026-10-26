@@ -42,8 +42,8 @@ Object RPC 自体はパスやスパース設定を受け取りません。
 終端のない部分オブジェクトは利用できません。
 
 ```sh
-RUSTC_WRAPPER= cargo test -p kasu-server --test objects --locked
-RUSTC_WRAPPER= cargo test -p kasu-store --test tree_membership --locked
+cargo test -p kasu-server --test objects --locked
+cargo test -p kasu-store --test tree_membership --locked
 ```
 
 実 gRPC でのスパース要求、保存 frame とのバイト一致、チャンク境界、認可・バッチ上限、

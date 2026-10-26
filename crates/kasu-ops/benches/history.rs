@@ -4,7 +4,7 @@ use kasu_ops::*;
 use kasu_store::*;
 use std::time::Instant;
 
-// Run: KASU_BENCH_HISTORY=1 RUSTC_WRAPPER= cargo bench -p kasu-ops --bench history
+// Run: KASU_BENCH_HISTORY=1 cargo bench -p kasu-ops --bench history
 // Samples identical changeset writes at increasing history lengths. Raw measurements
 // are emitted rather than imposing a machine-dependent timing assertion.
 fn main() {

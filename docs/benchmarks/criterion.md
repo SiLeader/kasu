@@ -41,7 +41,7 @@ cold／warm の pack 本文が完全一致し、Git の `index-pack --strict` �
 ## 再実行
 
 ```sh
-KASU_CRITERION_OUTPUT=/tmp/kasu-criterion-run CRITERION_HOME=/tmp/kasu-criterion-run/criterion RUSTC_WRAPPER= \
+KASU_CRITERION_OUTPUT=/tmp/kasu-criterion-run CRITERION_HOME=/tmp/kasu-criterion-run/criterion \
   cargo bench -p kasu-ingest --bench throughput --locked
 ```
 

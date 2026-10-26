@@ -40,7 +40,7 @@ shallow 列挙と大規模なバックフィル・容量評価は引き続き必
 ```sh
 git clone --bare --single-branch --branch main \
   https://github.com/fluxcd/flux2-kustomize-helm-example.git /tmp/kasu-flux-bandwidth.git
-RUSTC_WRAPPER= cargo run --release --locked -p kasu-ingest --example pack_bandwidth -- \
+cargo run --release --locked -p kasu-ingest --example pack_bandwidth -- \
   /tmp/kasu-flux-bandwidth.git 4f1a5b1051b469108d1bdf0ebec6c814427e3834
 ```
 

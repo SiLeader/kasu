@@ -1,5 +1,7 @@
 # kasu
 
+<img src="kasu-icon.svg" alt="kasu icon" width="160" height="160">
+
 English | [日本語](README_ja.md)
 
 kasu is a server-centric version control system written in Rust that implements the mechanisms described for Anthropic's **Scion** VCS. It provides read-only Git access so existing GitOps tools, including Argo CD and Flux, can consume repositories through familiar Git protocols.
@@ -40,8 +42,8 @@ You need Rust stable, a C compiler (for SQLite and zstd), `protoc`, and Git. Ins
 From this repository's root, import an existing Git repository with complete history and start the server:
 
 ```sh
-RUSTC_WRAPPER= cargo run -p kasu-ingest -- /path/to/source.git /path/to/kasu-data my-repo
-KASU_TOKEN=dev-token RUSTC_WRAPPER= cargo run -p kasu-server -- /path/to/kasu-data my-repo
+cargo run -p kasu-ingest -- /path/to/source.git /path/to/kasu-data my-repo
+KASU_TOKEN=dev-token cargo run -p kasu-server -- /path/to/kasu-data my-repo
 ```
 
 The default listeners are `127.0.0.1:50051` for gRPC and `127.0.0.1:50080` for HTTP. In another terminal, read the repository using Git:
@@ -54,7 +56,7 @@ git -c http.extraHeader='Authorization: Bearer dev-token' clone --depth=1 http:/
 To use a native working copy, build the CLI and connect to the same server. Replace `main` with a branch present in the imported repository:
 
 ```sh
-RUSTC_WRAPPER= cargo build -p kasu-cli --locked
+cargo build -p kasu-cli --locked
 export KASU_SERVER=http://127.0.0.1:50051
 export KASU_REPO=my-repo
 export KASU_TOKEN=dev-token
@@ -82,18 +84,18 @@ The implementation includes the native CLI, server APIs, Git gateway, cache hier
 ## Development
 
 ```sh
-RUSTC_WRAPPER= cargo fmt --all -- --check
-RUSTC_WRAPPER= cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
-RUSTC_WRAPPER= cargo test --workspace --all-targets --all-features --locked
-RUSTC_WRAPPER= cargo deny check
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo test --workspace --all-targets --all-features --locked
+cargo deny check
 ```
 
-`cargo deny` requires `cargo-deny`. Tests requiring external services or fixtures have separate instructions in the relevant guides. Clear `RUSTC_WRAPPER` when running Cargo in a sandbox to disable inherited sccache settings without changing Cargo configuration.
+`cargo deny` requires `cargo-deny`. Tests requiring external services or fixtures have separate instructions in the relevant guides.
 
 The opt-in 100,000-changeset history benchmark emits CSV timings:
 
 ```sh
-KASU_BENCH_HISTORY=1 RUSTC_WRAPPER= cargo bench -p kasu-ops --bench history
+KASU_BENCH_HISTORY=1 cargo bench -p kasu-ops --bench history
 ```
 
 ## License

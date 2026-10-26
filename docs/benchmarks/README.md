@@ -13,7 +13,7 @@ macOS／Linux の内容 ID 一致と MergeBase の古い祖先走査の削減を
 SQLite はファイル DB、WAL／synchronous=FULL、blob と tree はローカル FS／zstd です。
 
 ```sh
-KASU_BENCH_HISTORY=1 RUSTC_WRAPPER= cargo bench -p kasu-ops --bench history
+KASU_BENCH_HISTORY=1 cargo bench -p kasu-ops --bench history
 ```
 
 - 100,000 Changeset を順に作成し、各 Changeset は `bench/file` を 2 種類の内容間で更新します。

@@ -17,7 +17,7 @@ group／other に権限のない directory が必要です。
 ## 起動
 
 ```sh
-RUSTC_WRAPPER= cargo build -p kasu-server -p kasu-cache -p kasu-daemon -p kasu-cli --locked
+cargo build -p kasu-server -p kasu-cache -p kasu-daemon -p kasu-cli --locked
 export PATH="$(pwd)/target/debug:$PATH"
 export KASU_TOKEN=dev-token
 export KASU_SERVER=http://127.0.0.1:50051
@@ -144,7 +144,7 @@ requests は認可済みオブジェクト lookup の数で、拒否されたす
 hit 率と coalesced 数を併せて見て、cold burst の singleflight 効果を判断できます。
 
 ```sh
-RUSTC_WRAPPER= cargo test -p kasu-cache -p kasu-daemon -p kasu-cli --locked
+cargo test -p kasu-cache -p kasu-daemon -p kasu-cli --locked
 docker build -f tools/cache/Dockerfile -t kasu:cache-test .
 ```
 

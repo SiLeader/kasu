@@ -21,7 +21,7 @@
 `directories_hex` は非 UTF-8 パスのためのバイト列指定です。たとえば `ff` は `0xff` のディレクトリを許可します。
 
 ```sh
-KASU_PROJECTION_ACCOUNTS_FILE=/path/to/accounts.json RUSTC_WRAPPER= \
+KASU_PROJECTION_ACCOUNTS_FILE=/path/to/accounts.json \
   cargo run -p kasu-server -- /path/to/kasu-data my-repo
 
 git clone --filter=blob:none \
@@ -82,7 +82,7 @@ macOS arm64 と固定 Rust 1.90／Linux arm64 で、次のテストが通過し�
 [検証記録](../crates/kasu-git/tests/fixtures/clients/projection-auth-summary.json) にソースのハッシュと実行範囲を保存しています。
 
 ```sh
-RUSTC_WRAPPER= cargo test -p kasu-server --lib --test projection_accounts --locked
-RUSTC_WRAPPER= cargo test -p kasu-server --test git_http scoped_projection --locked
+cargo test -p kasu-server --lib --test projection_accounts --locked
+cargo test -p kasu-server --test git_http scoped_projection --locked
 docker build -f tools/git-compat/Dockerfile -t kasu:projection-auth-test .
 ```

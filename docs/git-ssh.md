@@ -7,7 +7,7 @@ native ストレージへの読み書きを Kasu が処理します。Git の外
 ## 起動と資格情報
 
 ```sh
-RUSTC_WRAPPER= cargo build -p kasu-server --bin kasu-git-ssh --release --locked
+cargo build -p kasu-server --bin kasu-git-ssh --release --locked
 ```
 
 専用 OS ユーザー `git` の `authorized_keys` に、公開鍵ごとの固定コマンドを登録します。
@@ -87,8 +87,8 @@ Linux の go-git v5.19.3 も実 SSH・固定 known_hosts で full／depth1 clone
 [通信 fixture と結果](../crates/kasu-git/tests/fixtures/clients/ssh/) を保存しています。
 
 ```sh
-RUSTC_WRAPPER= cargo test -p kasu-server --lib git_ssh --locked
-RUSTC_WRAPPER= cargo test -p kasu-server --test git_ssh --locked
+cargo test -p kasu-server --lib git_ssh --locked
+cargo test -p kasu-server --test git_ssh --locked
 docker build -f tools/ssh/Dockerfile -t kasu:ssh-test .
 docker run --rm --network none kasu:ssh-test
 ```

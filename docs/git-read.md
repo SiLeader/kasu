@@ -3,8 +3,8 @@
 Metadata API と同じ `kasu-server` の HTTP ポートで Git を配信します。
 
 ```sh
-RUSTC_WRAPPER= cargo run -p kasu-ingest -- /path/to/source.git /path/to/kasu-data my-repo
-KASU_TOKEN=dev-token RUSTC_WRAPPER= cargo run -p kasu-server -- /path/to/kasu-data my-repo
+cargo run -p kasu-ingest -- /path/to/source.git /path/to/kasu-data my-repo
+KASU_TOKEN=dev-token cargo run -p kasu-server -- /path/to/kasu-data my-repo
 
 git -c http.extraHeader='Authorization: Bearer dev-token' \
   ls-remote http://127.0.0.1:50080/my-repo.git
@@ -82,7 +82,7 @@ Git 2.54.0／macOS arm64 と Git 2.39.5／固定 Rust 1.90 の Linux arm64 で�
 大規模 repo での帯域・列挙性能評価と、他のフィルターは今後の対象です。
 
 ```sh
-KASU_CAPTURE_DIR=/tmp/kasu-partial-traces RUSTC_WRAPPER= \
+KASU_CAPTURE_DIR=/tmp/kasu-partial-traces \
   cargo test -p kasu-server --test git_http partial_clone --locked
 docker build -f tools/git-compat/Dockerfile -t kasu:partial-clone-test .
 ```
@@ -115,14 +115,14 @@ Go クライアントは checkout 後の各ファイル内容、symlink、実行
 通常の Rust テスト:
 
 ```sh
-RUSTC_WRAPPER= cargo test --workspace --all-targets
+cargo test --workspace --all-targets
 ```
 
 Linux 上で go-git E2E を有効化:
 
 ```sh
 go -C tools/git-compat build -o /tmp/kasu-go-git-compat .
-KASU_GO_GIT_CLIENT=/tmp/kasu-go-git-compat RUSTC_WRAPPER= \
+KASU_GO_GIT_CLIENT=/tmp/kasu-go-git-compat \
   cargo test -p kasu-server --test git_http -- --include-ignored
 ```
 
@@ -132,7 +132,7 @@ macOS arm64 から Linux で実行する場合（Docker、Python 3.12 以降が�
 GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go -C tools/git-compat build -o /tmp/kasu-go-git-compat-linux .
 docker pull rust:1.90-bookworm
 KASU_GO_GIT_CONTAINER=1 KASU_LINUX_GO_GIT_BINARY=/tmp/kasu-go-git-compat-linux \
-  KASU_GO_GIT_CLIENT="$PWD/tools/git-compat/linux-client.py" RUSTC_WRAPPER= \
+  KASU_GO_GIT_CLIENT="$PWD/tools/git-compat/linux-client.py" \
   cargo test -p kasu-server --test git_http -- --include-ignored
 ```
 

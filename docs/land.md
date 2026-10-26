@@ -62,10 +62,10 @@ ref・ref_log・結果のすべてをロールバックします。
 ## 検証
 
 ```sh
-RUSTC_WRAPPER= cargo test -p kasu-store --test land --locked
-RUSTC_WRAPPER= cargo test -p kasu-server --test write --locked
-RUSTC_WRAPPER= cargo test -p kasu-sim --test land_runtime --locked
-RUSTC_WRAPPER= cargo run --release --locked -p kasu-sim -- --seed 42 --clients 1000
+cargo test -p kasu-store --test land --locked
+cargo test -p kasu-server --test write --locked
+cargo test -p kasu-sim --test land_runtime --locked
+cargo run --release --locked -p kasu-sim -- --seed 42 --clients 1000
 ```
 
 ストアの16接続での重複キー競合、再オープン、トランザクション途中のキャンセル、

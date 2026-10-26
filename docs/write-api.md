@@ -70,7 +70,7 @@ CAS 後の Git 広告は更新したネイティブ ref を参照します。
 API で作成した履歴の Git clone と `fsck --strict` を含みます。
 
 ```sh
-RUSTC_WRAPPER= cargo test -p kasu-server --test write --locked
+cargo test -p kasu-server --test write --locked
 ```
 
 Land の要求・確定結果・再送・キャンセルは [Land](land.md) を参照してください。

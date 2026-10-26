@@ -3,7 +3,7 @@
 `kasu-cli` は `kasu` コマンドを提供します。macOS／Linux の Unix filesystem を対象とします。
 
 ```sh
-RUSTC_WRAPPER= cargo build -p kasu-cli --locked
+cargo build -p kasu-cli --locked
 KASU_BIN="$(pwd)/target/debug/kasu"
 export KASU_SERVER=http://127.0.0.1:50051
 export KASU_REPO=my-repo
@@ -101,7 +101,7 @@ Land の応答喪失時はキーを保持し、次の `land` で同じ要求を�
 ## 検証
 
 ```sh
-RUSTC_WRAPPER= cargo test -p kasu-cli --locked
+cargo test -p kasu-cli --locked
 docker build -f tools/cli/Dockerfile -t kasu:cli-test .
 ```
 

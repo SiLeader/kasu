@@ -1,7 +1,7 @@
 # Git 取り込みと OID の保持
 
 ```sh
-RUSTC_WRAPPER= cargo run -p kasu-ingest -- <Git リポジトリ> <保存ディレクトリ> <リポジトリ名>
+cargo run -p kasu-ingest -- <Git リポジトリ> <保存ディレクトリ> <リポジトリ名>
 ```
 
 Git の bare／working repository を gix で読み、親・依存オブジェクトを先に処理して Changeset に変換します。
@@ -48,7 +48,7 @@ fixture をその場で生成します。Git の pack にまとめた source か
 非 UTF-8 パス・gitlink・annotated tag・merge をまとめて持つ固定 GitLab upstream 入力も追加し、下記のとおり全183 OID の往復を検証しています。
 
 ```sh
-KASU_OSS_REPO=/path/to/TestGitRepository.git RUSTC_WRAPPER= cargo test \
+KASU_OSS_REPO=/path/to/TestGitRepository.git cargo test \
   -p kasu-ingest --test roundtrip pinned_oss_repository --locked -- --ignored
 ```
 
@@ -84,7 +84,7 @@ libgit2 の固定 commit [`338e6fb681369ff0537719095e22ce9dc602dbf0`](https://gi
 
 ```sh
 python3 tools/oss-fixtures/prepare.py --output /tmp/kasu-upstream-submodule.git
-KASU_OSS_SUBMODULE_REPO=/tmp/kasu-upstream-submodule.git RUSTC_WRAPPER= \
+KASU_OSS_SUBMODULE_REPO=/tmp/kasu-upstream-submodule.git \
   cargo test -p kasu-ingest --test roundtrip pinned_upstream_submodule --locked -- --ignored
 ```
 
@@ -140,7 +140,7 @@ annotated tag `v1.0.0` の固定 OID `f4e6814c3e4e7a0de82a9e7cd20c626cc963a2f8` 
 
 ```sh
 python3 tools/oss-fixtures/prepare_byte_paths.py --output /tmp/kasu-byte-paths.git
-KASU_OSS_BYTE_PATH_REPO=/tmp/kasu-byte-paths.git RUSTC_WRAPPER= \
+KASU_OSS_BYTE_PATH_REPO=/tmp/kasu-byte-paths.git \
   cargo test -p kasu-ingest --test roundtrip pinned_gitlab --locked -- --ignored
 ```
 
