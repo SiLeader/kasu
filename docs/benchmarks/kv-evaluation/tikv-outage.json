@@ -1,0 +1,12 @@
+{
+  "allChecksPassed": true,
+  "backend": "TiKV optimistic TxnKV prototype",
+  "elapsedMS": 2001.32,
+  "errorType": "\u003cnil\u003e",
+  "namespace": "run-18e11ca945c05b48",
+  "noAcknowledgedWrite": true,
+  "operations": 256,
+  "outcome": "Retry",
+  "phase": "outage",
+  "schema": 1
+}

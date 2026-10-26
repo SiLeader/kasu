@@ -1,0 +1,132 @@
+{
+  "captured_date": "2026-10-24",
+  "first_parent_skip_version": 2,
+  "platforms": {
+    "macos": {
+      "tip_changeset": "0856f67453cc7dd6f29ab78b95150d070705d89e0ce0df6a6465343d57f48260",
+      "root_tree": "2bfdf8d07030c5ad9048586c18db3739d06c39168bfd5249db81020a2595ce8d",
+      "max_meta_get_calls": 27,
+      "blocks": {
+        "first_10000": {
+          "mean_create_microseconds": 379.8,
+          "main_mean_microseconds": 379.418,
+          "side_mean_microseconds": 370.634,
+          "merge_mean_microseconds": 392.008,
+          "mean_meta_get_calls": 24.299,
+          "mean_meta_put_calls": 4.0,
+          "mean_blob_get_calls": 3.0,
+          "mean_blob_put_calls": 2.0,
+          "max_meta_get_calls": 27
+        },
+        "middle_10000": {
+          "mean_create_microseconds": 466.664,
+          "main_mean_microseconds": 462.233,
+          "side_mean_microseconds": 506.234,
+          "merge_mean_microseconds": 462.549,
+          "mean_meta_get_calls": 24.3,
+          "mean_meta_put_calls": 4.0,
+          "mean_blob_get_calls": 3.0,
+          "mean_blob_put_calls": 2.0,
+          "max_meta_get_calls": 27
+        },
+        "last_10000": {
+          "mean_create_microseconds": 451.031,
+          "main_mean_microseconds": 460.582,
+          "side_mean_microseconds": 422.383,
+          "merge_mean_microseconds": 403.288,
+          "mean_meta_get_calls": 24.3,
+          "mean_meta_put_calls": 4.0,
+          "mean_blob_get_calls": 3.0,
+          "mean_blob_put_calls": 2.0,
+          "max_meta_get_calls": 27
+        }
+      }
+    },
+    "linux": {
+      "tip_changeset": "0856f67453cc7dd6f29ab78b95150d070705d89e0ce0df6a6465343d57f48260",
+      "root_tree": "2bfdf8d07030c5ad9048586c18db3739d06c39168bfd5249db81020a2595ce8d",
+      "max_meta_get_calls": 27,
+      "blocks": {
+        "first_10000": {
+          "mean_create_microseconds": 531.335,
+          "main_mean_microseconds": 530.368,
+          "side_mean_microseconds": 522.56,
+          "merge_mean_microseconds": 547.86,
+          "mean_meta_get_calls": 24.299,
+          "mean_meta_put_calls": 4.0,
+          "mean_blob_get_calls": 3.0,
+          "mean_blob_put_calls": 2.0,
+          "max_meta_get_calls": 27
+        },
+        "middle_10000": {
+          "mean_create_microseconds": 910.882,
+          "main_mean_microseconds": 910.117,
+          "side_mean_microseconds": 934.813,
+          "merge_mean_microseconds": 893.081,
+          "mean_meta_get_calls": 24.3,
+          "mean_meta_put_calls": 4.0,
+          "mean_blob_get_calls": 3.0,
+          "mean_blob_put_calls": 2.0,
+          "max_meta_get_calls": 27
+        },
+        "last_10000": {
+          "mean_create_microseconds": 639.167,
+          "main_mean_microseconds": 650.537,
+          "side_mean_microseconds": 611.697,
+          "merge_mean_microseconds": 575.711,
+          "mean_meta_get_calls": 24.3,
+          "mean_meta_put_calls": 4.0,
+          "mean_blob_get_calls": 3.0,
+          "mean_blob_put_calls": 2.0,
+          "max_meta_get_calls": 27
+        }
+      }
+    }
+  },
+  "scope": {
+    "changesets": 100000,
+    "divergent_merges": 10000,
+    "side_commits": 10000,
+    "samples_per_row": 1000,
+    "timed": "Operations::create_changeset including eager derived data",
+    "untimed": "source construction, fork/ancestry/merge-base/content assertions and reporting",
+    "counts": "MetaStore/BlobStore API calls, not physical disk I/O",
+    "validation": "16 kasu-ops and 5 selected kasu-derived tests per OS; 16 server and 12 CLI tests on macOS",
+    "exhaustive_dags": 1024,
+    "exhaustive_tip_pairs": 25600,
+    "cold_merge_base_metadata_read_bound": 32,
+    "new_skip_index_get_calls_per_create_max": 7,
+    "new_skip_index_record_bytes_max": 82,
+    "v1_records": "preserved and lazy; v2 uses a separate key space"
+  },
+  "limits": [
+    "one run per OS, no throughput or strict constant-time guarantee",
+    "small fixed-width tree with two reused blob contents",
+    "local SQLite WAL/FULL and filesystem; host and container storage differ",
+    "some build/test activity overlapped; no timing gate",
+    "SQLite lookup/put costs still depend on storage size; no physical-latency guarantee",
+    "legacy histories need a one-time v2 first-parent backfill",
+    "GitHub workflow execution unverified"
+  ],
+  "source_sha256": {
+    "Cargo.lock": "1206daefe8ee25fb4796e2f566d18e103c9454e0a7708096030e948a678747a8",
+    "crates/kasu-ops/Cargo.toml": "9a15a94a21721cc15e478b958c08189237075c098af8f442bbe41a01185c9a4e",
+    "crates/kasu-ops/src/lib.rs": "9d99429cc2f7618f74d0cd675c563757b2032717a45951a9bd00fecd8b01c273",
+    "crates/kasu-ops/tests/operations.rs": "87c48bceb6459f7ebe043f95efd5c3b9c6e2f21e03c60349668cef791f1942d0",
+    "crates/kasu-ops/benches/divergent_history.rs": "69cae53603b664c32ac29fa679de2e5de7a45080c02b00853b35acfc8b66284d",
+    "crates/kasu-derived/src/types.rs": "60dd778d78b5f8400e55cdbc92dfaba6a5d83a45ed82401a72a1dc4c14dfc31d",
+    "crates/kasu-derived/src/scheduler.rs": "491555d28ba16ce47c49a5e714ccfc417554fa71cde1ea8a2e04ed64b0798442",
+    "crates/kasu-derived/tests/derived.rs": "5d1042f15ac1064692108fbf53fa313d7bf714f430562e6d1797f21678683ab0",
+    "crates/kasu-ops/src/metadata.rs": "3fb36fff96dc398db4335d03e50f51adef0dc86d8eba60371de0c009299786a3",
+    "crates/kasu-ops/tests/first_parent.rs": "c9570116afa7d16e22d73ac0a2d939ac91c89f61e27b5218ebed746cf832007e",
+    "tools/history-benchmark/Dockerfile": "0aaa78e58cdc88c9942c8065682d33ef39459479749710a36e6375700ae42cd5",
+    "tools/history-benchmark/record.py": "b2a92d1fa8160a3882362ee7da136276bee6efbda7060618fa26a7d537b63f73",
+    ".github/workflows/history-benchmark.yml": "378698627b12243e3c4c519e76ef88556638e4cdc4949dc148ec68d720d3e840"
+  },
+  "baseline": {
+    "path": "../divergent-history/summary.json",
+    "same_final_changeset_and_tree": true,
+    "v1_meta_get_max": 43,
+    "v2_meta_get_max": 27
+  }
+}

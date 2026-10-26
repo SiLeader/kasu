@@ -1,0 +1,5 @@
+   Compiling kasu-proto v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-proto)
+    Checking kasu-object v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-object)
+    Checking kasu-server v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-server)
+    Checking kasu-fuzz v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/fuzz)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.44s

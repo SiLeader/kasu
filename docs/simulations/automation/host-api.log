@@ -1,0 +1,13 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.80s
+     Running tests/automation.rs (target/debug/deps/automation-76fa3ca69eb37238)
+
+running 6 tests
+test ancestor_guard_is_rechecked_after_cas_loss_and_bound_to_receipts ... ok
+test redirects_and_unguarded_requests_fail_without_publication ... ok
+test lost_land_reply_resumes_the_same_key_even_after_branch_replacement ... ok
+test conflicts_mainline_and_root_reverts_are_explicit ... ok
+test metadata_only_bisect_finds_second_parent_regression_and_guarded_revert_preserves_later_edits ... ok
+test check_gates_immutable_revisions_and_detects_ref_aba_during_testing ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.30s
+

@@ -1,0 +1,44 @@
+{"built":"2026-10-20T18:33:20Z","commit":"c2b1e3017e2cec86b122172e861dcd026453ae44","level":"info","msg":"ArgoCD API Server is starting","namespace":"argocd","port":8080,"time":"2026-10-23T05:40:30Z","version":"v3.5.6"}
+{"level":"info","msg":"Loading Redis credentials from environment variables","time":"2026-10-23T05:40:30Z"}
+{"level":"info","msg":"Loading Redis credentials from environment variables","time":"2026-10-23T05:40:30Z"}
+{"level":"info","msg":"Starting configmap/secret informers","time":"2026-10-23T05:40:30Z"}
+{"level":"info","msg":"Configmap/secret informer synced","time":"2026-10-23T05:40:31Z"}
+{"level":"info","msg":"Cluster cache informer synced","time":"2026-10-23T05:40:31Z"}
+{"level":"info","msg":"Loading TLS configuration from secret argocd/argocd-secret","time":"2026-10-23T05:40:31Z"}
+{"level":"warning","msg":"Static assets directory \"/shared/app\" does not exist, using only embedded assets","time":"2026-10-23T05:40:31Z"}
+{"level":"info","msg":"invalidated cache for resource in namespace: argocd with the name: argocd-notifications-cm","time":"2026-10-23T05:40:31Z"}
+{"level":"info","msg":"invalidated cache for resource in namespace: argocd with the name: argocd-notifications-secret","time":"2026-10-23T05:40:31Z"}
+{"level":"info","msg":"Creating client app ()","time":"2026-10-23T05:40:31Z"}
+{"level":"info","msg":"argocd v3.5.6 serving on port 8080 (url: , tls: false, namespace: argocd, sso: false)","time":"2026-10-23T05:40:31Z"}
+{"level":"info","msg":"Enabled application namespace patterns: argocd","time":"2026-10-23T05:40:31Z"}
+{"level":"info","msg":"0x4b71dba90700 subscribed to settings updates","time":"2026-10-23T05:40:31Z"}
+{"level":"info","msg":"Starting rbac config informer","time":"2026-10-23T05:40:31Z"}
+{"level":"info","msg":"RBAC ConfigMap 'argocd-rbac-cm' added","time":"2026-10-23T05:40:31Z"}
+{"level":"info","msg":"Webhook handler started","time":"2026-10-23T05:41:03Z"}
+{"level":"info","msg":"Received push event repo: http://kasu.gitops-test.svc.cluster.local:50080/demo, revision: main, touchedHead: true","time":"2026-10-23T05:41:03Z"}
+{"app-namespace":"argocd","application":"kasu","level":"info","msg":"refreshing app from webhook","project":"default","time":"2026-10-23T05:41:03Z"}
+{"level":"info","msg":"Webhook handler completed in 153.584µs","time":"2026-10-23T05:41:03Z"}
+{"level":"info","msg":"Requested app 'kasu' refresh","time":"2026-10-23T05:41:03Z"}
+{"level":"info","msg":"Requested app 'kasu' refresh","time":"2026-10-23T05:41:03Z"}
+{"level":"info","msg":"Webhook handler started","time":"2026-10-23T05:41:35Z"}
+{"level":"info","msg":"Received push event repo: http://kasu.gitops-test.svc.cluster.local:50080/demo, revision: main, touchedHead: true","time":"2026-10-23T05:41:35Z"}
+{"app-namespace":"argocd","application":"kasu","level":"info","msg":"refreshing app from webhook","project":"default","time":"2026-10-23T05:41:35Z"}
+{"level":"info","msg":"Webhook handler completed in 161.75µs","time":"2026-10-23T05:41:35Z"}
+{"level":"info","msg":"Requested app 'kasu' refresh","time":"2026-10-23T05:41:35Z"}
+{"level":"info","msg":"Requested app 'kasu' refresh","time":"2026-10-23T05:41:35Z"}
+{"level":"info","msg":"Webhook handler started","time":"2026-10-23T05:42:40Z"}
+{"level":"info","msg":"Received push event repo: http://kasu.gitops-test.svc.cluster.local:50080/demo, revision: main, touchedHead: true","time":"2026-10-23T05:42:40Z"}
+{"app-namespace":"argocd","application":"kasu","level":"info","msg":"manifest cache miss while moving manifests cache to the new revision","new_cacheKey":"mfst|annotation:app.kubernetes.io/instance|kasu|94c39792eadeb6fb1bef9cf37b8eab21cac0703f|argo-target|3105110393|nil","old_cacheKey":"mfst|annotation:app.kubernetes.io/instance|kasu|6e1773d9c0ad7af349d31c76b3f09a09ed15721b|argo-target|3105110393|nil","project":"default","time":"2026-10-23T05:42:40Z"}
+{"level":"info","msg":"Webhook handler completed in 1.41575ms","time":"2026-10-23T05:42:40Z"}
+{"level":"info","msg":"Webhook handler started","time":"2026-10-23T05:42:51Z"}
+{"level":"info","msg":"Received push event repo: http://kasu.gitops-test.svc.cluster.local:50080/demo, revision: main, touchedHead: true","time":"2026-10-23T05:42:51Z"}
+{"app-namespace":"argocd","application":"kasu","level":"info","msg":"manifest cache miss while moving manifests cache to the new revision","new_cacheKey":"mfst|annotation:app.kubernetes.io/instance|kasu|4a17332527ec2e8a302f2c8fbfd0b4b3e4dd7066|argo-target|3105110393|nil","old_cacheKey":"mfst|annotation:app.kubernetes.io/instance|kasu|94c39792eadeb6fb1bef9cf37b8eab21cac0703f|argo-target|3105110393|nil","project":"default","time":"2026-10-23T05:42:51Z"}
+{"app-namespace":"argocd","application":"kasu-images","level":"info","msg":"manifests cache moved","new_cacheKey":"mfst|annotation:app.kubernetes.io/instance|kasu-images|4a17332527ec2e8a302f2c8fbfd0b4b3e4dd7066|argo-target|3292841078|nil","old_cacheKey":"mfst|annotation:app.kubernetes.io/instance|kasu-images|94c39792eadeb6fb1bef9cf37b8eab21cac0703f|argo-target|3292841078|nil","project":"default","time":"2026-10-23T05:42:51Z"}
+{"level":"info","msg":"Webhook handler completed in 883.125µs","time":"2026-10-23T05:42:51Z"}
+{"level":"info","msg":"Webhook handler started","time":"2026-10-23T05:43:06Z"}
+{"level":"info","msg":"Received push event repo: http://kasu.gitops-test.svc.cluster.local:50080/demo, revision: main, touchedHead: true","time":"2026-10-23T05:43:06Z"}
+{"app-namespace":"argocd","application":"kasu","level":"info","msg":"manifest cache miss while moving manifests cache to the new revision","new_cacheKey":"mfst|annotation:app.kubernetes.io/instance|kasu|61cd8b524f06ca531c40fffe28f523371dc6776e|argo-target|3105110393|nil","old_cacheKey":"mfst|annotation:app.kubernetes.io/instance|kasu|4a17332527ec2e8a302f2c8fbfd0b4b3e4dd7066|argo-target|3105110393|nil","project":"default","time":"2026-10-23T05:43:06Z"}
+{"app-namespace":"argocd","application":"kasu-images","level":"info","msg":"refreshing app from webhook","project":"default","time":"2026-10-23T05:43:06Z"}
+{"level":"info","msg":"Webhook handler completed in 525.167µs","time":"2026-10-23T05:43:06Z"}
+{"level":"info","msg":"Requested app 'kasu-images' refresh","time":"2026-10-23T05:43:06Z"}
+{"level":"info","msg":"Requested app 'kasu-images' refresh","time":"2026-10-23T05:43:06Z"}

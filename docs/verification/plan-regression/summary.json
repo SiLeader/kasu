@@ -1,0 +1,74 @@
+{
+  "recorded_at": "2026-10-26T11:40:50.007043+09:00",
+  "platform": "Darwin arm64",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "workspace": {
+    "command": "RUSTC_WRAPPER= cargo test --workspace --all-targets --all-features --locked",
+    "exit_code": 0,
+    "passed": 214,
+    "failed": 0,
+    "ignored": 21,
+    "criterion_smoke": 11
+  },
+  "checks": {
+    "clippy": "RUSTC_WRAPPER= cargo clippy --workspace --all-targets --all-features --locked -- -D warnings",
+    "fmt": "RUSTC_WRAPPER= cargo fmt --all -- --check",
+    "deny": "RUSTC_WRAPPER= cargo deny check bans licenses sources",
+    "actionlint": "actionlint",
+    "webhook": "RUSTC_WRAPPER= cargo test -p kasu-server --test webhook --all-features --locked"
+  },
+  "supplemental": {
+    "webhook_passed": 6,
+    "automation_passed": 7,
+    "prior_to_resume_oss_roundtrip_passed": 3,
+    "prior_to_resume_oss_metadata_passed": 1
+  },
+  "source_manifest": "source-sha256.json",
+  "workspace_source_override": {
+    "crates/kasu-server/tests/webhook.rs": "1f2fa2a7769cfc26f7a6ea5ac4274286f7a3f697aab63f1682162e6b0655a255"
+  },
+  "scope_notes": [
+    "全体実行のコンパイル後に webhook テスト用 atomic counter の非推奨 API を置換した。上記 override が全体実行時の同テストの hash。修正後の6件を補足実行し、Clippy は現在のソースで通過。製品コードは両実行間で変更していない。",
+    "OSS の3件と Metadata の1件は一時停止前に同じ製品ソースで別実行した記録。これらの実行時 compiler version は記録していない。",
+    "21 ignored は失敗ではないが、この全体実行で成功した件数にも含めない。固定 OSS は補足実行、その他の実サービス・特権環境の検証範囲は plan-audit.json と個別の受け入れ記録を参照。",
+    "advisories と fuzz campaign はユーザー指示により保留。GitHub 上での CI/nightly 実行確認は含まない。"
+  ],
+  "logs": {
+    "tests": {
+      "path": "docs/verification/plan-regression/tests.log",
+      "sha256": "67a62de2a1e2b33fa46810810a5ee04e490e0a477e6a468e3fe740a63bdde050"
+    },
+    "clippy": {
+      "path": "docs/verification/plan-regression/clippy.log",
+      "sha256": "646411c72809b39bc7dee0994be9d7359ce3a29cc4bc076e3d4a8da67b48417c"
+    },
+    "fmt": {
+      "path": "docs/verification/plan-regression/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "deny": {
+      "path": "docs/verification/plan-regression/deny.log",
+      "sha256": "1fb97723fc12f08db3a58578b1045465d34d2355a8963218db4d319e63dd06ca"
+    },
+    "actionlint": {
+      "path": "docs/verification/plan-regression/actionlint.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "webhook": {
+      "path": "docs/verification/plan-regression/webhook.log",
+      "sha256": "32efd0e08301a4a594729748f12cac2340001999a80db1cf9db84e7107ac2587"
+    },
+    "automation": {
+      "path": "docs/verification/plan-regression/automation.log",
+      "sha256": "2ad146055bb3290ffb964520694575d2c1622273661deef3b0ae3de52d951b69"
+    },
+    "oss": {
+      "path": "docs/verification/plan-regression/oss.log",
+      "sha256": "290421b0d71e320564a091ab266ecab77ccc0a8d7f5a01fb626033ca3a8ad28a"
+    },
+    "oss-metadata": {
+      "path": "docs/verification/plan-regression/oss-metadata.log",
+      "sha256": "751dc6510e90bff148c6f7804342a1bc600a1f70c86ea871198b75d5aaa0cd98"
+    }
+  }
+}

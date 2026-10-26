@@ -1,0 +1,42 @@
+name: kasu-kv-evaluation
+services:
+  pd1:
+    image: pingcap/pd@sha256:424e896800e42e1b7eb585b604c8daa3454110d0f0df5ab41f7c5f49164d3aef
+    mem_limit: 512m
+    command: ["--name=pd1", "--data-dir=/data", "--client-urls=http://0.0.0.0:2379", "--advertise-client-urls=http://pd1:2379", "--peer-urls=http://0.0.0.0:2380", "--advertise-peer-urls=http://pd1:2380", "--initial-cluster=pd1=http://pd1:2380,pd2=http://pd2:2380,pd3=http://pd3:2380", "--log-level=warn"]
+  pd2:
+    image: pingcap/pd@sha256:424e896800e42e1b7eb585b604c8daa3454110d0f0df5ab41f7c5f49164d3aef
+    mem_limit: 512m
+    command: ["--name=pd2", "--data-dir=/data", "--client-urls=http://0.0.0.0:2379", "--advertise-client-urls=http://pd2:2379", "--peer-urls=http://0.0.0.0:2380", "--advertise-peer-urls=http://pd2:2380", "--initial-cluster=pd1=http://pd1:2380,pd2=http://pd2:2380,pd3=http://pd3:2380", "--log-level=warn"]
+  pd3:
+    image: pingcap/pd@sha256:424e896800e42e1b7eb585b604c8daa3454110d0f0df5ab41f7c5f49164d3aef
+    mem_limit: 512m
+    command: ["--name=pd3", "--data-dir=/data", "--client-urls=http://0.0.0.0:2379", "--advertise-client-urls=http://pd3:2379", "--peer-urls=http://0.0.0.0:2380", "--advertise-peer-urls=http://pd3:2380", "--initial-cluster=pd1=http://pd1:2380,pd2=http://pd2:2380,pd3=http://pd3:2380", "--log-level=warn"]
+  tikv1:
+    image: pingcap/tikv@sha256:ab84580b6795868940231aa778a34b082d19e4417e6d66f755c609bebdbbfd69
+    mem_limit: 3g
+    cpus: 1
+    command: ["--addr=0.0.0.0:20160", "--advertise-addr=tikv1:20160", "--status-addr=0.0.0.0:20180", "--data-dir=/data", "--pd=pd1:2379,pd2:2379,pd3:2379", "--config=/config/tikv.toml"]
+    volumes:
+      - ./tikv.toml:/config/tikv.toml:ro
+  tikv2:
+    image: pingcap/tikv@sha256:ab84580b6795868940231aa778a34b082d19e4417e6d66f755c609bebdbbfd69
+    mem_limit: 3g
+    cpus: 1
+    command: ["--addr=0.0.0.0:20160", "--advertise-addr=tikv2:20160", "--status-addr=0.0.0.0:20180", "--data-dir=/data", "--pd=pd1:2379,pd2:2379,pd3:2379", "--config=/config/tikv.toml"]
+    volumes:
+      - ./tikv.toml:/config/tikv.toml:ro
+  tikv3:
+    image: pingcap/tikv@sha256:ab84580b6795868940231aa778a34b082d19e4417e6d66f755c609bebdbbfd69
+    mem_limit: 3g
+    cpus: 1
+    command: ["--addr=0.0.0.0:20160", "--advertise-addr=tikv3:20160", "--status-addr=0.0.0.0:20180", "--data-dir=/data", "--pd=pd1:2379,pd2:2379,pd3:2379", "--config=/config/tikv.toml"]
+    volumes:
+      - ./tikv.toml:/config/tikv.toml:ro
+  postgres:
+    image: postgres@sha256:4ef4dbc939d61acea57712655ddb4b4ab27419c913f94cca0cd57cb3ea3c2280
+    mem_limit: 1g
+    environment:
+      POSTGRES_USER: kasu
+      POSTGRES_PASSWORD: kasu-evaluation-only
+      POSTGRES_DB: kasu

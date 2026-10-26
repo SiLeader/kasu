@@ -1,0 +1,34 @@
+{
+  "source": "https://gitlab.com/gitlab-org/gitlab-test.git",
+  "refs": "99e4853698007ed7e68826730ef5313d24841991 refs/heads/invalid-utf8-diff-paths\nf4e6814c3e4e7a0de82a9e7cd20c626cc963a2f8 refs/tags/v1.0.0\n",
+  "head": "99e4853698007ed7e68826730ef5313d24841991",
+  "symbolic_head": "refs/heads/invalid-utf8-diff-paths",
+  "scope": "complete history and all objects reachable from the fixed branch and v1.0.0 tag; other upstream refs excluded",
+  "counts": {
+    "commit": 50,
+    "tree": 76,
+    "blob": 56,
+    "tag": 1
+  },
+  "object_list_sha256": "63bc889d8c1138367dfbe1e09e4ac1436c47c6aafc2da8d0eabb3818152c571d",
+  "merge_commits": 14,
+  "non_utf8_path_hex": "68656c6c6f80776f726c64",
+  "path_snapshots": [
+    {
+      "commit": "d0888d297eadcd7a345427915c309413b1231e65",
+      "blob": "3742e48c1108ced3bf45ac633b34b65ac3f2af04"
+    },
+    {
+      "commit": "19950f03c765f7ac8723a73a0599764095f52fc0",
+      "blob": "ea20973903d3800ac659d503596f9105f0a7423f"
+    },
+    {
+      "commit": "99e4853698007ed7e68826730ef5313d24841991",
+      "blob": null
+    }
+  ],
+  "strict_fsck": true,
+  "shallow": false,
+  "submodule_contents_fetched": false,
+  "git": "git version 2.54.0 (Apple Git-157)"
+}

@@ -1,0 +1,19 @@
+{
+  "dirty": false,
+  "integrity": "ok",
+  "interrupted": {
+    "catalog_ids": [
+      "53ec8af3efb2d76b8655f75ec711fb1eb0639efaadbdf24b7e64ec0768172106",
+      "a2d09641e167aec26d4c39898ef5fc5c63e429bdf7d4ff7ce0bb5814f220ada6"
+    ],
+    "dirty": true,
+    "marker_ids": [
+      "53ec8af3efb2d76b8655f75ec711fb1eb0639efaadbdf24b7e64ec0768172106"
+    ],
+    "physical_ids": [
+      "53ec8af3efb2d76b8655f75ec711fb1eb0639efaadbdf24b7e64ec0768172106"
+    ]
+  },
+  "recovered_bytes": 15,
+  "recovered_entries": 1
+}

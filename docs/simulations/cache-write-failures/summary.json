@@ -1,0 +1,35 @@
+{
+  "captured_at": "2026-10-26T09:03:33.997862+09:00",
+  "success": true,
+  "regression_reproduced_before_fix": true,
+  "macos_tests_passed": 6,
+  "linux_tests_passed": 43,
+  "linux_tests_ignored": 2,
+  "verified": [
+    "3 failed persistence operations open the fill circuit",
+    "30 queued distinct cold misses make no further authority requests",
+    "warm frames remain available while persistence is unavailable",
+    "one failed cooldown probe reopens the circuit despite a successful upstream read",
+    "successful persistence after recovery closes the circuit; the next read is a hit",
+    "macOS cache layer suite; pinned Rust 1.90 Linux cache, daemon and CLI suites",
+    "cache all-targets clippy with warnings denied"
+  ],
+  "not_verified": [
+    "actual filesystem ENOSPC or power loss; this regression injects Store::put errors",
+    "large multi-node production workload",
+    "GitHub CI execution"
+  ],
+  "source_sha256": {
+    "Cargo.lock": "1206daefe8ee25fb4796e2f566d18e103c9454e0a7708096030e948a678747a8",
+    "crates/kasu-cache/Cargo.toml": "5942a78fad7304f0ab024205ceee149b43f3bea7b6c5e06806258c1e2209dd50",
+    "crates/kasu-cache/src/disk.rs": "b090b589f488aa83709c3e372f9d020b45fb98f38d2b8a422c29966544a29cfd",
+    "crates/kasu-cache/src/disk/state.rs": "2966e6c99b69174a7122178a4be264a6a5fcb430abd5a204fb7870c6213eb156",
+    "crates/kasu-cache/src/lib.rs": "20544911da2199ee81f35fa8eee00edb506bc901d24cbf3dd9c85723495f6dfc",
+    "crates/kasu-cache/tests/disk_lru.rs": "04bafb709183c25ef48103effc615ef29ee519653935a3d79440a3e6b19ebd43",
+    "crates/kasu-cache/tests/layers.rs": "0aedc8e03e62e6d50e0e460d9eb2ff79bc5ab723c88a571ac01440b4e25b88f2",
+    "crates/kasu-daemon/src/main.rs": "da037118a2a3e1102688531239b35e8bf1a7fee47b3871f8727f6b875c85d458",
+    "crates/kasu-daemon/tests/process.rs": "7d2f30d202b255f60b195e9069ede58a7a17e7c275a75c4cd7b396c4befb854b",
+    "tools/cache/Dockerfile": "2093597976e171226c49ca573264b62405ae87d4485356b49c48cbd75a053691",
+    "tools/cache/record-failures.py": "9ccb2b6e34cfc87422a55b66d636f5341dcc2781b6c6ceff3c6ee2a5a468f075"
+  }
+}

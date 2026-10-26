@@ -1,0 +1,75 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 DONE 0.0s
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.51kB done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.7s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#3 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e done
+#3 CACHED
+
+#4 [internal] load metadata for docker.io/library/rust@sha256:3914072ca0c3b8aad871db9169a651ccfce30cf58303e5d6f2db16d1d8a7e58f
+#4 DONE 0.0s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 247B done
+#5 DONE 0.0s
+
+#6 [stage-0 1/8] FROM docker.io/library/rust@sha256:3914072ca0c3b8aad871db9169a651ccfce30cf58303e5d6f2db16d1d8a7e58f
+#6 resolve docker.io/library/rust@sha256:3914072ca0c3b8aad871db9169a651ccfce30cf58303e5d6f2db16d1d8a7e58f done
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 26.17kB 0.0s done
+#7 DONE 0.0s
+
+#8 [stage-0 2/8] RUN apt-get update && apt-get install -y --no-install-recommends protobuf-compiler fuse3 util-linux python3 && rm -rf /var/lib/apt/lists/*
+#8 CACHED
+
+#9 [stage-0 4/8] WORKDIR /app
+#9 CACHED
+
+#10 [stage-0 3/8] RUN rustup component add clippy
+#10 CACHED
+
+#11 [stage-0 5/8] COPY Cargo.toml Cargo.lock ./
+#11 CACHED
+
+#12 [stage-0 6/8] COPY crates ./crates
+#12 DONE 0.0s
+
+#13 [stage-0 7/8] RUN --mount=type=cache,target=/usr/local/cargo/registry     --mount=type=cache,target=/app/target     rustc --version && uname -sm &&     sha256sum crates/kasu-cli/src/virtual_fs.rs crates/kasu-cli/src/virtual_fs/lower.rs crates/kasu-cli/src/remote.rs crates/kasu-cli/tests/e2e.rs crates/kasu-proto/proto/kasu.proto crates/kasu-server/src/backend.rs &&     cargo clippy -p kasu-cli --all-targets --locked -- -D warnings &&     mkdir -p /out &&     cargo test -p kasu-cli --test e2e --no-run --locked --message-format=json |     python3 -c 'import sys,json,shutil; artifacts=[json.loads(line) for line in sys.stdin]; exe=[a["executable"] for a in artifacts if a.get("reason")=="compiler-artifact" and a.get("target",{}).get("name")=="e2e" and a.get("executable")]; assert len(exe)==1; shutil.copyfile(exe[0],"/out/virtual-test")' &&     cp target/debug/kasu /out/kasu && chmod +x /out/virtual-test
+#13 0.070 rustc 1.90.0 (1159e78c4 2025-09-14)
+#13 0.071 Linux aarch64
+#13 0.072 8d6c02983ab0e206a132e31a41cad8ec5522f2a11e23bb51091f2aac13bc8eb1  crates/kasu-cli/src/virtual_fs.rs
+#13 0.072 df49a1595bf99e3e7be92c9092d5dc0858aa81ff858e3a076d759b7bed65358b  crates/kasu-cli/src/virtual_fs/lower.rs
+#13 0.072 b9d735702a00384c93b5ba1676908e3487127230a410b5d339a7dacb11b0c41f  crates/kasu-cli/src/remote.rs
+#13 0.072 d29decf8af12a89b0611f74f8d7e48c4b356185d075172a8a8375bfa543d949c  crates/kasu-cli/tests/e2e.rs
+#13 0.072 997717eeb6583bf656d45a92de91f51c3d30ecbc4053c4de7f4d959f21968b4c  crates/kasu-proto/proto/kasu.proto
+#13 0.072 7e5cb5ccf164e0ea753315cf1213414ecdbd392ff8c37ae1cd82eff1b5b1d934  crates/kasu-server/src/backend.rs
+#13 0.261     Checking kasu-cli v0.1.0 (/app/crates/kasu-cli)
+#13 0.559     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.44s
+#13 0.699    Compiling kasu-cli v0.1.0 (/app/crates/kasu-cli)
+#13 4.510     Finished `test` profile [unoptimized + debuginfo] target(s) in 3.91s
+#13 DONE 4.8s
+
+#14 [stage-0 8/8] RUN mkdir -p /app/target/debug && cp /out/kasu /app/target/debug/kasu
+#14 DONE 0.1s
+
+#15 exporting to image
+#15 exporting layers
+#15 exporting layers 5.2s done
+#15 exporting manifest sha256:fd1988422681e302cf00a9611233433fa67cf58388c31903c7a54220d52a5f0a done
+#15 exporting config sha256:db0b64b083083b18eceba6da30028e52dadbdd0b256b54e29c6ae0ea82e6dfdc done
+#15 exporting attestation manifest sha256:76d66cdbc0b150ce8e9fa731814101ce709bde3401b8c81d68e9a7398bd1a388 done
+#15 exporting manifest list sha256:144d5b7d93881cc2997a48c2bb3a49823f272bcbf74d6b53ecbd3796fe75c451 done
+#15 naming to docker.io/library/kasu:virtual-test done
+#15 unpacking to docker.io/library/kasu:virtual-test
+#15 unpacking to docker.io/library/kasu:virtual-test 1.8s done
+#15 DONE 7.0s

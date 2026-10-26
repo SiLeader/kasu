@@ -1,0 +1,29 @@
+name: Criterion benchmarks
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '51 17 * * *'
+permissions:
+  contents: read
+jobs:
+  throughput:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build with fixed Rust 1.90
+        run: docker build -f tools/criterion/Dockerfile -t kasu:criterion . > criterion-build.log 2>&1
+      - name: Measure Changesets, Derived Data and cold/warm packs
+        run: |
+          mkdir -p "$RUNNER_TEMP/criterion"
+          docker run --rm --network none --user "$(id -u):$(id -g)" \
+            -e KASU_CRITERION_OUTPUT=/reports \
+            --mount type=bind,source="$RUNNER_TEMP/criterion",target=/reports \
+            kasu:criterion > criterion-run.log 2>&1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: criterion-evidence
+          path: |
+            criterion-*.log
+            ${{ runner.temp }}/criterion

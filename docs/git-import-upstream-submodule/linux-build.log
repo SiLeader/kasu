@@ -1,0 +1,9 @@
+#12 [stage-0 6/8] RUN --mount=type=cache,target=/usr/local/cargo/registry     --mount=type=cache,target=/app/target     rustc --version && git --version && uname -sm &&     sha256sum crates/kasu-ingest/tests/roundtrip.rs crates/kasu-ingest/tests/fixtures/upstream-submodule-refs.txt crates/kasu-ingest/tests/fixtures/upstream-byte-path-refs.txt crates/kasu-ingest/tests/fixtures/upstream-byte-path-objects.txt crates/kasu-ingest/src/lib.rs &&     mkdir -p /out && cargo test -p kasu-ingest --test roundtrip --no-run --locked --message-format=json |     python3 -c 'import sys,json,shutil; data=[json.loads(line) for line in sys.stdin]; [sys.stderr.write(a["message"].get("rendered","")) for a in data if a.get("reason")=="compiler-message"]; paths=[a["executable"] for a in data if a.get("reason")=="compiler-artifact" and a.get("target",{}).get("name")=="roundtrip" and a.get("executable")]; assert len(paths)==1; shutil.copyfile(paths[0],"/out/roundtrip-test")' &&     cp target/debug/kasu-ingest /out/kasu-ingest && chmod +x /out/roundtrip-test
+#12 0.075 rustc 1.90.0 (1159e78c4 2025-09-14)
+#12 0.076 git version 2.39.5
+#12 0.076 Linux aarch64
+#12 0.076 9da58c1e4c16900c7ef6be57d5177f3af999b2f038c97540e68b725276803271  crates/kasu-ingest/tests/roundtrip.rs
+#12 0.076 765ac714ad87ab60c5e3f7db175209912d019ca1d34bfcc103767ea35c9f2cfe  crates/kasu-ingest/tests/fixtures/upstream-submodule-refs.txt
+#12 0.076 c9ee318dc775c6b4de03d5a0436840ceed4ad4647b715e88a4f3c7d9f76ac750  crates/kasu-ingest/tests/fixtures/upstream-byte-path-refs.txt
+#12 0.076 63bc889d8c1138367dfbe1e09e4ac1436c47c6aafc2da8d0eabb3818152c571d  crates/kasu-ingest/tests/fixtures/upstream-byte-path-objects.txt
+#12 0.077 bb7f140feff215b773d75483b6a9ba0ad44690fc55d85aaf0887a10f154456c4  crates/kasu-ingest/src/lib.rs

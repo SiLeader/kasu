@@ -1,0 +1,12 @@
+    Blocking waiting for file lock on build directory
+   Compiling kasu-ingest v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-ingest)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 20.50s
+     Running tests/roundtrip.rs (target/debug/deps/roundtrip-fe121601647096e8)
+
+running 3 tests
+test pinned_upstream_submodule_fixture_roundtrips_all_reachable_objects ... ok
+test pinned_oss_repository_roundtrips_all_objects_through_pack_and_clone ... ok
+test pinned_gitlab_byte_paths_tags_and_merges_roundtrip ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 10.09s
+

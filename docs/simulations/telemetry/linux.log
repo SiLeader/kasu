@@ -1,0 +1,120 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 967B done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.8s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#3 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.0s done
+#3 CACHED
+
+#4 [internal] load metadata for docker.io/library/rust@sha256:3914072ca0c3b8aad871db9169a651ccfce30cf58303e5d6f2db16d1d8a7e58f
+#4 DONE 0.0s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 247B done
+#5 DONE 0.0s
+
+#6 [stage-0 1/7] FROM docker.io/library/rust@sha256:3914072ca0c3b8aad871db9169a651ccfce30cf58303e5d6f2db16d1d8a7e58f
+#6 resolve docker.io/library/rust@sha256:3914072ca0c3b8aad871db9169a651ccfce30cf58303e5d6f2db16d1d8a7e58f 0.0s done
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 113.14kB 0.0s done
+#7 DONE 0.0s
+
+#8 [stage-0 2/7] RUN apt-get update && apt-get install -y --no-install-recommends protobuf-compiler python3 git && rm -rf /var/lib/apt/lists/*
+#8 CACHED
+
+#9 [stage-0 3/7] WORKDIR /app
+#9 CACHED
+
+#10 [stage-0 4/7] COPY Cargo.toml Cargo.lock ./
+#10 CACHED
+
+#11 [stage-0 5/7] COPY crates ./crates
+#11 DONE 0.0s
+
+#12 [stage-0 6/7] COPY tools/telemetry ./tools/telemetry
+#12 DONE 0.0s
+
+#13 [stage-0 7/7] RUN --mount=type=cache,target=/usr/local/cargo/registry     --mount=type=cache,target=/app/target     rustc --version && python3 --version && git --version && uname -sm &&     sha256sum crates/kasu-telemetry/src/*.rs tools/telemetry/verify.py &&     RUSTC_WRAPPER= cargo test -p kasu-telemetry --locked &&     RUSTC_WRAPPER= cargo build -p kasu-server -p kasu-cli -p kasu-cache -p kasu-daemon -p kasu-ingest --locked &&     RUSTC_WRAPPER= cargo build -p kasu-telemetry --example inspect_otlp --locked &&     python3 tools/telemetry/verify.py --out /out
+#13 0.127 rustc 1.90.0 (1159e78c4 2025-09-14)
+#13 0.129 Python 3.11.2
+#13 0.130 git version 2.39.5
+#13 0.130 Linux aarch64
+#13 0.131 c408832eaec476488a86d0f0c989f5a806108cd7633bc100ea11700080909a85  crates/kasu-telemetry/src/lib.rs
+#13 0.131 98e31c2134b4f9627cbb62a22eb2194c4eec8891a3ad7c4135b94faf48eb7f72  crates/kasu-telemetry/src/tests.rs
+#13 0.131 4944392cf8f7ef56b6c62a065df8339c15c32b3263e4241e883218f10332b99f  crates/kasu-telemetry/src/transport.rs
+#13 0.131 8668f80e15febbda228aa119ee32e04895c76e015bbaaf72bd3c67a454f4a626  tools/telemetry/verify.py
+#13 0.270    Compiling kasu-telemetry v0.1.0 (/app/crates/kasu-telemetry)
+#13 1.775     Finished `test` profile [unoptimized + debuginfo] target(s) in 1.62s
+#13 1.784      Running unittests src/lib.rs (target/debug/deps/kasu_telemetry-ed43772c352e6c9e)
+#13 1.785 
+#13 1.785 running 6 tests
+#13 1.786 test tests::configuration_is_opt_in_validated_and_errors_are_sanitized ... ok
+#13 1.786 test tests::malformed_and_oversized_contexts_start_new_roots ... ok
+#13 1.786 test tests::remote_parent_child_injection_sampling_and_event_exclusion ... ok
+#13 1.786 test tests::grpc_span_survives_headers_and_closes_as_cancelled_on_body_drop ... ok
+#13 1.786 test tests::blocking_worker_retains_span_and_current_context_after_caller_drops_it ... ok
+#13 1.789 test tests::full_export_queue_drops_spans_without_waiting_for_exporter ... ok
+#13 1.789 
+#13 1.789 test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+#13 1.789 
+#13 1.789    Doc-tests kasu_telemetry
+#13 1.814 
+#13 1.814 running 0 tests
+#13 1.814 
+#13 1.814 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+#13 1.814 
+#13 2.041    Compiling kasu-telemetry v0.1.0 (/app/crates/kasu-telemetry)
+#13 2.169    Compiling kasu-object v0.1.0 (/app/crates/kasu-object)
+#13 2.169    Compiling kasu-ingest v0.1.0 (/app/crates/kasu-ingest)
+#13 2.287    Compiling kasu-cache v0.1.0 (/app/crates/kasu-cache)
+#13 2.287    Compiling kasu-server v0.1.0 (/app/crates/kasu-server)
+#13 2.287    Compiling kasu-cli v0.1.0 (/app/crates/kasu-cli)
+#13 2.622    Compiling kasu-daemon v0.1.0 (/app/crates/kasu-daemon)
+#13 12.26     Finished `dev` profile [unoptimized + debuginfo] target(s) in 10.42s
+#13 12.51     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.18s
+#13 19.08 {
+#13 19.08   "platform": "Linux aarch64",
+#13 19.08   "spans": 44,
+#13 19.08   "cold_trace_spans": 27,
+#13 19.08   "warm_trace_spans": 12,
+#13 19.08   "services": [
+#13 19.08     "kasu-cache",
+#13 19.08     "kasu-cli",
+#13 19.08     "kasu-daemon",
+#13 19.08     "kasu-ingest",
+#13 19.08     "kasu-server"
+#13 19.08   ],
+#13 19.08   "remote_parent_statuses": [
+#13 19.08     0,
+#13 19.08     16
+#13 19.08   ],
+#13 19.08   "ignored_unsampled": true,
+#13 19.08   "invalid_and_duplicate_context_new_roots": true,
+#13 19.08   "disabled_cli_no_export": true,
+#13 19.08   "no_baggage_or_credentials": true,
+#13 19.08   "no_redirect_followed": true,
+#13 19.08   "graceful_shutdown": true,
+#13 19.08   "durations": {
+#13 19.08     "stalled_seconds": 2.0096298339776695,
+#13 19.08     "redirect_seconds": 0.008018792024813592,
+#13 19.08     "unavailable_seconds": 0.008670540992170572
+#13 19.08   }
+#13 19.08 }
+#13 DONE 19.3s
+
+#14 exporting to image
+#14 exporting layers 0.1s done
+#14 exporting manifest sha256:4b379181f65b019c7330fc42a9accd3346ba4cd0719cf12af9518d0a179be78c 0.0s done
+#14 exporting config sha256:fb42f55c5f90d14948a22a3e86538f870c74444686b75a44ba5576edde1fe9ea done
+#14 exporting attestation manifest sha256:c2621bdc2363ad2707c5f8e6051487ccdb6c08d200b813828d89d296b6de24b7 0.0s done
+#14 exporting manifest list sha256:58a69e30420b995b0e36e5c82c5d657c20f97ae7f6a0b5a9bb3e467e66cb51d6 0.0s done
+#14 naming to docker.io/library/kasu:telemetry-test done
+#14 unpacking to docker.io/library/kasu:telemetry-test 0.0s done
+#14 DONE 0.2s

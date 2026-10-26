@@ -1,0 +1,851 @@
+packet: clone< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+packet: clone< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/heads/main
+packet: clone< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: clone< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/tags/release^{}
+packet: clone< 0000
+packet: clone> want 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 multi_ack_detailed side-band-64k no-progress ofs-delta deepen-since deepen-not agent=git/2.39.5
+packet: clone> want 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: clone> want 857c884fc3656a92521093cb1219f4ebfc1994a7
+packet: clone> 0000
+packet: clone> done
+packet: clone< NAK
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: fetch< version 2
+packet: fetch< agent=kasu/0.1.0
+packet: fetch< ls-refs=unborn
+packet: fetch< fetch=shallow filter
+packet: fetch< object-format=sha1
+packet: fetch< 0000
+packet: fetch> command=ls-refs
+packet: fetch> agent=git/2.39.5
+packet: fetch> object-format=sha1
+packet: fetch> 0001
+packet: fetch> peel
+packet: fetch> symrefs
+packet: fetch> unborn
+packet: fetch> ref-prefix refs/heads/
+packet: fetch> ref-prefix refs/heads/main
+packet: fetch> ref-prefix refs/tags/
+packet: fetch> 0000
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release peeled:8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch< 0000
+packet: fetch> 0000
+packet: clone< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+packet: clone< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/heads/main
+packet: clone< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: clone< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/tags/release^{}
+packet: clone< 0000
+packet: clone> want 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 multi_ack_detailed side-band-64k no-progress ofs-delta deepen-since deepen-not agent=git/2.39.5
+packet: clone> want 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: clone> want 857c884fc3656a92521093cb1219f4ebfc1994a7
+packet: clone> deepen 1
+packet: clone> 0000
+packet: clone< shallow 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: clone< 0000
+packet: clone> done
+packet: clone< NAK
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/tags/release^{}
+packet: fetch< 0000
+packet: fetch> want 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 multi_ack_detailed side-band-64k deepen-relative no-progress include-tag ofs-delta deepen-since deepen-not agent=git/2.39.5
+packet: fetch> shallow 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch> deepen 1
+packet: fetch> 0000
+packet: fetch< shallow 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: fetch< unshallow 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch< 0000
+packet: fetch> have 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch> done
+packet: fetch< ACK 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: fetch< version 2
+packet: fetch< agent=kasu/0.1.0
+packet: fetch< ls-refs=unborn
+packet: fetch< fetch=shallow filter
+packet: fetch< object-format=sha1
+packet: fetch< 0000
+packet: fetch> command=ls-refs
+packet: fetch> agent=git/2.39.5
+packet: fetch> object-format=sha1
+packet: fetch> 0001
+packet: fetch> peel
+packet: fetch> symrefs
+packet: fetch> unborn
+packet: fetch> ref-prefix refs/heads/
+packet: fetch> ref-prefix refs/heads/main
+packet: fetch> ref-prefix refs/tags/
+packet: fetch> 0000
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release peeled:8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch< 0000
+packet: fetch> 0000
+packet: clone< version 1
+packet: clone< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+packet: clone< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/heads/main
+packet: clone< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: clone< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/tags/release^{}
+packet: clone< 0000
+packet: clone> want 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 multi_ack_detailed side-band-64k no-progress ofs-delta deepen-since deepen-not agent=git/2.39.5
+packet: clone> want 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: clone> want 857c884fc3656a92521093cb1219f4ebfc1994a7
+packet: clone> 0000
+packet: clone> done
+packet: clone< NAK
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: fetch< version 2
+packet: fetch< agent=kasu/0.1.0
+packet: fetch< ls-refs=unborn
+packet: fetch< fetch=shallow filter
+packet: fetch< object-format=sha1
+packet: fetch< 0000
+packet: fetch> command=ls-refs
+packet: fetch> agent=git/2.39.5
+packet: fetch> object-format=sha1
+packet: fetch> 0001
+packet: fetch> peel
+packet: fetch> symrefs
+packet: fetch> unborn
+packet: fetch> ref-prefix refs/heads/
+packet: fetch> ref-prefix refs/heads/main
+packet: fetch> ref-prefix refs/tags/
+packet: fetch> 0000
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release peeled:8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch< 0000
+packet: fetch> 0000
+packet: clone< version 1
+packet: clone< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+packet: clone< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/heads/main
+packet: clone< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: clone< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/tags/release^{}
+packet: clone< 0000
+packet: clone> want 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 multi_ack_detailed side-band-64k no-progress ofs-delta deepen-since deepen-not agent=git/2.39.5
+packet: clone> want 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: clone> want 857c884fc3656a92521093cb1219f4ebfc1994a7
+packet: clone> deepen 1
+packet: clone> 0000
+packet: clone< shallow 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: clone< 0000
+packet: clone> done
+packet: clone< NAK
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: fetch< version 1
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/tags/release^{}
+packet: fetch< 0000
+packet: fetch> want 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 multi_ack_detailed side-band-64k deepen-relative no-progress include-tag ofs-delta deepen-since deepen-not agent=git/2.39.5
+packet: fetch> shallow 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch> deepen 1
+packet: fetch> 0000
+packet: fetch< shallow 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: fetch< unshallow 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch< 0000
+packet: fetch> have 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch> done
+packet: fetch< ACK 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: fetch< version 2
+packet: fetch< agent=kasu/0.1.0
+packet: fetch< ls-refs=unborn
+packet: fetch< fetch=shallow filter
+packet: fetch< object-format=sha1
+packet: fetch< 0000
+packet: fetch> command=ls-refs
+packet: fetch> agent=git/2.39.5
+packet: fetch> object-format=sha1
+packet: fetch> 0001
+packet: fetch> peel
+packet: fetch> symrefs
+packet: fetch> unborn
+packet: fetch> ref-prefix refs/heads/
+packet: fetch> ref-prefix refs/heads/main
+packet: fetch> ref-prefix refs/tags/
+packet: fetch> 0000
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release peeled:8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch< 0000
+packet: fetch> 0000
+packet: clone< version 2
+packet: clone< agent=kasu/0.1.0
+packet: clone< ls-refs=unborn
+packet: clone< fetch=shallow filter
+packet: clone< object-format=sha1
+packet: clone< 0000
+packet: clone> command=ls-refs
+packet: clone> agent=git/2.39.5
+packet: clone> object-format=sha1
+packet: clone> 0001
+packet: clone> peel
+packet: clone> symrefs
+packet: clone> unborn
+packet: clone> ref-prefix HEAD
+packet: clone> ref-prefix refs/heads/
+packet: clone> ref-prefix refs/tags/
+packet: clone> 0000
+packet: clone< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 HEAD symref-target:refs/heads/main
+packet: clone< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/heads/main
+packet: clone< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release peeled:8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: clone< 0000
+packet: clone> command=fetch
+packet: clone> agent=git/2.39.5
+packet: clone> object-format=sha1
+packet: clone> 0001
+packet: clone> thin-pack
+packet: clone> no-progress
+packet: clone> ofs-delta
+packet: clone> want 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: clone> want 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: clone> want 857c884fc3656a92521093cb1219f4ebfc1994a7
+packet: clone> done
+packet: clone> 0000
+packet: clone< packfile
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: fetch< version 2
+packet: fetch< agent=kasu/0.1.0
+packet: fetch< ls-refs=unborn
+packet: fetch< fetch=shallow filter
+packet: fetch< object-format=sha1
+packet: fetch< 0000
+packet: fetch> command=ls-refs
+packet: fetch> agent=git/2.39.5
+packet: fetch> object-format=sha1
+packet: fetch> 0001
+packet: fetch> peel
+packet: fetch> symrefs
+packet: fetch> unborn
+packet: fetch> ref-prefix refs/heads/
+packet: fetch> ref-prefix refs/heads/main
+packet: fetch> ref-prefix refs/tags/
+packet: fetch> 0000
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release peeled:8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch< 0000
+packet: fetch> 0000
+packet: clone< version 2
+packet: clone< agent=kasu/0.1.0
+packet: clone< ls-refs=unborn
+packet: clone< fetch=shallow filter
+packet: clone< object-format=sha1
+packet: clone< 0000
+packet: clone> command=ls-refs
+packet: clone> agent=git/2.39.5
+packet: clone> object-format=sha1
+packet: clone> 0001
+packet: clone> peel
+packet: clone> symrefs
+packet: clone> unborn
+packet: clone> ref-prefix HEAD
+packet: clone> ref-prefix refs/heads/
+packet: clone> ref-prefix refs/tags/
+packet: clone> 0000
+packet: clone< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 HEAD symref-target:refs/heads/main
+packet: clone< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/heads/main
+packet: clone< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release peeled:8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: clone< 0000
+packet: clone> command=fetch
+packet: clone> agent=git/2.39.5
+packet: clone> object-format=sha1
+packet: clone> 0001
+packet: clone> thin-pack
+packet: clone> no-progress
+packet: clone> ofs-delta
+packet: clone> deepen 1
+packet: clone> want 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: clone> want 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: clone> want 857c884fc3656a92521093cb1219f4ebfc1994a7
+packet: clone> done
+packet: clone> 0000
+packet: clone< shallow-info
+packet: clone< shallow 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: clone< 0001
+packet: clone< packfile
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: fetch< version 2
+packet: fetch< agent=kasu/0.1.0
+packet: fetch< ls-refs=unborn
+packet: fetch< fetch=shallow filter
+packet: fetch< object-format=sha1
+packet: fetch< 0000
+packet: fetch> command=ls-refs
+packet: fetch> agent=git/2.39.5
+packet: fetch> object-format=sha1
+packet: fetch> 0001
+packet: fetch> peel
+packet: fetch> symrefs
+packet: fetch> unborn
+packet: fetch> ref-prefix refs/heads/
+packet: fetch> ref-prefix refs/heads/main
+packet: fetch> ref-prefix refs/tags/
+packet: fetch> 0000
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release peeled:8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch< 0000
+packet: fetch> command=fetch
+packet: fetch> agent=git/2.39.5
+packet: fetch> object-format=sha1
+packet: fetch> 0001
+packet: fetch> thin-pack
+packet: fetch> no-progress
+packet: fetch> include-tag
+packet: fetch> ofs-delta
+packet: fetch> shallow 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch> deepen 1
+packet: fetch> deepen-relative
+packet: fetch> want 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch> have 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch> 0000
+packet: fetch< acknowledgments
+packet: fetch< ACK 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch< ready
+packet: fetch< 0001
+packet: fetch< shallow-info
+packet: fetch< shallow 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: fetch< unshallow 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch< 0001
+packet: fetch< packfile
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: fetch< version 2
+packet: fetch< agent=kasu/0.1.0
+packet: fetch< ls-refs=unborn
+packet: fetch< fetch=shallow filter
+packet: fetch< object-format=sha1
+packet: fetch< 0000
+packet: fetch> command=ls-refs
+packet: fetch> agent=git/2.39.5
+packet: fetch> object-format=sha1
+packet: fetch> 0001
+packet: fetch> peel
+packet: fetch> symrefs
+packet: fetch> unborn
+packet: fetch> ref-prefix refs/heads/
+packet: fetch> ref-prefix refs/heads/main
+packet: fetch> ref-prefix refs/tags/
+packet: fetch> 0000
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release peeled:8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch< 0000
+packet: fetch> 0000
+packet: push< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/heads/main\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet: push< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: push< 0000
+packet: push> 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/main\0 report-status side-band-64k object-format=sha1 agent=git/2.39.5
+packet: push> 0000
+packet: sideband< \1000eunpack ok0017ok refs/heads/main0000
+packet: sideband< 0000
+packet: push< unpack ok
+packet: push< ok refs/heads/main
+packet: push< 0000
+packet: push< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/main\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet: push< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: push< 0000
+packet: push> 0000000000000000000000000000000000000000 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/temporary\0 report-status side-band-64k object-format=sha1 agent=git/2.39.5
+packet: push> 0000
+packet: sideband< \1000eunpack ok001cok refs/heads/temporary0000
+packet: sideband< 0000
+packet: push< unpack ok
+packet: push< ok refs/heads/temporary
+packet: push< 0000
+packet: push< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/main\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet: push< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/temporary
+packet: push< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: push< 0000
+packet: push> 64a121103947f59d9b3b7e61c30c9279a3a54884 0000000000000000000000000000000000000000 refs/heads/temporary\0 report-status side-band-64k object-format=sha1 agent=git/2.39.5
+packet: push> 0000
+packet: sideband< \1000eunpack ok001cok refs/heads/temporary0000
+packet: sideband< 0000
+packet: push< unpack ok
+packet: push< ok refs/heads/temporary
+packet: push< 0000
+packet: push< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/main\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet: push< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: push< 0000
+packet: push> 0000000000000000000000000000000000000000 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/atomic-branch\0 report-status side-band-64k atomic object-format=sha1 agent=git/2.39.5
+packet: push> 0000000000000000000000000000000000000000 a0f8226cd05d99e48671ed6484be785fc105f964 refs/tags/ssh-tag
+packet: push> 0000
+packet: sideband< \1000eunpack ok0020ok refs/heads/atomic-branch0019ok refs/tags/ssh-tag0000
+packet: sideband< 0000
+packet: push< unpack ok
+packet: push< ok refs/heads/atomic-branch
+packet: push< ok refs/tags/ssh-tag
+packet: push< 0000
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/atomic-branch
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/tags/release^{}
+packet: fetch< a0f8226cd05d99e48671ed6484be785fc105f964 refs/tags/ssh-tag
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/tags/ssh-tag^{}
+packet: fetch< 0000
+packet: fetch> want 64a121103947f59d9b3b7e61c30c9279a3a54884 multi_ack_detailed side-band-64k no-progress include-tag ofs-delta deepen-since deepen-not agent=git/2.39.5
+packet: fetch> want 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: fetch> want a0f8226cd05d99e48671ed6484be785fc105f964
+packet: fetch> 0000
+packet: fetch> have 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch> done
+packet: fetch< ACK 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/atomic-branch
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/tags/release^{}
+packet: fetch< a0f8226cd05d99e48671ed6484be785fc105f964 refs/tags/ssh-tag
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/tags/ssh-tag^{}
+packet: fetch< 0000
+packet: fetch> want 64a121103947f59d9b3b7e61c30c9279a3a54884 multi_ack_detailed side-band-64k no-progress include-tag ofs-delta deepen-since deepen-not agent=git/2.39.5
+packet: fetch> want 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: fetch> want a0f8226cd05d99e48671ed6484be785fc105f964
+packet: fetch> shallow 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: fetch> 0000
+packet: fetch> have 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch> done
+packet: fetch< ACK 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/atomic-branch
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/tags/release^{}
+packet: fetch< a0f8226cd05d99e48671ed6484be785fc105f964 refs/tags/ssh-tag
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/tags/ssh-tag^{}
+packet: fetch< 0000
+packet: fetch> want 64a121103947f59d9b3b7e61c30c9279a3a54884 multi_ack_detailed side-band-64k no-progress include-tag ofs-delta deepen-since deepen-not agent=git/2.39.5
+packet: fetch> want 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: fetch> shallow 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: fetch> deepen 2147483647
+packet: fetch> 0000
+packet: fetch< unshallow 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: fetch< 0000
+packet: fetch> have 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch> have 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: fetch> have 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: fetch> done
+packet: fetch< ACK 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: fetch< version 1
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/atomic-branch
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/tags/release^{}
+packet: fetch< a0f8226cd05d99e48671ed6484be785fc105f964 refs/tags/ssh-tag
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/tags/ssh-tag^{}
+packet: fetch< 0000
+packet: fetch> want 64a121103947f59d9b3b7e61c30c9279a3a54884 multi_ack_detailed side-band-64k no-progress include-tag ofs-delta deepen-since deepen-not agent=git/2.39.5
+packet: fetch> want 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: fetch> want a0f8226cd05d99e48671ed6484be785fc105f964
+packet: fetch> 0000
+packet: fetch> have 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch> done
+packet: fetch< ACK 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: fetch< version 1
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/atomic-branch
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/tags/release^{}
+packet: fetch< a0f8226cd05d99e48671ed6484be785fc105f964 refs/tags/ssh-tag
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/tags/ssh-tag^{}
+packet: fetch< 0000
+packet: fetch> want 64a121103947f59d9b3b7e61c30c9279a3a54884 multi_ack_detailed side-band-64k no-progress include-tag ofs-delta deepen-since deepen-not agent=git/2.39.5
+packet: fetch> want 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: fetch> want a0f8226cd05d99e48671ed6484be785fc105f964
+packet: fetch> shallow 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: fetch> 0000
+packet: fetch> have 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch> done
+packet: fetch< ACK 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: fetch< version 1
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/atomic-branch
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: fetch< 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5 refs/tags/release^{}
+packet: fetch< a0f8226cd05d99e48671ed6484be785fc105f964 refs/tags/ssh-tag
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/tags/ssh-tag^{}
+packet: fetch< 0000
+packet: fetch> want 64a121103947f59d9b3b7e61c30c9279a3a54884 multi_ack_detailed side-band-64k no-progress include-tag ofs-delta deepen-since deepen-not agent=git/2.39.5
+packet: fetch> want 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: fetch> shallow 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: fetch> deepen 2147483647
+packet: fetch> 0000
+packet: fetch< unshallow 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: fetch< 0000
+packet: fetch> have 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch> have 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: fetch> have 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: fetch> done
+packet: fetch< ACK 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: fetch< version 2
+packet: fetch< agent=kasu/0.1.0
+packet: fetch< ls-refs=unborn
+packet: fetch< fetch=shallow filter
+packet: fetch< object-format=sha1
+packet: fetch< 0000
+packet: fetch> command=ls-refs
+packet: fetch> agent=git/2.39.5
+packet: fetch> object-format=sha1
+packet: fetch> 0001
+packet: fetch> peel
+packet: fetch> symrefs
+packet: fetch> unborn
+packet: fetch> ref-prefix refs/heads/
+packet: fetch> ref-prefix refs/heads/main
+packet: fetch> ref-prefix refs/tags/
+packet: fetch> 0000
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/atomic-branch
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release peeled:8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch< a0f8226cd05d99e48671ed6484be785fc105f964 refs/tags/ssh-tag peeled:64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: fetch< 0000
+packet: fetch> 0000
+packet: fetch< version 2
+packet: fetch< agent=kasu/0.1.0
+packet: fetch< ls-refs=unborn
+packet: fetch< fetch=shallow filter
+packet: fetch< object-format=sha1
+packet: fetch< 0000
+packet: fetch> command=ls-refs
+packet: fetch> agent=git/2.39.5
+packet: fetch> object-format=sha1
+packet: fetch> 0001
+packet: fetch> peel
+packet: fetch> symrefs
+packet: fetch> unborn
+packet: fetch> ref-prefix refs/heads/
+packet: fetch> ref-prefix refs/heads/main
+packet: fetch> ref-prefix refs/tags/
+packet: fetch> 0000
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/atomic-branch
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release peeled:8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch< a0f8226cd05d99e48671ed6484be785fc105f964 refs/tags/ssh-tag peeled:64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: fetch< 0000
+packet: fetch> command=fetch
+packet: fetch> agent=git/2.39.5
+packet: fetch> object-format=sha1
+packet: fetch> 0001
+packet: fetch> thin-pack
+packet: fetch> no-progress
+packet: fetch> include-tag
+packet: fetch> ofs-delta
+packet: fetch> shallow 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: fetch> want 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: fetch> want 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: fetch> want a0f8226cd05d99e48671ed6484be785fc105f964
+packet: fetch> have 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch> 0000
+packet: fetch< acknowledgments
+packet: fetch< ACK 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch< ready
+packet: fetch< 0001
+packet: fetch< packfile
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: fetch< version 2
+packet: fetch< agent=kasu/0.1.0
+packet: fetch< ls-refs=unborn
+packet: fetch< fetch=shallow filter
+packet: fetch< object-format=sha1
+packet: fetch< 0000
+packet: fetch> command=ls-refs
+packet: fetch> agent=git/2.39.5
+packet: fetch> object-format=sha1
+packet: fetch> 0001
+packet: fetch> peel
+packet: fetch> symrefs
+packet: fetch> unborn
+packet: fetch> ref-prefix refs/heads/
+packet: fetch> ref-prefix refs/heads/main
+packet: fetch> ref-prefix refs/tags/
+packet: fetch> 0000
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/atomic-branch
+packet: fetch< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/main
+packet: fetch< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release peeled:8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch< a0f8226cd05d99e48671ed6484be785fc105f964 refs/tags/ssh-tag peeled:64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: fetch< 0000
+packet: fetch> command=fetch
+packet: fetch> agent=git/2.39.5
+packet: fetch> object-format=sha1
+packet: fetch> 0001
+packet: fetch> thin-pack
+packet: fetch> no-progress
+packet: fetch> include-tag
+packet: fetch> ofs-delta
+packet: fetch> shallow 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: fetch> deepen 2147483647
+packet: fetch> want 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: fetch> want 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: fetch> have 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch> have 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: fetch> have 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: fetch> 0000
+packet: fetch< acknowledgments
+packet: fetch< ACK 8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: fetch< ACK 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: fetch< ACK 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: fetch< ready
+packet: fetch< 0001
+packet: fetch< shallow-info
+packet: fetch< unshallow 6eba86c9902a4ad91fda808a4a1e9400d98180f1
+packet: fetch< 0001
+packet: fetch< packfile
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: clone< version 2
+packet: clone< agent=kasu/0.1.0
+packet: clone< ls-refs=unborn
+packet: clone< fetch=shallow filter
+packet: clone< object-format=sha1
+packet: clone< 0000
+packet: clone> command=ls-refs
+packet: clone> agent=git/2.39.5
+packet: clone> object-format=sha1
+packet: clone> 0001
+packet: clone> peel
+packet: clone> symrefs
+packet: clone> unborn
+packet: clone> ref-prefix HEAD
+packet: clone> ref-prefix refs/heads/
+packet: clone> ref-prefix refs/tags/
+packet: clone> 0000
+packet: clone< 64f61ed35e52911ac2961ca4b32415314008b5c9 HEAD symref-target:refs/heads/main
+packet: clone< 64f61ed35e52911ac2961ca4b32415314008b5c9 refs/heads/atomic-branch
+packet: clone< 64f61ed35e52911ac2961ca4b32415314008b5c9 refs/heads/main
+packet: clone< 5b26e1f10e6166db7d46547447f01e6778548389 refs/tags/release peeled:8f6fc88555e11bea22b9935dfd3bd555b76ebaf8
+packet: clone< 8a4697d3c6a41f9ba1f5274d57b91931db2edfa1 refs/tags/ssh-tag peeled:64f61ed35e52911ac2961ca4b32415314008b5c9
+packet: clone< 0000
+packet: clone> command=fetch
+packet: clone> agent=git/2.39.5
+packet: clone> object-format=sha1
+packet: clone> 0001
+packet: clone> thin-pack
+packet: clone> no-progress
+packet: clone> ofs-delta
+packet: clone> want 64f61ed35e52911ac2961ca4b32415314008b5c9
+packet: clone> want 64f61ed35e52911ac2961ca4b32415314008b5c9
+packet: clone> want 64f61ed35e52911ac2961ca4b32415314008b5c9
+packet: clone> want 5b26e1f10e6166db7d46547447f01e6778548389
+packet: clone> want 8a4697d3c6a41f9ba1f5274d57b91931db2edfa1
+packet: clone> done
+packet: clone> 0000
+packet: clone< packfile
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: ls-remote< version 2
+packet: ls-remote< agent=kasu/0.1.0
+packet: ls-remote< ls-refs=unborn
+packet: ls-remote< fetch=shallow filter
+packet: ls-remote< object-format=sha1
+packet: ls-remote< 0000
+packet: ls-remote> command=ls-refs
+packet: ls-remote> agent=git/2.39.5
+packet: ls-remote> object-format=sha1
+packet: ls-remote> 0001
+packet: ls-remote> peel
+packet: ls-remote> symrefs
+packet: ls-remote> unborn
+packet: ls-remote> 0000
+packet: ls-remote< 64f61ed35e52911ac2961ca4b32415314008b5c9 HEAD symref-target:refs/heads/main
+packet: ls-remote< 64f61ed35e52911ac2961ca4b32415314008b5c9 refs/heads/atomic-branch
+packet: ls-remote< 64f61ed35e52911ac2961ca4b32415314008b5c9 refs/heads/main
+packet: ls-remote< 5b26e1f10e6166db7d46547447f01e6778548389 refs/tags/release peeled:8f6fc88555e11bea22b9935dfd3bd555b76ebaf8
+packet: ls-remote< 8a4697d3c6a41f9ba1f5274d57b91931db2edfa1 refs/tags/ssh-tag peeled:64f61ed35e52911ac2961ca4b32415314008b5c9
+packet: ls-remote< 0000
+packet: ls-remote> 0000
+packet: ls-remote< ERR kasu SSH request failed
+packet: clone< version 2
+packet: clone< agent=kasu/0.1.0
+packet: clone< ls-refs=unborn
+packet: clone< fetch=shallow filter
+packet: clone< object-format=sha1
+packet: clone< 0000
+packet: clone> command=ls-refs
+packet: clone> agent=git/2.39.5
+packet: clone> object-format=sha1
+packet: clone> 0001
+packet: clone> peel
+packet: clone> symrefs
+packet: clone> unborn
+packet: clone> ref-prefix HEAD
+packet: clone> ref-prefix refs/heads/
+packet: clone> ref-prefix refs/tags/
+packet: clone> 0000
+packet: clone< 64a121103947f59d9b3b7e61c30c9279a3a54884 HEAD symref-target:refs/heads/main
+packet: clone< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/atomic-branch
+packet: clone< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/main
+packet: clone< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release peeled:8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: clone< a0f8226cd05d99e48671ed6484be785fc105f964 refs/tags/ssh-tag peeled:64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: clone< 0000
+packet: clone> command=fetch
+packet: clone> agent=git/2.39.5
+packet: clone> object-format=sha1
+packet: clone> 0001
+packet: clone> thin-pack
+packet: clone> no-progress
+packet: clone> ofs-delta
+packet: clone> filter blob:none
+packet: clone> want 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: clone> want 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: clone> want 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: clone> want 857c884fc3656a92521093cb1219f4ebfc1994a7
+packet: clone> want a0f8226cd05d99e48671ed6484be785fc105f964
+packet: clone> done
+packet: clone> 0000
+packet: clone< packfile
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: fetch< version 2
+packet: fetch< agent=kasu/0.1.0
+packet: fetch< ls-refs=unborn
+packet: fetch< fetch=shallow filter
+packet: fetch< object-format=sha1
+packet: fetch< 0000
+packet: fetch> command=fetch
+packet: fetch> agent=git/2.39.5
+packet: fetch> object-format=sha1
+packet: fetch> 0001
+packet: fetch> thin-pack
+packet: fetch> no-progress
+packet: fetch> ofs-delta
+packet: fetch> filter blob:none
+packet: fetch> want a886876ec4d5fd119a041b73a533b3192f74752a
+packet: fetch> want fd9228c71d0bd6db1a96e9d794b6273f3ac3a19c
+packet: fetch> done
+packet: fetch> 0000
+packet: fetch< packfile
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: clone< version 2
+packet: clone< agent=kasu/0.1.0
+packet: clone< ls-refs=unborn
+packet: clone< fetch=shallow filter
+packet: clone< object-format=sha1
+packet: clone< 0000
+packet: clone> command=ls-refs
+packet: clone> agent=git/2.39.5
+packet: clone> object-format=sha1
+packet: clone> 0001
+packet: clone> peel
+packet: clone> symrefs
+packet: clone> unborn
+packet: clone> ref-prefix HEAD
+packet: clone> ref-prefix refs/heads/
+packet: clone> ref-prefix refs/tags/
+packet: clone> 0000
+packet: clone< 7487c54db2be141f04d588cd369df43419197b25 HEAD symref-target:refs/heads/main
+packet: clone< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/atomic-branch
+packet: clone< 7487c54db2be141f04d588cd369df43419197b25 refs/heads/main
+packet: clone< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release peeled:8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: clone< a0f8226cd05d99e48671ed6484be785fc105f964 refs/tags/ssh-tag peeled:64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: clone< 0000
+packet: clone> command=fetch
+packet: clone> agent=git/2.39.5
+packet: clone> object-format=sha1
+packet: clone> 0001
+packet: clone> thin-pack
+packet: clone> no-progress
+packet: clone> ofs-delta
+packet: clone> want 7487c54db2be141f04d588cd369df43419197b25
+packet: clone> want 64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: clone> want 7487c54db2be141f04d588cd369df43419197b25
+packet: clone> want 857c884fc3656a92521093cb1219f4ebfc1994a7
+packet: clone> want a0f8226cd05d99e48671ed6484be785fc105f964
+packet: clone> done
+packet: clone> 0000
+packet: clone< packfile
+packet: sideband< PACK ...
+packet: sideband< 0000
+packet: push< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/atomic-branch\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet: push< 7487c54db2be141f04d588cd369df43419197b25 refs/heads/main
+packet: push< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: push< a0f8226cd05d99e48671ed6484be785fc105f964 refs/tags/ssh-tag
+packet: push< 0000
+packet: push> 7487c54db2be141f04d588cd369df43419197b25 0b211d6ae8b2d65a7a36ce0055c441e254f3f941 refs/heads/main\0 report-status side-band-64k object-format=sha1 agent=git/2.39.5
+packet: push> 0000
+packet: sideband< \1000eunpack ok0017ok refs/heads/main0000
+packet: sideband< 0000
+packet: push< unpack ok
+packet: push< ok refs/heads/main
+packet: push< 0000
+packet: push< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/atomic-branch\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet: push< 0b211d6ae8b2d65a7a36ce0055c441e254f3f941 refs/heads/main
+packet: push< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: push< a0f8226cd05d99e48671ed6484be785fc105f964 refs/tags/ssh-tag
+packet: push< 0000
+packet: push> 0b211d6ae8b2d65a7a36ce0055c441e254f3f941 5aa2ce8b3e667736eb7aa32101ad7b1698892359 refs/heads/main\0 report-status side-band-64k object-format=sha1 agent=git/2.39.5
+packet: push> 0000
+packet: sideband< \1000eunpack ok0046ng refs/heads/main final tree changes a path that is not writable0000
+packet: sideband< 0000
+packet: push< unpack ok
+packet: push< ng refs/heads/main final tree changes a path that is not writable
+packet: push< 0000
+packet: push< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/atomic-branch\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet: push< 0b211d6ae8b2d65a7a36ce0055c441e254f3f941 refs/heads/main
+packet: push< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: push< a0f8226cd05d99e48671ed6484be785fc105f964 refs/tags/ssh-tag
+packet: push< 0000
+packet: push> 0b211d6ae8b2d65a7a36ce0055c441e254f3f941 0000000000000000000000000000000000000000 refs/heads/main\0 report-status side-band-64k object-format=sha1 agent=git/2.39.5
+packet: push> 0000
+packet: sideband< \1000eunpack ok0030ng refs/heads/main ref deletion is disabled0000
+packet: sideband< 0000
+packet: push< unpack ok
+packet: push< ng refs/heads/main ref deletion is disabled
+packet: push< 0000
+packet: push< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/atomic-branch\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet: push< 0b211d6ae8b2d65a7a36ce0055c441e254f3f941 refs/heads/main
+packet: push< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release
+packet: push< a0f8226cd05d99e48671ed6484be785fc105f964 refs/tags/ssh-tag
+packet: push< 0000
+packet: push> 0000000000000000000000000000000000000000 5aa2ce8b3e667736eb7aa32101ad7b1698892359 refs/heads/denied\0 report-status side-band-64k object-format=sha1 agent=git/2.39.5
+packet: push> 0000
+packet: sideband< \1000eunpack ok002dng refs/heads/denied ref is not writable0000
+packet: sideband< 0000
+packet: push< unpack ok
+packet: push< ng refs/heads/denied ref is not writable
+packet: push< 0000
+packet: ls-remote< version 2
+packet: ls-remote< agent=kasu/0.1.0
+packet: ls-remote< ls-refs=unborn
+packet: ls-remote< fetch=shallow filter
+packet: ls-remote< object-format=sha1
+packet: ls-remote< 0000
+packet: ls-remote> command=ls-refs
+packet: ls-remote> agent=git/2.39.5
+packet: ls-remote> object-format=sha1
+packet: ls-remote> 0001
+packet: ls-remote> peel
+packet: ls-remote> symrefs
+packet: ls-remote> unborn
+packet: ls-remote> 0000
+packet: ls-remote< 0b211d6ae8b2d65a7a36ce0055c441e254f3f941 HEAD symref-target:refs/heads/main
+packet: ls-remote< 64a121103947f59d9b3b7e61c30c9279a3a54884 refs/heads/atomic-branch
+packet: ls-remote< 0b211d6ae8b2d65a7a36ce0055c441e254f3f941 refs/heads/main
+packet: ls-remote< 857c884fc3656a92521093cb1219f4ebfc1994a7 refs/tags/release peeled:8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5
+packet: ls-remote< a0f8226cd05d99e48671ed6484be785fc105f964 refs/tags/ssh-tag peeled:64a121103947f59d9b3b7e61c30c9279a3a54884
+packet: ls-remote< 0000
+packet: ls-remote> 0000

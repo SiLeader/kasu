@@ -1,0 +1,9 @@
+    Checking kasu-derived v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-derived)
+   Compiling kasu-proto v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-proto)
+    Checking kasu-ops v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-ops)
+    Checking kasu-git v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-git)
+    Checking kasu-ingest v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-ingest)
+    Checking kasu-object v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-object)
+    Checking kasu-server v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-server)
+    Checking kasu-fuzz v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/fuzz)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.54s

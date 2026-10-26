@@ -1,0 +1,8 @@
+rustc 1.98.1 (48a229cea 2026-09-01)
+Darwin arm64
+21b6da5875ac3f00735bb5b1341c0a347d5ed84fbaeb441308caa72492bcdaa6  Cargo.lock
+409f87f628e3f093ccbfda7b95a6a9c5690164ea27963570e96e9378619f75c8  crates/kasu-cache/src/lib.rs
+77d9ae8f7a2de84fead5d88a7a7120ed782778e3cc59f282ad50337f653a8123  crates/kasu-cache/Cargo.toml
+43dbdfcf43402fb29629904552d8ccfdaa8486427c7adbdf0e66721ca9b41e60  crates/kasu-sim/Cargo.toml
+bdf708b19a60cbf504568856372eb7bfafad637c840a69c84d9d8adec8f3fc30  crates/kasu-sim/src/cache.rs
+35916e654ec6748592a8375eb81e09e0b49bf4742019794bfa3852f4eeac4619  crates/kasu-sim/src/main.rs

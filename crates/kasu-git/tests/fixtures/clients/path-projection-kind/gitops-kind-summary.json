@@ -1,0 +1,389 @@
+{
+  "result": {
+    "started": "2026-10-23T22:59:27.115613+00:00",
+    "success": true,
+    "projection": "deploy",
+    "repositoryUrl": "http://kasu.gitops-test.svc.cluster.local:50080/demo/-/path/deploy.git",
+    "initial": "e744c005c78892226ba7e42bcde4560f493eccd0",
+    "updated": "1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac",
+    "outside": "e744c005c78892226ba7e42bcde4560f493eccd0",
+    "stages": [
+      {
+        "stage": "one",
+        "source": "8b2e4029909bb84908e457e3cfcd57faf99349e4",
+        "projected": "e744c005c78892226ba7e42bcde4560f493eccd0",
+        "tree": "8d5ccacec19f5b14b3fe4dadcd8be3f9eda19edb",
+        "files": [
+          "100644 blob f80cf9ed1354ef7df511175f3d2175c3ef47f9b5\targo/configmap.yaml",
+          "100644 blob acfbbc7cc98153cca3283c13a866387ec3fffa6a\tflux/configmap.yaml",
+          "100644 blob 38089494bcf0326127404eee98aaa30ecb2ec37e\tflux/kustomization.yaml"
+        ],
+        "gitFsckStrict": true,
+        "sourceSubtreeMatches": true
+      },
+      {
+        "stage": "outside",
+        "source": "56f1f25eccb63a7bd9f4f61065b6a6bd735290c1",
+        "projected": "e744c005c78892226ba7e42bcde4560f493eccd0",
+        "tree": "8d5ccacec19f5b14b3fe4dadcd8be3f9eda19edb",
+        "files": [
+          "100644 blob f80cf9ed1354ef7df511175f3d2175c3ef47f9b5\targo/configmap.yaml",
+          "100644 blob acfbbc7cc98153cca3283c13a866387ec3fffa6a\tflux/configmap.yaml",
+          "100644 blob 38089494bcf0326127404eee98aaa30ecb2ec37e\tflux/kustomization.yaml"
+        ],
+        "gitFsckStrict": true,
+        "sourceSubtreeMatches": true
+      },
+      {
+        "stage": "two",
+        "source": "7638c1d2152fddb20946f975ea5888c183dff23a",
+        "projected": "1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac",
+        "tree": "7877ec0f0ed9e58c96e99b9cbd0c77d6131f99c5",
+        "files": [
+          "100644 blob 0774a483100880df7d266316e8e3c792d53f141b\targo/configmap.yaml",
+          "100644 blob 61e148e0ad6f7099ff6be5d33b2b2e504afc6149\tflux/configmap.yaml",
+          "100644 blob 38089494bcf0326127404eee98aaa30ecb2ec37e\tflux/kustomization.yaml"
+        ],
+        "gitFsckStrict": true,
+        "sourceSubtreeMatches": true
+      }
+    ],
+    "refreshes": {
+      "outside": {
+        "argocdReconciledBefore": "2026-10-23T23:01:36Z",
+        "argocdReconciledAfter": "2026-10-23T23:01:40Z",
+        "fluxRequestedAt": "1792796500992727000",
+        "fluxHandledAt": "1792796500992727000"
+      },
+      "two": {
+        "argocdReconciledBefore": "2026-10-23T23:01:40Z",
+        "argocdReconciledAfter": "2026-10-23T23:01:42Z",
+        "fluxRequestedAt": "1792796501731778000",
+        "fluxHandledAt": "1792796501731778000"
+      }
+    },
+    "finished": "2026-10-23T23:01:44.813757+00:00"
+  },
+  "versions": {
+    "kind": "v0.33.0",
+    "kubectl": "v1.37.0",
+    "node_image": "kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5",
+    "argocd": {
+      "version": "v3.5.6",
+      "url": "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.6/manifests/install.yaml",
+      "sha256": "846c644bc81ce5557dd9048757a9c7353378f25c5eb811c77d32a9e907823599"
+    },
+    "image_updater": {
+      "version": "v1.4.0",
+      "url": "https://raw.githubusercontent.com/argoproj-labs/argocd-image-updater/v1.4.0/config/install.yaml",
+      "sha256": "def04f52cb940da4fb4799630c1ace964902c0f3b97d57b382ff3e6577ae7044"
+    },
+    "test_registry_image": "registry:3.0.0@sha256:6c5666b861f3505b116bb9aa9b25175e71210414bd010d92035ff64018f9457e",
+    "test_workload_image": "busybox:1.37.0@sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e",
+    "flux": {
+      "version": "v2.9.6",
+      "url": "https://github.com/fluxcd/flux2/releases/download/v2.9.6/install.yaml",
+      "sha256": "9c1fda7e401429531ed1478f67ba06b3edff6513b75da7ee47bde9f1c4d4251c"
+    }
+  },
+  "kubernetes": {
+    "clientVersion": {
+      "major": "1",
+      "minor": "37",
+      "gitVersion": "v1.37.0",
+      "gitCommit": "f54c212e3a2f75d674b717a9b29052b20b60aefc",
+      "gitTreeState": "clean",
+      "buildDate": "2026-08-26T10:48:06Z",
+      "goVersion": "go1.26.6",
+      "compiler": "gc",
+      "platform": "darwin/arm64"
+    },
+    "kustomizeVersion": "v5.8.1",
+    "serverVersion": {
+      "major": "1",
+      "minor": "37",
+      "emulationMajor": "1",
+      "emulationMinor": "37",
+      "minCompatibilityMajor": "1",
+      "minCompatibilityMinor": "36",
+      "gitVersion": "v1.37.0",
+      "gitCommit": "f54c212e3a2f75d674b717a9b29052b20b60aefc",
+      "gitTreeState": "clean",
+      "buildDate": "2026-08-26T10:44:25Z",
+      "goVersion": "go1.26.6",
+      "compiler": "gc",
+      "platform": "linux/arm64"
+    }
+  },
+  "argocdGit": "git version 2.53.0",
+  "images": [
+    {
+      "image": "docker.io/library/kasu:gitops-e2e",
+      "imageID": "docker.io/library/import-2026-10-23@sha256:dc13359a08f62308ebe0c5b102595b89027427759a6c2fb4b52db225ae81da3b"
+    },
+    {
+      "image": "ghcr.io/dexidp/dex:v2.45.1",
+      "imageID": "ghcr.io/dexidp/dex@sha256:8499afd690c437f52301efd2b05b2455da5bd2dfc20332cd697dc9937f808462"
+    },
+    {
+      "image": "ghcr.io/fluxcd/helm-controller:v1.6.5",
+      "imageID": "ghcr.io/fluxcd/helm-controller@sha256:0d52fff5c4d476277b8fcb6beb9041e269adb5db943fe69f5a806ea0c92b1511"
+    },
+    {
+      "image": "ghcr.io/fluxcd/image-automation-controller:v1.2.5",
+      "imageID": "ghcr.io/fluxcd/image-automation-controller@sha256:e1a2720d3951694609c39635886d5dcb15b7dffe0b8248461c6693539c522a28"
+    },
+    {
+      "image": "ghcr.io/fluxcd/image-reflector-controller:v1.2.5",
+      "imageID": "ghcr.io/fluxcd/image-reflector-controller@sha256:c83ce5c06fed9ebb308cd5165bd144ee934c720f6b47e0da2180869092063c82"
+    },
+    {
+      "image": "ghcr.io/fluxcd/kustomize-controller:v1.9.6",
+      "imageID": "ghcr.io/fluxcd/kustomize-controller@sha256:2ebeaa341da77d52b6abbbba5efcee0450d47f8b42f0e6f33b08f9020262d606"
+    },
+    {
+      "image": "ghcr.io/fluxcd/notification-controller:v1.9.4",
+      "imageID": "ghcr.io/fluxcd/notification-controller@sha256:840f318265ee26f0d2c48a158bf7896b22aa4e998e320a18646309f0e40b15da"
+    },
+    {
+      "image": "ghcr.io/fluxcd/source-controller:v1.9.6",
+      "imageID": "ghcr.io/fluxcd/source-controller@sha256:6a6693172589f8ff26123a231d5fa6ceb194a6efb4dc647cdf057c959f76a2e3"
+    },
+    {
+      "image": "ghcr.io/fluxcd/source-watcher:v2.2.4",
+      "imageID": "ghcr.io/fluxcd/source-watcher@sha256:86743f5a4cd4ea76b9722eb86222d56e8253e776daa0565ecb186ec68ad1d835"
+    },
+    {
+      "image": "public.ecr.aws/docker/library/redis:8.2.3-alpine",
+      "imageID": "public.ecr.aws/docker/library/redis@sha256:08ad0b1d280850169a790dba1393ff7a90aef951fc19632cf4d3ce4f78e679ba"
+    },
+    {
+      "image": "quay.io/argoproj/argocd:v3.5.6",
+      "imageID": "quay.io/argoproj/argocd@sha256:8e5cc5bb008df8a09dba439462e58c94c55b7735888d3ebde0c25fc05e4e5335"
+    }
+  ],
+  "syncs": [
+    {
+      "head": "e744c005c78892226ba7e42bcde4560f493eccd0",
+      "marker": "one",
+      "argocd": {
+        "health": {
+          "lastTransitionTime": "2026-10-23T23:01:36Z",
+          "status": "Healthy"
+        },
+        "sync": {
+          "comparedTo": {
+            "destination": {
+              "namespace": "argo-target",
+              "server": "https://kubernetes.default.svc"
+            },
+            "source": {
+              "path": "argo",
+              "repoURL": "http://kasu.gitops-test.svc.cluster.local:50080/demo/-/path/deploy.git",
+              "targetRevision": "main"
+            }
+          },
+          "revision": "e744c005c78892226ba7e42bcde4560f493eccd0",
+          "status": "Synced"
+        }
+      },
+      "fluxSource": {
+        "artifact": {
+          "digest": "sha256:da64e1aa41e59668a8fcb4cba34140e5efedfe2fcb2c4dd7f025a81869041179",
+          "lastUpdateTime": "2026-10-23T23:01:14Z",
+          "path": "gitrepository/flux-system/kasu/e744c005c78892226ba7e42bcde4560f493eccd0.tar.gz",
+          "revision": "main@sha1:e744c005c78892226ba7e42bcde4560f493eccd0",
+          "size": 361,
+          "url": "http://source-controller.flux-system.svc.cluster.local./gitrepository/flux-system/kasu/e744c005c78892226ba7e42bcde4560f493eccd0.tar.gz"
+        },
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-10-23T23:01:14Z",
+            "message": "stored artifact for revision 'main@sha1:e744c005c78892226ba7e42bcde4560f493eccd0'",
+            "observedGeneration": 1,
+            "reason": "Succeeded",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-10-23T23:01:14Z",
+            "message": "stored artifact for revision 'main@sha1:e744c005c78892226ba7e42bcde4560f493eccd0'",
+            "observedGeneration": 1,
+            "reason": "Succeeded",
+            "status": "True",
+            "type": "ArtifactInStorage"
+          }
+        ]
+      },
+      "fluxKustomization": {
+        "lastAppliedRevision": "main@sha1:e744c005c78892226ba7e42bcde4560f493eccd0",
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-10-23T23:01:39Z",
+            "message": "Applied revision: main@sha1:e744c005c78892226ba7e42bcde4560f493eccd0",
+            "observedGeneration": 1,
+            "reason": "ReconciliationSucceeded",
+            "status": "True",
+            "type": "Ready"
+          }
+        ]
+      },
+      "argoConfigMap": {
+        "marker": "one",
+        "source": "native-kasu-store"
+      },
+      "fluxConfigMap": {
+        "marker": "one",
+        "source": "native-kasu-store"
+      }
+    },
+    {
+      "head": "e744c005c78892226ba7e42bcde4560f493eccd0",
+      "marker": "one",
+      "argocd": {
+        "health": {
+          "lastTransitionTime": "2026-10-23T23:01:36Z",
+          "status": "Healthy"
+        },
+        "sync": {
+          "comparedTo": {
+            "destination": {
+              "namespace": "argo-target",
+              "server": "https://kubernetes.default.svc"
+            },
+            "source": {
+              "path": "argo",
+              "repoURL": "http://kasu.gitops-test.svc.cluster.local:50080/demo/-/path/deploy.git",
+              "targetRevision": "main"
+            }
+          },
+          "revision": "e744c005c78892226ba7e42bcde4560f493eccd0",
+          "status": "Synced"
+        }
+      },
+      "fluxSource": {
+        "artifact": {
+          "digest": "sha256:da64e1aa41e59668a8fcb4cba34140e5efedfe2fcb2c4dd7f025a81869041179",
+          "lastUpdateTime": "2026-10-23T23:01:14Z",
+          "path": "gitrepository/flux-system/kasu/e744c005c78892226ba7e42bcde4560f493eccd0.tar.gz",
+          "revision": "main@sha1:e744c005c78892226ba7e42bcde4560f493eccd0",
+          "size": 361,
+          "url": "http://source-controller.flux-system.svc.cluster.local./gitrepository/flux-system/kasu/e744c005c78892226ba7e42bcde4560f493eccd0.tar.gz"
+        },
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-10-23T23:01:14Z",
+            "message": "stored artifact for revision 'main@sha1:e744c005c78892226ba7e42bcde4560f493eccd0'",
+            "observedGeneration": 1,
+            "reason": "Succeeded",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-10-23T23:01:14Z",
+            "message": "stored artifact for revision 'main@sha1:e744c005c78892226ba7e42bcde4560f493eccd0'",
+            "observedGeneration": 1,
+            "reason": "Succeeded",
+            "status": "True",
+            "type": "ArtifactInStorage"
+          }
+        ]
+      },
+      "fluxKustomization": {
+        "lastAppliedRevision": "main@sha1:e744c005c78892226ba7e42bcde4560f493eccd0",
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-10-23T23:01:39Z",
+            "message": "Applied revision: main@sha1:e744c005c78892226ba7e42bcde4560f493eccd0",
+            "observedGeneration": 1,
+            "reason": "ReconciliationSucceeded",
+            "status": "True",
+            "type": "Ready"
+          }
+        ]
+      },
+      "argoConfigMap": {
+        "marker": "one",
+        "source": "native-kasu-store"
+      },
+      "fluxConfigMap": {
+        "marker": "one",
+        "source": "native-kasu-store"
+      }
+    },
+    {
+      "head": "1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac",
+      "marker": "two",
+      "argocd": {
+        "health": {
+          "lastTransitionTime": "2026-10-23T23:01:36Z",
+          "status": "Healthy"
+        },
+        "sync": {
+          "comparedTo": {
+            "destination": {
+              "namespace": "argo-target",
+              "server": "https://kubernetes.default.svc"
+            },
+            "source": {
+              "path": "argo",
+              "repoURL": "http://kasu.gitops-test.svc.cluster.local:50080/demo/-/path/deploy.git",
+              "targetRevision": "main"
+            }
+          },
+          "revision": "1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac",
+          "status": "Synced"
+        }
+      },
+      "fluxSource": {
+        "artifact": {
+          "digest": "sha256:0f1d9596c8ad72bea86926d837e44a0e62ab019db0a20d4dc0a0b529262d1e61",
+          "lastUpdateTime": "2026-10-23T23:01:41Z",
+          "path": "gitrepository/flux-system/kasu/1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac.tar.gz",
+          "revision": "main@sha1:1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac",
+          "size": 362,
+          "url": "http://source-controller.flux-system.svc.cluster.local./gitrepository/flux-system/kasu/1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac.tar.gz"
+        },
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-10-23T23:01:41Z",
+            "message": "stored artifact for revision 'main@sha1:1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac'",
+            "observedGeneration": 1,
+            "reason": "Succeeded",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-10-23T23:01:41Z",
+            "message": "stored artifact for revision 'main@sha1:1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac'",
+            "observedGeneration": 1,
+            "reason": "Succeeded",
+            "status": "True",
+            "type": "ArtifactInStorage"
+          }
+        ]
+      },
+      "fluxKustomization": {
+        "lastAppliedRevision": "main@sha1:1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac",
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-10-23T23:01:41Z",
+            "message": "Applied revision: main@sha1:1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac",
+            "observedGeneration": 1,
+            "reason": "ReconciliationSucceeded",
+            "status": "True",
+            "type": "Ready"
+          }
+        ]
+      },
+      "argoConfigMap": {
+        "marker": "two",
+        "source": "native-kasu-store"
+      },
+      "fluxConfigMap": {
+        "marker": "two",
+        "source": "native-kasu-store"
+      }
+    }
+  ]
+}

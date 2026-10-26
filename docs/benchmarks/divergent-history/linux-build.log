@@ -1,0 +1,24 @@
+#12 [stage-0 6/6] RUN --mount=type=cache,target=/usr/local/cargo/registry     --mount=type=cache,target=/app/target     rustc --version && uname -sm &&     sha256sum crates/kasu-ops/src/lib.rs crates/kasu-ops/tests/operations.rs crates/kasu-ops/benches/divergent_history.rs &&     cargo test -p kasu-ops --locked && mkdir -p /out &&     cargo bench -p kasu-ops --bench divergent_history --no-run --locked --message-format=json |     python3 -c 'import sys,json,shutil; data=[json.loads(line) for line in sys.stdin]; [sys.stderr.write(a["message"].get("rendered","")) for a in data if a.get("reason")=="compiler-message"]; paths=[a["executable"] for a in data if a.get("reason")=="compiler-artifact" and a.get("target",{}).get("name")=="divergent_history" and a.get("executable")]; assert len(paths)==1; shutil.copyfile(paths[0],"/out/history-bench")' &&     chmod +x /out/history-bench
+#12 0.081 rustc 1.90.0 (1159e78c4 2025-09-14)
+#12 0.082 Linux aarch64
+#12 0.082 9d99429cc2f7618f74d0cd675c563757b2032717a45951a9bd00fecd8b01c273  crates/kasu-ops/src/lib.rs
+#12 0.082 75bd36e043761da14991354ca3b9679eb008a372c9c3954ad17d21e363837917  crates/kasu-ops/tests/operations.rs
+#12 0.082 69cae53603b664c32ac29fa679de2e5de7a45080c02b00853b35acfc8b66284d  crates/kasu-ops/benches/divergent_history.rs
+#12 0.191 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+#12 0.192 test text_merge_preserves_bytes_and_reports_ranges_without_markers ... ok
+#12 0.197 test text_clean_results_match_git_merge_file ... ok
+#12 0.206 test text_merge_identity_and_side_symmetry ... ok
+#12 0.229 test opaque_entries_and_binary_files_require_explicit_resolution ... ok
+#12 0.255 test tree_merge_combines_content_modes_and_directories_and_classifies_conflicts ... ok
+#12 0.270 test line_edits_match_git_across_insert_delete_replace_boundaries ... ok
+#12 0.270 test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+#12 0.278 test all_merge_bases_in_criss_cross_history ... ok
+#12 1.468 test merge_base_stops_at_a_recent_fork_in_a_long_persisted_history ... ok
+#12 1.576 test ancestry_matches_transitive_closure ... ok
+#12 2.224 test pruned_merge_bases_match_all_five_node_dags_and_tip_pairs ... ok
+#12 2.224 test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.95s
+#12 2.300 test merge_rebase_preserve_parents_metadata_and_conflicts ... ok
+#12 2.319 test three_best_bases_are_reduced_without_exposing_virtual_parents ... ok
+#12 2.321 test criss_cross_uses_all_bases_and_reports_conflicting_base_resolution ... ok
+#12 2.321 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+#12 2.340 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

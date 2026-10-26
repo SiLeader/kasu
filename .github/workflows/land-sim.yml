@@ -1,0 +1,54 @@
+name: Land deterministic simulation
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '29 18 * * *'
+permissions:
+  contents: read
+jobs:
+  land:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RUSTC_WRAPPER: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test -p kasu-store --test land --locked
+      - run: cargo test -p kasu-sim --test land_runtime --locked
+      - name: Simulate 1000 clients with fixed schedules
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/land-sim"
+          for seed in 1 42 2026; do
+            cargo run --release --locked -p kasu-sim -- --seed "$seed" --clients 1000 > "$RUNNER_TEMP/land-sim/seed-$seed.json"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: land-simulation
+          path: ${{ runner.temp }}/land-sim
+
+  cache:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build fixed Rust 1.90 cache simulation and run cache regressions
+        run: docker build -f tools/cache-sim/Dockerfile -t kasu:cache-sim . > cache-sim-build.log 2>&1
+      - name: Repeat 1000 clients under virtual time and cache faults
+        run: |
+          mkdir -p "$RUNNER_TEMP/cache-sim"
+          docker run --rm --network none --user "$(id -u):$(id -g)" \
+            -e KASU_SIM_OUTPUT=/reports \
+            --mount type=bind,source="$RUNNER_TEMP/cache-sim",target=/reports \
+            kasu:cache-sim > cache-sim-run.log 2>&1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cache-deterministic-simulation
+          path: |
+            cache-sim-*.log
+            ${{ runner.temp }}/cache-sim

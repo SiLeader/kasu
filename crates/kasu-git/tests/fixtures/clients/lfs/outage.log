@@ -1,0 +1,5 @@
+batch response: Fatal error: fixture offline
+
+Errors logged to '<work>/skip/.git/lfs/logs/<timestamp>.log'.
+Use `git lfs logs last` to view the log.
+Failed to fetch some objects from '<lfs>'

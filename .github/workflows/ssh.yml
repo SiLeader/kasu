@@ -1,0 +1,38 @@
+name: Git SSH
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'crates/**'
+      - 'Cargo.*'
+      - 'tools/ssh/**'
+      - 'tools/git-compat/**'
+      - '.dockerignore'
+      - '.github/workflows/ssh.yml'
+permissions:
+  contents: read
+jobs:
+  openssh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build pinned Rust and go-git clients with transport unit tests
+        run: docker build -f tools/ssh/Dockerfile -t kasu:ssh-test . > ssh-build.log 2>&1
+      - name: Stdio and idle deadline regression
+        run: docker run --rm --network none --entrypoint /out/ssh-test kasu:ssh-test --skip git_over_real_openssh > ssh-stdio.log 2>&1
+      - name: Native and Git HTTP account policies with real server restarts
+        run: docker run --rm --network none --entrypoint /out/accounts-test kasu:ssh-test > ssh-accounts.log 2>&1
+      - name: Native CLI with directory read scopes and writer regression
+        run: docker run --rm --network none --entrypoint /out/cli-e2e-test kasu:ssh-test --skip virtual_mount > ssh-native-cli.log 2>&1
+      - name: Real OpenSSH with Git CLI and go-git
+        run: |
+          mkdir -p ssh-evidence
+          docker run --rm --network none --mount type=bind,source="$PWD/ssh-evidence",target=/evidence -e KASU_CAPTURE_DIR=/evidence kasu:ssh-test > ssh-openssh.log 2>&1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: git-ssh-evidence
+          path: |
+            ssh-*.log
+            ssh-evidence/

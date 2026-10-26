@@ -1,0 +1,1134 @@
+[
+  {
+    "attributes": {
+      "busy_ns": 97923583,
+      "idle_ns": 42875,
+      "kasu.code": 0,
+      "operation": "ingest",
+      "target": "kasu_telemetry"
+    },
+    "end_nanos": 1792758766528855000,
+    "events": 0,
+    "flags": 257,
+    "kind": 1,
+    "links": 0,
+    "name": "operation",
+    "parent_span_id": "",
+    "resource": {
+      "service.name": "kasu-ingest",
+      "service.version": "0.1.0"
+    },
+    "span_id": "05b5301ee9bb1207",
+    "start_nanos": 1792758766430901000,
+    "status": 1,
+    "trace_id": "72b646034641cd467467542c78b58ef0",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 187208,
+      "idle_ns": 19622042,
+      "kasu.code": 0,
+      "method": "GetTrees",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767310605000,
+    "events": 0,
+    "flags": 257,
+    "kind": 3,
+    "links": 0,
+    "name": "client_request",
+    "parent_span_id": "42e7daf907355a0a",
+    "resource": {
+      "service.name": "kasu-cli",
+      "service.version": "0.1.0"
+    },
+    "span_id": "c4200c7a34134437",
+    "start_nanos": 1792758767290803000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 196208,
+      "idle_ns": 43962875,
+      "kasu.code": 0,
+      "method": "GetTrees",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767364595000,
+    "events": 0,
+    "flags": 257,
+    "kind": 3,
+    "links": 0,
+    "name": "client_request",
+    "parent_span_id": "42e7daf907355a0a",
+    "resource": {
+      "service.name": "kasu-cli",
+      "service.version": "0.1.0"
+    },
+    "span_id": "00ad7a9f58f986d2",
+    "start_nanos": 1792758767320442000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 227583,
+      "idle_ns": 46100667,
+      "kasu.code": 0,
+      "method": "GetBlobs",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767418839000,
+    "events": 0,
+    "flags": 257,
+    "kind": 3,
+    "links": 0,
+    "name": "client_request",
+    "parent_span_id": "42e7daf907355a0a",
+    "resource": {
+      "service.name": "kasu-cli",
+      "service.version": "0.1.0"
+    },
+    "span_id": "1a349683afb8891d",
+    "start_nanos": 1792758767372518000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 109662582,
+      "idle_ns": 115553168,
+      "kasu.code": 0,
+      "operation": "cli",
+      "target": "kasu_telemetry"
+    },
+    "end_nanos": 1792758767499841000,
+    "events": 0,
+    "flags": 257,
+    "kind": 1,
+    "links": 0,
+    "name": "operation",
+    "parent_span_id": "",
+    "resource": {
+      "service.name": "kasu-cli",
+      "service.version": "0.1.0"
+    },
+    "span_id": "42e7daf907355a0a",
+    "start_nanos": 1792758767274643000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 191041,
+      "idle_ns": 2186876,
+      "kasu.code": 0,
+      "method": "GetTrees",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767540917000,
+    "events": 0,
+    "flags": 257,
+    "kind": 3,
+    "links": 0,
+    "name": "client_request",
+    "parent_span_id": "9d26e06594ffd301",
+    "resource": {
+      "service.name": "kasu-cli",
+      "service.version": "0.1.0"
+    },
+    "span_id": "d17d3598601ca994",
+    "start_nanos": 1792758767538550000,
+    "status": 1,
+    "trace_id": "341d390be37e0e80ce8e3b49d78c0ed8",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 256166,
+      "idle_ns": 1860168,
+      "kasu.code": 0,
+      "method": "GetTrees",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767551957000,
+    "events": 0,
+    "flags": 257,
+    "kind": 3,
+    "links": 0,
+    "name": "client_request",
+    "parent_span_id": "9d26e06594ffd301",
+    "resource": {
+      "service.name": "kasu-cli",
+      "service.version": "0.1.0"
+    },
+    "span_id": "ce6922013b4d2f60",
+    "start_nanos": 1792758767549846000,
+    "status": 1,
+    "trace_id": "341d390be37e0e80ce8e3b49d78c0ed8",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 209956,
+      "idle_ns": 1754294,
+      "kasu.code": 0,
+      "method": "GetBlobs",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767562635000,
+    "events": 0,
+    "flags": 257,
+    "kind": 3,
+    "links": 0,
+    "name": "client_request",
+    "parent_span_id": "9d26e06594ffd301",
+    "resource": {
+      "service.name": "kasu-cli",
+      "service.version": "0.1.0"
+    },
+    "span_id": "527a3046491cd62f",
+    "start_nanos": 1792758767560683000,
+    "status": 1,
+    "trace_id": "341d390be37e0e80ce8e3b49d78c0ed8",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 107661170,
+      "idle_ns": 9257414,
+      "kasu.code": 0,
+      "operation": "cli",
+      "target": "kasu_telemetry"
+    },
+    "end_nanos": 1792758767642095000,
+    "events": 0,
+    "flags": 257,
+    "kind": 1,
+    "links": 0,
+    "name": "operation",
+    "parent_span_id": "",
+    "resource": {
+      "service.name": "kasu-cli",
+      "service.version": "0.1.0"
+    },
+    "span_id": "9d26e06594ffd301",
+    "start_nanos": 1792758767525198000,
+    "status": 1,
+    "trace_id": "341d390be37e0e80ce8e3b49d78c0ed8",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 1069540,
+      "idle_ns": 297251,
+      "kasu.code": 0,
+      "method": "ResolveRef",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767286830000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "42e7daf907355a0a",
+    "resource": {
+      "service.name": "kasu-server",
+      "service.version": "0.1.0"
+    },
+    "span_id": "d8896b342eee5833",
+    "start_nanos": 1792758767285539000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 2162084,
+      "idle_ns": 169499,
+      "kasu.code": 0,
+      "method": "GetRootTree",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767290323000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "42e7daf907355a0a",
+    "resource": {
+      "service.name": "kasu-server",
+      "service.version": "0.1.0"
+    },
+    "span_id": "b1f903bc623477d7",
+    "start_nanos": 1792758767287996000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 465084,
+      "idle_ns": 136874,
+      "kasu.code": 0,
+      "method": "GetTrees",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767295214000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "73d42acf6990b72c",
+    "resource": {
+      "service.name": "kasu-server",
+      "service.version": "0.1.0"
+    },
+    "span_id": "6ec601a6cd528ced",
+    "start_nanos": 1792758767294616000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 383249,
+      "idle_ns": 126834,
+      "kasu.code": 0,
+      "method": "GetTrees",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767346536000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "6d3cbd6e7fd4a362",
+    "resource": {
+      "service.name": "kasu-server",
+      "service.version": "0.1.0"
+    },
+    "span_id": "03f8c2b435ab5d5a",
+    "start_nanos": 1792758767346033000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 2302000,
+      "idle_ns": 120167,
+      "kasu.code": 0,
+      "method": "GetBlobs",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767400528000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "159b78a3215cea49",
+    "resource": {
+      "service.name": "kasu-server",
+      "service.version": "0.1.0"
+    },
+    "span_id": "87039a615f3aa903",
+    "start_nanos": 1792758767398116000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 456959,
+      "idle_ns": 284500,
+      "kasu.code": 0,
+      "method": "ResolveRef",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767536287000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "9d26e06594ffd301",
+    "resource": {
+      "service.name": "kasu-server",
+      "service.version": "0.1.0"
+    },
+    "span_id": "8aa508506877c567",
+    "start_nanos": 1792758767535556000,
+    "status": 1,
+    "trace_id": "341d390be37e0e80ce8e3b49d78c0ed8",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 330082,
+      "idle_ns": 170835,
+      "kasu.code": 0,
+      "method": "GetRootTree",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767538048000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "9d26e06594ffd301",
+    "resource": {
+      "service.name": "kasu-server",
+      "service.version": "0.1.0"
+    },
+    "span_id": "ba6384a3708f2cff",
+    "start_nanos": 1792758767537551000,
+    "status": 1,
+    "trace_id": "341d390be37e0e80ce8e3b49d78c0ed8",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 1237875,
+      "idle_ns": 235166,
+      "kasu.code": 0,
+      "method": "ListRefs",
+      "target": "kasu_telemetry",
+      "transport": "http"
+    },
+    "end_nanos": 1792758767648121000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "2222222222222222",
+    "resource": {
+      "service.name": "kasu-server",
+      "service.version": "0.1.0"
+    },
+    "span_id": "e1f961ae97df335a",
+    "start_nanos": 1792758767646656000,
+    "status": 1,
+    "trace_id": "11111111111111111111111111111111",
+    "trace_state": "vendor=acceptance"
+  },
+  {
+    "attributes": {
+      "busy_ns": 100709,
+      "idle_ns": 80333,
+      "kasu.code": 16,
+      "method": "ListRefs",
+      "target": "kasu_telemetry",
+      "transport": "http"
+    },
+    "end_nanos": 1792758767649314000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "2222222222222222",
+    "resource": {
+      "service.name": "kasu-server",
+      "service.version": "0.1.0"
+    },
+    "span_id": "43dd6ad51349869d",
+    "start_nanos": 1792758767649137000,
+    "status": 2,
+    "trace_id": "11111111111111111111111111111111",
+    "trace_state": "vendor=acceptance"
+  },
+  {
+    "attributes": {
+      "busy_ns": 344125,
+      "idle_ns": 93459,
+      "kasu.code": 0,
+      "method": "ListRefs",
+      "target": "kasu_telemetry",
+      "transport": "http"
+    },
+    "end_nanos": 1792758767650614000,
+    "events": 0,
+    "flags": 257,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "",
+    "resource": {
+      "service.name": "kasu-server",
+      "service.version": "0.1.0"
+    },
+    "span_id": "5f115e2b73ceead9",
+    "start_nanos": 1792758767650179000,
+    "status": 1,
+    "trace_id": "3e355d82058ff06a5aefdcd71c568ced",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 221459,
+      "idle_ns": 74916,
+      "kasu.code": 0,
+      "method": "ListRefs",
+      "target": "kasu_telemetry",
+      "transport": "http"
+    },
+    "end_nanos": 1792758767651538000,
+    "events": 0,
+    "flags": 257,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "",
+    "resource": {
+      "service.name": "kasu-server",
+      "service.version": "0.1.0"
+    },
+    "span_id": "65d5aff70a8040a1",
+    "start_nanos": 1792758767651244000,
+    "status": 1,
+    "trace_id": "3be5be6bc05241221964f7ae7ce148f6",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 431833,
+      "idle_ns": 1324084,
+      "kasu.code": 0,
+      "method": "GetTrees",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767295493000,
+    "events": 0,
+    "flags": 257,
+    "kind": 3,
+    "links": 0,
+    "name": "client_request",
+    "parent_span_id": "0849e27128b52770",
+    "resource": {
+      "service.name": "kasu-cache",
+      "service.version": "0.1.0"
+    },
+    "span_id": "73d42acf6990b72c",
+    "start_nanos": 1792758767293740000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 521540,
+      "idle_ns": 1718460,
+      "kasu.code": 0,
+      "operation": "object_fill",
+      "target": "kasu_telemetry"
+    },
+    "end_nanos": 1792758767295776000,
+    "events": 0,
+    "flags": 257,
+    "kind": 1,
+    "links": 0,
+    "name": "operation",
+    "parent_span_id": "3863886a14748166",
+    "resource": {
+      "service.name": "kasu-cache",
+      "service.version": "0.1.0"
+    },
+    "span_id": "0849e27128b52770",
+    "start_nanos": 1792758767293542000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 293664,
+      "idle_ns": 2425627,
+      "kasu.code": 0,
+      "method": "GetTrees",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767295877000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "a51ff1d7c3658a48",
+    "resource": {
+      "service.name": "kasu-cache",
+      "service.version": "0.1.0"
+    },
+    "span_id": "3863886a14748166",
+    "start_nanos": 1792758767293175000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 155374,
+      "idle_ns": 1226251,
+      "kasu.code": 0,
+      "method": "GetTrees",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767346800000,
+    "events": 0,
+    "flags": 257,
+    "kind": 3,
+    "links": 0,
+    "name": "client_request",
+    "parent_span_id": "8272121e6eba0596",
+    "resource": {
+      "service.name": "kasu-cache",
+      "service.version": "0.1.0"
+    },
+    "span_id": "6d3cbd6e7fd4a362",
+    "start_nanos": 1792758767345421000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 395500,
+      "idle_ns": 1315834,
+      "kasu.code": 0,
+      "operation": "object_fill",
+      "target": "kasu_telemetry"
+    },
+    "end_nanos": 1792758767346989000,
+    "events": 0,
+    "flags": 257,
+    "kind": 1,
+    "links": 0,
+    "name": "operation",
+    "parent_span_id": "2ca1ed5c43a37dc4",
+    "resource": {
+      "service.name": "kasu-cache",
+      "service.version": "0.1.0"
+    },
+    "span_id": "8272121e6eba0596",
+    "start_nanos": 1792758767345282000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 244249,
+      "idle_ns": 1852167,
+      "kasu.code": 0,
+      "method": "GetTrees",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767347088000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "3376094c0fa23e0d",
+    "resource": {
+      "service.name": "kasu-cache",
+      "service.version": "0.1.0"
+    },
+    "span_id": "2ca1ed5c43a37dc4",
+    "start_nanos": 1792758767345000000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 174458,
+      "idle_ns": 3321709,
+      "kasu.code": 0,
+      "method": "GetBlobs",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767401033000,
+    "events": 0,
+    "flags": 257,
+    "kind": 3,
+    "links": 0,
+    "name": "client_request",
+    "parent_span_id": "993af39ff9f9175a",
+    "resource": {
+      "service.name": "kasu-cache",
+      "service.version": "0.1.0"
+    },
+    "span_id": "159b78a3215cea49",
+    "start_nanos": 1792758767397539000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 392875,
+      "idle_ns": 3415333,
+      "kasu.code": 0,
+      "operation": "object_fill",
+      "target": "kasu_telemetry"
+    },
+    "end_nanos": 1792758767401222000,
+    "events": 0,
+    "flags": 257,
+    "kind": 1,
+    "links": 0,
+    "name": "operation",
+    "parent_span_id": "ad51e27352244eea",
+    "resource": {
+      "service.name": "kasu-cache",
+      "service.version": "0.1.0"
+    },
+    "span_id": "993af39ff9f9175a",
+    "start_nanos": 1792758767397418000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 261208,
+      "idle_ns": 3961833,
+      "kasu.code": 0,
+      "method": "GetBlobs",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767401346000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "ffcd9f87d39010a9",
+    "resource": {
+      "service.name": "kasu-cache",
+      "service.version": "0.1.0"
+    },
+    "span_id": "ad51e27352244eea",
+    "start_nanos": 1792758767397131000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 451208,
+      "idle_ns": 3694959,
+      "kasu.code": 0,
+      "method": "GetTrees",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767296206000,
+    "events": 0,
+    "flags": 257,
+    "kind": 3,
+    "links": 0,
+    "name": "client_request",
+    "parent_span_id": "77eb46c721c31162",
+    "resource": {
+      "service.name": "kasu-daemon",
+      "service.version": "0.1.0"
+    },
+    "span_id": "a51ff1d7c3658a48",
+    "start_nanos": 1792758767292063000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 14212626,
+      "idle_ns": 4107040,
+      "kasu.code": 0,
+      "operation": "object_fill",
+      "target": "kasu_telemetry"
+    },
+    "end_nanos": 1792758767310164000,
+    "events": 0,
+    "flags": 257,
+    "kind": 1,
+    "links": 0,
+    "name": "operation",
+    "parent_span_id": "16e4cbf0ff685905",
+    "resource": {
+      "service.name": "kasu-daemon",
+      "service.version": "0.1.0"
+    },
+    "span_id": "77eb46c721c31162",
+    "start_nanos": 1792758767291848000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 297165,
+      "idle_ns": 18523710,
+      "kasu.code": 0,
+      "method": "GetTrees",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767310302000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "c4200c7a34134437",
+    "resource": {
+      "service.name": "kasu-daemon",
+      "service.version": "0.1.0"
+    },
+    "span_id": "16e4cbf0ff685905",
+    "start_nanos": 1792758767291496000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 197124,
+      "idle_ns": 2895917,
+      "kasu.code": 0,
+      "method": "GetTrees",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767347396000,
+    "events": 0,
+    "flags": 257,
+    "kind": 3,
+    "links": 0,
+    "name": "client_request",
+    "parent_span_id": "d81030b9248533df",
+    "resource": {
+      "service.name": "kasu-daemon",
+      "service.version": "0.1.0"
+    },
+    "span_id": "3376094c0fa23e0d",
+    "start_nanos": 1792758767344318000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 17025749,
+      "idle_ns": 25997168,
+      "kasu.code": 0,
+      "operation": "object_fill",
+      "target": "kasu_telemetry"
+    },
+    "end_nanos": 1792758767364137000,
+    "events": 0,
+    "flags": 257,
+    "kind": 1,
+    "links": 0,
+    "name": "operation",
+    "parent_span_id": "4a09260b50b01fcb",
+    "resource": {
+      "service.name": "kasu-daemon",
+      "service.version": "0.1.0"
+    },
+    "span_id": "d81030b9248533df",
+    "start_nanos": 1792758767321117000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 204917,
+      "idle_ns": 43165541,
+      "kasu.code": 0,
+      "method": "GetTrees",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767364287000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "00ad7a9f58f986d2",
+    "resource": {
+      "service.name": "kasu-daemon",
+      "service.version": "0.1.0"
+    },
+    "span_id": "4a09260b50b01fcb",
+    "start_nanos": 1792758767320922000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 253416,
+      "idle_ns": 5116001,
+      "kasu.code": 0,
+      "method": "GetBlobs",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767401741000,
+    "events": 0,
+    "flags": 257,
+    "kind": 3,
+    "links": 0,
+    "name": "client_request",
+    "parent_span_id": "11d055f99a88e28a",
+    "resource": {
+      "service.name": "kasu-daemon",
+      "service.version": "0.1.0"
+    },
+    "span_id": "ffcd9f87d39010a9",
+    "start_nanos": 1792758767396380000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 16764750,
+      "idle_ns": 28253959,
+      "kasu.code": 0,
+      "operation": "object_fill",
+      "target": "kasu_telemetry"
+    },
+    "end_nanos": 1792758767418208000,
+    "events": 0,
+    "flags": 257,
+    "kind": 1,
+    "links": 0,
+    "name": "operation",
+    "parent_span_id": "288fd719b3966748",
+    "resource": {
+      "service.name": "kasu-daemon",
+      "service.version": "0.1.0"
+    },
+    "span_id": "11d055f99a88e28a",
+    "start_nanos": 1792758767373191000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 220871,
+      "idle_ns": 45198879,
+      "kasu.code": 0,
+      "method": "GetBlobs",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767418419000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "1a349683afb8891d",
+    "resource": {
+      "service.name": "kasu-daemon",
+      "service.version": "0.1.0"
+    },
+    "span_id": "288fd719b3966748",
+    "start_nanos": 1792758767373007000,
+    "status": 1,
+    "trace_id": "1174f155eaa7906d581e0a27b8435bde",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 594291,
+      "idle_ns": 101293,
+      "kasu.code": 0,
+      "operation": "object_fill",
+      "target": "kasu_telemetry"
+    },
+    "end_nanos": 1792758767540568000,
+    "events": 0,
+    "flags": 257,
+    "kind": 1,
+    "links": 0,
+    "name": "operation",
+    "parent_span_id": "7160832422c76dfb",
+    "resource": {
+      "service.name": "kasu-daemon",
+      "service.version": "0.1.0"
+    },
+    "span_id": "23e406d230b35d7d",
+    "start_nanos": 1792758767539878000,
+    "status": 1,
+    "trace_id": "341d390be37e0e80ce8e3b49d78c0ed8",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 316333,
+      "idle_ns": 940917,
+      "kasu.code": 0,
+      "method": "GetTrees",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767540707000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "d17d3598601ca994",
+    "resource": {
+      "service.name": "kasu-daemon",
+      "service.version": "0.1.0"
+    },
+    "span_id": "7160832422c76dfb",
+    "start_nanos": 1792758767539460000,
+    "status": 1,
+    "trace_id": "341d390be37e0e80ce8e3b49d78c0ed8",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 539790,
+      "idle_ns": 101168,
+      "kasu.code": 0,
+      "operation": "object_fill",
+      "target": "kasu_telemetry"
+    },
+    "end_nanos": 1792758767551580000,
+    "events": 0,
+    "flags": 257,
+    "kind": 1,
+    "links": 0,
+    "name": "operation",
+    "parent_span_id": "e8cb9c1bad2ec570",
+    "resource": {
+      "service.name": "kasu-daemon",
+      "service.version": "0.1.0"
+    },
+    "span_id": "b50303215c972baa",
+    "start_nanos": 1792758767550944000,
+    "status": 1,
+    "trace_id": "341d390be37e0e80ce8e3b49d78c0ed8",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 305166,
+      "idle_ns": 833834,
+      "kasu.code": 0,
+      "method": "GetTrees",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767551721000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "ce6922013b4d2f60",
+    "resource": {
+      "service.name": "kasu-daemon",
+      "service.version": "0.1.0"
+    },
+    "span_id": "e8cb9c1bad2ec570",
+    "start_nanos": 1792758767550592000,
+    "status": 1,
+    "trace_id": "341d390be37e0e80ce8e3b49d78c0ed8",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 515625,
+      "idle_ns": 97500,
+      "kasu.code": 0,
+      "operation": "object_fill",
+      "target": "kasu_telemetry"
+    },
+    "end_nanos": 1792758767562278000,
+    "events": 0,
+    "flags": 257,
+    "kind": 1,
+    "links": 0,
+    "name": "operation",
+    "parent_span_id": "656ee1eec3a7ab8c",
+    "resource": {
+      "service.name": "kasu-daemon",
+      "service.version": "0.1.0"
+    },
+    "span_id": "8e9eb5d043f9783f",
+    "start_nanos": 1792758767561670000,
+    "status": 1,
+    "trace_id": "341d390be37e0e80ce8e3b49d78c0ed8",
+    "trace_state": ""
+  },
+  {
+    "attributes": {
+      "busy_ns": 273708,
+      "idle_ns": 865667,
+      "kasu.code": 0,
+      "method": "GetBlobs",
+      "target": "kasu_telemetry",
+      "transport": "grpc"
+    },
+    "end_nanos": 1792758767562415000,
+    "events": 0,
+    "flags": 769,
+    "kind": 2,
+    "links": 0,
+    "name": "server_request",
+    "parent_span_id": "527a3046491cd62f",
+    "resource": {
+      "service.name": "kasu-daemon",
+      "service.version": "0.1.0"
+    },
+    "span_id": "656ee1eec3a7ab8c",
+    "start_nanos": 1792758767561282000,
+    "status": 1,
+    "trace_id": "341d390be37e0e80ce8e3b49d78c0ed8",
+    "trace_state": ""
+  }
+]

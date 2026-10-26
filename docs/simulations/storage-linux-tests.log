@@ -1,0 +1,70 @@
+
+running 2 tests
+test late_sql_failure_rolls_back_both_ref_models_and_both_logs ... ok
+test independent_mixed_transactions_have_one_winner_and_matching_logs ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+
+running 2 tests
+test results_ref_and_log_are_atomic_durable_and_request_bound ... ok
+test independent_connections_record_one_result_and_one_landing_for_duplicate_keys ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+
+
+running 1 test
+test persisted_membership_skips_shared_subtrees_and_failed_roots_are_not_published ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+
+running 4 tests
+test s3_configuration_requires_canonical_prefix_and_explicit_plaintext ... ok
+test s3_corruption_fails_closed_and_cannot_be_replaced_by_put_if_absent ... ok
+test s3_preserves_first_frame_across_reopen_and_conditional_put ... ok
+test s3_parallel_writers_converge_without_replacing_an_existing_frame ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.10s
+
+
+running 2 tests
+test postgres::reconnect_tests::a_closed_connection_recovers_on_a_subsequent_call_without_replaying_a_query ... ok
+test postgres::ordering_tests::committed_feed_cannot_overtake_an_uncommitted_lower_sequence ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+
+running 8 tests
+test postgres_plaintext_and_invalid_configuration_fail_without_exposing_the_dsn ... ok
+test postgres_connect_query_and_drop_from_a_current_thread_runtime ... ok
+test postgres_tls_verifies_the_configured_ca_and_refuses_untrusted_certificates ... ok
+test postgres_binary_immutable_keys_tombstones_and_reopen ... ok
+test postgres_sql_failure_rolls_back_refs_logs_and_counter_then_allows_retry ... ok
+test postgres_land_replay_and_cancellation_are_transactional_across_connections ... ok
+test postgres_independent_connections_have_one_mixed_cas_winner ... ok
+test postgres_webhook_pending_body_survives_reopen_and_stale_workers ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+
+
+running 3 tests
+test atomic_batch_log_and_aba_protection ... ok
+test immutable_and_compressed_objects_survive_reopen ... ok
+test independent_connections_race_one_winner_and_one_log ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+
+
+running 2 tests
+test pending_body_and_cursor_survive_reopen_and_stale_workers_cannot_rewind ... ok
+test producers_on_independent_connections_install_one_authoritative_body ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+
+running 1 test
+test two_server_processes_share_ingest_git_atomic_push_native_cas_and_land_replay ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.63s
+

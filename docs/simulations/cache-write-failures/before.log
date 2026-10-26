@@ -1,0 +1,18 @@
+Running tests/layers.rs
+running 1 test
+
+thread 'cache_write_failures_stop_refetches_preserve_warm_hits_and_recover' (16194437) panicked at crates/kasu-cache/tests/layers.rs:530:9:
+assertion `left == right` failed
+  left: Internal
+ right: Unavailable
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test cache_write_failures_stop_refetches_preserve_warm_hits_and_recover ... FAILED
+
+failures:
+
+failures:
+    cache_write_failures_stop_refetches_preserve_warm_hits_and_recover
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 5 filtered out; finished in 1.30s
+
+error: test failed, to rerun pass `-p kasu-cache --test layers`

@@ -1,0 +1,30 @@
+name: Virtual checkout
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'crates/**'
+      - 'Cargo.*'
+      - 'tools/virtual/**'
+      - '.github/workflows/virtual.yml'
+permissions:
+  contents: read
+jobs:
+  linux-mount:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare FUSE device
+        run: sudo modprobe fuse || test -e /dev/fuse
+      - name: Build pinned Rust virtual checkout tests
+        run: docker build -f tools/virtual/Dockerfile -t kasu:virtual-test . > virtual-build.log 2>&1
+      - name: Native CLI regression tests
+        run: docker run --rm --network none --entrypoint /out/virtual-test kasu:virtual-test --skip virtual_mount > virtual-cli.log 2>&1
+      - name: Real FUSE and OverlayFS checkout
+        run: docker run --rm --network none --mount type=volume,destination=/tmp --device /dev/fuse --cap-add SYS_ADMIN --security-opt apparmor=unconfined kasu:virtual-test > virtual-mount.log 2>&1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: virtual-checkout-evidence
+          path: virtual-*.log

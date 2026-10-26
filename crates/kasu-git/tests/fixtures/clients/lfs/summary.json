@@ -1,0 +1,23 @@
+{
+  "captured_date": "2026-10-24",
+  "source_sha256": {
+    "tools/lfs/run.py": "d1721d68944b91b78cea25c0250f2967b68085ceb4814aec529991f126418012",
+    "tools/lfs/Dockerfile": "db5ee6b5d243c3264279999f9751c0dc90840afc91c8e932770cef88f36c411e",
+    "tools/lfs/record.py": "48e55d0cc1e510f5ef502b6e3785ceb43dd764b86800ac234d4ea70f46ca4908",
+    ".github/workflows/lfs.yml": "0dae3f7484dc184b148013d494e632010841d5e44f4a4cb8d77f43db65a0dbc0",
+    "Cargo.lock": "1206daefe8ee25fb4796e2f566d18e103c9454e0a7708096030e948a678747a8",
+    "crates/kasu-server/src/backend.rs": "7e5cb5ccf164e0ea753315cf1213414ecdbd392ff8c37ae1cd82eff1b5b1d934",
+    "crates/kasu-server/src/receive.rs": "ed5b0a11a6519b72877ebcd2fcaea3da348a95d1e19b6a2a068bce155fb7e74d",
+    "crates/kasu-server/src/git_http.rs": "063ca0af60a06421730785b16ede8ec6105f4b1a04b284c1333d32e47ef12469",
+    "crates/kasu-ingest/src/main.rs": "143787039b670309f63e249a077654f08dbde68053828f3030fd6d5972ad4593"
+  },
+  "scope": "Linux arm64 real Git LFS client; separate in-memory Basic LFS peer; real Kasu binaries",
+  "not_verified": [
+    "production LFS service",
+    "TLS and authentication",
+    "SSH plus LFS",
+    "projection plus LFS",
+    "large-file capacity and performance",
+    "GitHub workflow"
+  ]
+}

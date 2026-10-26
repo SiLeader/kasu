@@ -1,0 +1,24 @@
+{
+  "seed": 42,
+  "clients": 1000,
+  "initial": {
+    "landed": 9,
+    "conflict": 0,
+    "retry": 991
+  },
+  "after_resubmission": {
+    "landed": 991,
+    "conflict": 9,
+    "retry": 0
+  },
+  "virtual_time_ms": 21,
+  "scheduled_attempts": 2941,
+  "max_attempts_per_request": 3,
+  "storage_failures": 33,
+  "lost_replies": 23,
+  "cancellations": 27,
+  "restarted_replays": 1000,
+  "ref_log_entries": 992,
+  "final_files": 991,
+  "result_digest": "1d4efcb414df6e5a50982c60d4da7403d9f92f51a1f86247b16f1d6b373a2f84"
+}

@@ -1,0 +1,153 @@
+{
+  "schema": 1,
+  "captured_date": "2026-10-24",
+  "derived_versions": {
+    "Blame": 2,
+    "CopyBlame": 2,
+    "CopyDetect": 1,
+    "PathIndex": 1,
+    "MovedBlame": 1,
+    "LineMatches": 1
+  },
+  "platforms": [
+    {
+      "git": "2.54.0 (Apple Git-157)",
+      "platform": "darwin/arm64"
+    },
+    {
+      "git": "2.39.5",
+      "platform": "linux/arm64",
+      "rust": "1.90.0"
+    }
+  ],
+  "git_comparison": {
+    "cases_per_platform": 24,
+    "operations": [
+      "pure rename",
+      "edited rename",
+      "exact whole-file copy",
+      "edit after copy",
+      "intra-file block move",
+      "fragment copy into existing file",
+      "edit after fragment copy",
+      "fragment copy into new file"
+    ],
+    "modes": [
+      "default Git blame",
+      "git blame -M",
+      "git blame -C1 -C1 for earlier exact-copy fixtures",
+      "git blame -M -C -C -C for long fragment-copy fixtures"
+    ],
+    "compared": [
+      "source commit Git OID",
+      "source line number",
+      "source byte path"
+    ],
+    "native_origins_equal_between_platforms": true
+  },
+  "rpc_verified": [
+    "backend",
+    "real gRPC",
+    "HTTP JSON"
+  ],
+  "native_checks": [
+    "second parent rename",
+    "deletion/recreation",
+    "non-UTF8 source",
+    "binary exact copy",
+    "one-to-one exact/similar rename assignment",
+    "1000 pair budget errors without result publication",
+    "1024 sequential renames preserve root origin",
+    "late dependency cycle rejection",
+    "32 property cases: PathIndex equals RootTree paths",
+    "requested content IDs only; cached result reuse",
+    "second parent fragment copy",
+    "24 property cases: reordered unique blocks preserve original line numbers",
+    "fragment candidate and comparison limits fail without result publication",
+    "short common lines do not become fragment copies",
+    "large roots bypass unnecessary fragment search",
+    "recursive parent Blame only for actual contributing sources"
+  ],
+  "limits": [
+    "line-based similarity and byte-path tie breaking differ from Git heuristics",
+    "large-repository reverse-index backfill/capacity unmeasured",
+    "real OSS rename/copy parity pending",
+    "fragment detection uses exact contiguous lines, ASCII scores 20/40 and kasu tie breaking; not all Git heuristics",
+    "fragment sources must exist in an immediate parent snapshot",
+    "1000 other source files, 100000 lines per searched text, 1 million search steps; exceeding limits returns an error"
+  ],
+  "source_sha256": {
+    "Cargo.lock": "6b3c43ff8acb130a805b37b9c706625077221ac68312115585e62e4c00fd7a3c",
+    "crates/kasu-cli/src/commands.rs": "1e8cf13807b60dfe82d7ba9d5d141730a6d9504eb993cc9875a5f14a1f911d97",
+    "crates/kasu-cli/src/filesystem.rs": "2bedf60d8d6925c0c6e6b40c70ce8c24313814fd331564ece10ed99b6a7cd627",
+    "crates/kasu-cli/src/lib.rs": "c6eb7eb0d17c55cf85b07ea8d1138dc6aa99272c518813a6f79b8edaea35beed",
+    "crates/kasu-cli/src/main.rs": "489bf51870c583f0cb24c1baa005b779a59e789e48c05aef6f1900517cf69e0f",
+    "crates/kasu-cli/src/remote.rs": "f012d77fc219348cd244281f3d37a7019e05b8fddd9dd7c13f61433a8c797a15",
+    "crates/kasu-cli/src/sparse.rs": "3dc153e2d6cad6a632fb6c940018dfc90398a5a1e5adb4207e60065499c23c91",
+    "crates/kasu-cli/src/working.rs": "ac2802987dd9ac68721828b9bca2ee3d394171f1c2b5f32968d6424e54665d1d",
+    "crates/kasu-cli/tests/e2e.rs": "7766df9ae1e64c8a7419c2ccc7605ba58a575e14480122ea8fe1d5ffc8bcc24c",
+    "crates/kasu-core/src/codec.rs": "4bab68f90a776493c3fc75f4161dba3cdc0d26ef4490551b2a65d51ecf1ad994",
+    "crates/kasu-core/src/git.rs": "4151432098885228742afb0f5de743ad736d89b7bb4ff3a8ee5e4f5d3a164ba2",
+    "crates/kasu-core/src/lib.rs": "1fd95e3340cbe908c01b8ac58157c6190bc673b6a10cba865673f3eda8584b3d",
+    "crates/kasu-core/src/model.rs": "d5360696ed8e87c25b3c4623e65aa48ba0808e49de3415284cab0722d30dde88",
+    "crates/kasu-derived/src/copies.rs": "6627c2f8220279826b0158145deade5756cf9b77555da9be1fe2ab623799af9f",
+    "crates/kasu-derived/src/fragments.rs": "a93f494f532b268d33422e6722905cdbf2d7b986004f919fc78a74fcf67e2f97",
+    "crates/kasu-derived/src/history.rs": "4ffc1d8044e7fa93c5c7b62fa176863f0642ad7b3d62da5382b7b88076a2bad5",
+    "crates/kasu-derived/src/lib.rs": "69e70d8edf12a7bea83909dda5d25cc5d9fc0275471c2d9b8c73d538e7d1ceec",
+    "crates/kasu-derived/src/lines.rs": "0dba3e5ed6b7f9594e672669656764b9bce8f15c15d1b39d1b20799144ca61a2",
+    "crates/kasu-derived/src/scheduler.rs": "5e7098b8871d7a807bb23783742166e56d9346205bc61f33bbdc9ce821b9fe0f",
+    "crates/kasu-derived/src/tree.rs": "35384f70ff21bd30a626c9f0fcae9656c69b801808127babed412537b224259a",
+    "crates/kasu-derived/src/types.rs": "84d951b060b0b504a0c35598596450d77e28765351bd78ffa939755062c8fbfe",
+    "crates/kasu-derived/tests/lineage.rs": "2083a17f73d23e7a6afe00f66b572af1201a489ac2c79d476b05cc5294b33f3b",
+    "crates/kasu-proto/build.rs": "40a1e32da4fe8174badfee0d5f73775ca7d0c345ca6e69e1212a9220b107cce7",
+    "crates/kasu-proto/proto/kasu.proto": "8a671861c519de0a728a59ce6c33991473852d8e72693cda0e0837cb3c16998b",
+    "crates/kasu-server/src/auth.rs": "b7857dc8efca7a2930540ee9212078bbe93629760febb84845f138aa6b53bcb8",
+    "crates/kasu-server/src/backend.rs": "de7b4e03dffd8740bc8952ddcaf4c3fc3cd44751269dc3f0269a92c72745c341",
+    "crates/kasu-server/src/git_http.rs": "bc8d6a960bc8863992d62382450f85bc1beb3aa74ecc1b3f8afe33e5a70148dc",
+    "crates/kasu-server/src/land.rs": "6ebefebfe272acccdc1a137e8b913e796f9c044ce355a2646f7ece0f882b0231",
+    "crates/kasu-server/src/lib.rs": "3cc6b17cffa220336c9e373f8eb5e1afa96ad644d6791cf824e12f1deabf1341",
+    "crates/kasu-server/src/main.rs": "d8d5a3fff0616b41b070dd1a37bd8dffe32bcb2a58f8c3faf1d54241df433fd4",
+    "crates/kasu-server/src/objects.rs": "844b624f640cfeca70bed7c6e6bb75e603ac29729956db4e2755ab8bf6e446c8",
+    "crates/kasu-server/src/receive.rs": "ed5b0a11a6519b72877ebcd2fcaea3da348a95d1e19b6a2a068bce155fb7e74d",
+    "crates/kasu-server/src/transport.rs": "b87ff647017f256c5f2741130bdd5a052ce6409bceef61fb3ce3c5b005074b81",
+    "crates/kasu-server/src/webhook.rs": "ab36a491d51c45d8c64c3f502227e41302adf82f5ce56cfe9711563547dd6593",
+    "crates/kasu-server/src/write.rs": "1c207817933ec03f80d164bbb412eddaaa6859235ba17fce3dea2aa717598dcb",
+    "crates/kasu-server/src/write_transport.rs": "15f2058f3e21e5313d29443130c15218931f14339edfd18b0cb3b4a760024086",
+    "crates/kasu-server/tests/metadata.rs": "8bb004cbf3fb5d61fcf6a44e8aac970cc28a7d2abe76a53abb2e46fa5a4aa41e",
+    "crates/kasu-store/src/blocking.rs": "02de04799176a46c242ccd335795a7fc7bfcdf236114c1805205ac5005efa071",
+    "crates/kasu-store/src/configured.rs": "51da1ca3539d5e5c3b4f55459d01b3e81ce61767f95191a6aab68b189a287055",
+    "crates/kasu-store/src/fs.rs": "e3447746a21910d6e13706d1be0743713b7893cc8a47f740aca0fcbdf8180c52",
+    "crates/kasu-store/src/lib.rs": "569213e82cb687ba15ab3a6547b1454182d55ccf063ad1ce653b020ad89631cd",
+    "crates/kasu-store/src/postgres.rs": "6a83fd9b700bb31e591911be3e8af5da76e910101cd2eb721704fccc0ef5fbe1",
+    "crates/kasu-store/src/s3.rs": "cd1856a7183ef30ab57ca70c8b89af06d80a856c0dd60359c4eee8f6efc292f2",
+    "crates/kasu-store/src/sqlite.rs": "06f4699e43c5bcb5fd44b1a3dfcc267221cf2ac7ecf68608b75a79e971db192d",
+    "crates/kasu-store/src/tree_membership.rs": "55469ca7907512ccb0903845ae65bc4385ab45296d263e665112fed6dc900048",
+    "crates/kasu-store/src/webhook.rs": "51238e65bcf7c9a8090d30a19797c110141dca19dfbcf4f8bd352cab1e5d1393",
+    "fuzz/src/seeds.rs": "6b942a0f450c1d0958dccb68e242d977b08f14c8d188b97ce95343b7f2324505",
+    "tools/cli/Dockerfile": "3b610735cb55f32a2da4da1ba71f275caed4751d8f21c71a2f5669d32398cf59",
+    "tools/git-compat/Dockerfile": "d64ac14afdd8421b9ae6ffe58e3bffc0baeec631f5c4efbd27ea9df258a55ff9"
+  },
+  "reports_sha256": {
+    "blame-lineage-git-2.39.5.json": "17c266a70965eb74860ddbf5a3e8ab95974d10e9486723b507da49f86c77dd46",
+    "blame-lineage-git-2.54.0.json": "ac01d329ec729b160fb45f332dbcbf79934f196f80644215dcc82e2fe57f23ac",
+    "clippy.log": "5555195d5198f39cd44fc725e1dfef89ca8abc0df3953ea43074189973e2ac06",
+    "fuzz-build.log": "05301bb0d724bb9affa0fea8f71227b698f3b7161fd8bd2615ad6e619d1c3e1c",
+    "host-cli-tests.log": "4ad6fca70531140ff1f254608d8683118a23766af7f2f396472711a0068ef14b",
+    "host-derived-tests.log": "a798faca996f8892d41a1bf0ae47a35d58bb125e6251eb37c2dce9b8dcb6b019",
+    "host-metadata-tests.log": "efbf673561eb7eb39b75bfde3801928cd16cae55528155b9a632bc6d737be031",
+    "linux-cli-tests.log": "062fdc79975ff0ede0e756645fe3785020bdcc85d64714111c0a2b0365b7ab8f",
+    "linux-tests.log": "c3f4e98aecbb2687e121f382bede102e00039ee9572c1e658126b696857c3ec9"
+  },
+  "cli_e2e": {
+    "platforms": [
+      "darwin/arm64",
+      "linux/arm64; Rust 1.90.0"
+    ],
+    "linux_log": "linux-cli-tests.log",
+    "flags": [
+      "blame --follow-copies",
+      "blame --follow-moves"
+    ],
+    "origins_compared": true
+  }
+}

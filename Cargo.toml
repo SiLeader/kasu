@@ -1,6 +1,49 @@
-[package]
-name = "kasu"
+[workspace]
+members = ["crates/*"]
+resolver = "2"
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
+publish = false
 
-[dependencies]
+[workspace.dependencies]
+kasu-core = { version = "0.1.0", path = "crates/kasu-core" }
+kasu-store = { version = "0.1.0", path = "crates/kasu-store" }
+kasu-derived = { version = "0.1.0", path = "crates/kasu-derived" }
+blake3 = "1.8"
+bstr = "1.13"
+hex = "0.4"
+thiserror = "2"
+sha1 = "0.10"
+zstd = "0.13"
+rusqlite = { version = "0.38", features = ["bundled"] }
+tempfile = "3"
+proptest = "1"
+tracing = "0.1"
+kasu-git = { version = "0.1.0", path = "crates/kasu-git" }
+kasu-ingest = { version = "0.1.0", path = "crates/kasu-ingest" }
+gix = { version = "0.87.1", default-features = false, features = ["sha1"] }
+gix-pack = { version = "0.74.2", default-features = false, features = ["sha1"] }
+gix-zlib = "0.1.0"
+flate2 = "1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+kasu-ops = { version = "0.1.0", path = "crates/kasu-ops" }
+kasu-proto = { version = "0.1.0", path = "crates/kasu-proto" }
+kasu-server = { version = "0.1.0", path = "crates/kasu-server" }
+gix-imara-diff = "0.2.5"
+prost = "0.14"
+tonic = "0.14"
+tonic-prost = "0.14"
+tonic-prost-build = "0.14"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal", "io-util", "sync", "time"] }
+tokio-stream = { version = "0.1", features = ["net"] }
+axum = "0.8"
+base64 = "0.22"
+hashlink = "0.11"
+kasu-object = { version = "0.1.0", path = "crates/kasu-object" }
+kasu-cache = { version = "0.1.0", path = "crates/kasu-cache" }
+
+kasu-telemetry = { version = "0.1.0", path = "crates/kasu-telemetry" }

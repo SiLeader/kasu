@@ -1,0 +1,77 @@
+# git version 2.54.0 (Apple Git-157)
+         git< version 2
+         git< version 2
+         git< agent=kasu/0.1.0
+         git< ls-refs=unborn
+         git< fetch=shallow
+         git< object-format=sha1
+         git< 0000
+       clone< version 2
+       clone< agent=kasu/0.1.0
+       clone< ls-refs=unborn
+       clone< fetch=shallow
+       clone< object-format=sha1
+       clone< 0000
+       clone> command=ls-refs
+       clone> agent=git/2.54.0-Darwin
+         git< command=ls-refs
+       clone> object-format=sha1
+         git< agent=git/2.54.0-Darwin
+       clone> 0001
+         git< object-format=sha1
+       clone> peel
+         git< 0001
+       clone> symrefs
+         git< peel
+       clone> unborn
+         git< symrefs
+       clone> ref-prefix refs/heads/
+         git< unborn
+       clone> ref-prefix refs/tags/
+         git< ref-prefix refs/heads/
+       clone> ref-prefix HEAD
+         git< ref-prefix refs/tags/
+       clone> 0000
+         git< ref-prefix HEAD
+         git< 0000
+         git> 0002
+       clone< 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35 HEAD symref-target:refs/heads/main
+       clone< 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35 refs/heads/main
+       clone< c0c294595b1c61ccecce5ed23239ad64d470ca51 refs/heads/release
+       clone< 3d12084a0ff4394e7cbe96bbee047b4bf77f63e2 refs/tags/v1 peeled:032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35
+       clone< 0000
+       clone< 0002
+       clone> command=fetch
+       clone> agent=git/2.54.0-Darwin
+       clone> object-format=sha1
+       clone> 0001
+       clone> thin-pack
+       clone> no-progress
+       clone> include-tag
+       clone> ofs-delta
+       clone> deepen 1
+       clone> want 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35
+       clone> want 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35
+       clone> done
+       clone> 0000
+         git< command=fetch
+         git< agent=git/2.54.0-Darwin
+         git< object-format=sha1
+         git< 0001
+         git< thin-pack
+         git< no-progress
+         git< include-tag
+         git< ofs-delta
+         git< deepen 1
+         git< want 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35
+         git< want 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35
+         git< done
+         git< 0000
+         git> 0002
+       clone< shallow-info
+       clone< shallow 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35
+       clone< 0001
+       clone< packfile
+    sideband< PACK ...
+    sideband< 0000
+       clone< 0002

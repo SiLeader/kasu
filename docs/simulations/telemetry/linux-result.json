@@ -1,0 +1,28 @@
+{
+  "platform": "Linux aarch64",
+  "spans": 44,
+  "cold_trace_spans": 27,
+  "warm_trace_spans": 12,
+  "services": [
+    "kasu-cache",
+    "kasu-cli",
+    "kasu-daemon",
+    "kasu-ingest",
+    "kasu-server"
+  ],
+  "remote_parent_statuses": [
+    0,
+    16
+  ],
+  "ignored_unsampled": true,
+  "invalid_and_duplicate_context_new_roots": true,
+  "disabled_cli_no_export": true,
+  "no_baggage_or_credentials": true,
+  "no_redirect_followed": true,
+  "graceful_shutdown": true,
+  "durations": {
+    "stalled_seconds": 2.0096298339776695,
+    "redirect_seconds": 0.008018792024813592,
+    "unavailable_seconds": 0.008670540992170572
+  }
+}

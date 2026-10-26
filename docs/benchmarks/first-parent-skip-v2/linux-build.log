@@ -1,0 +1,39 @@
+#12 [stage-0 6/6] RUN --mount=type=cache,target=/usr/local/cargo/registry     --mount=type=cache,target=/app/target     rustc --version && uname -sm &&     sha256sum crates/kasu-ops/src/lib.rs crates/kasu-ops/tests/operations.rs crates/kasu-ops/tests/first_parent.rs crates/kasu-derived/src/types.rs crates/kasu-derived/src/scheduler.rs crates/kasu-ops/src/metadata.rs crates/kasu-ops/benches/divergent_history.rs &&     cargo test -p kasu-derived --test derived --test scheduler --locked &&     cargo test -p kasu-ops --locked && mkdir -p /out &&     cargo bench -p kasu-ops --bench divergent_history --no-run --locked --message-format=json |     python3 -c 'import sys,json,shutil; data=[json.loads(line) for line in sys.stdin]; [sys.stderr.write(a["message"].get("rendered","")) for a in data if a.get("reason")=="compiler-message"]; paths=[a["executable"] for a in data if a.get("reason")=="compiler-artifact" and a.get("target",{}).get("name")=="divergent_history" and a.get("executable")]; assert len(paths)==1; shutil.copyfile(paths[0],"/out/history-bench")' &&     chmod +x /out/history-bench
+#12 0.076 rustc 1.90.0 (1159e78c4 2025-09-14)
+#12 0.077 Linux aarch64
+#12 0.077 9d99429cc2f7618f74d0cd675c563757b2032717a45951a9bd00fecd8b01c273  crates/kasu-ops/src/lib.rs
+#12 0.077 87c48bceb6459f7ebe043f95efd5c3b9c6e2f21e03c60349668cef791f1942d0  crates/kasu-ops/tests/operations.rs
+#12 0.077 c9570116afa7d16e22d73ac0a2d939ac91c89f61e27b5218ebed746cf832007e  crates/kasu-ops/tests/first_parent.rs
+#12 0.077 60dd778d78b5f8400e55cdbc92dfaba6a5d83a45ed82401a72a1dc4c14dfc31d  crates/kasu-derived/src/types.rs
+#12 0.077 491555d28ba16ce47c49a5e714ccfc417554fa71cde1ea8a2e04ed64b0798442  crates/kasu-derived/src/scheduler.rs
+#12 0.077 3fb36fff96dc398db4335d03e50f51adef0dc86d8eba60371de0c009299786a3  crates/kasu-ops/src/metadata.rs
+#12 0.077 69cae53603b664c32ac29fa679de2e5de7a45080c02b00853b35acfc8b66284d  crates/kasu-ops/benches/divergent_history.rs
+#12 1.313 test file_directory_replacement_and_parent_sharing ... ok
+#12 3.367 test apply_diff_roundtrip ... ok
+#12 4.010 test iterative_long_history_and_skip_pointers ... ok
+#12 4.010 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.71s
+#12 4.013 test cycles_and_unregistered_types_are_errors ... ok
+#12 4.017 test lazy_keys_versions_dependencies_and_concurrent_singleflight ... ok
+#12 4.017 test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+#12 5.169 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+#12 5.170 test skip_codec_rejects_incoherent_depths_and_links ... ok
+#12 6.580 test v1_records_survive_reopen_and_v2_backfill_without_changing_changesets ... ok
+#12 7.261 test eager_skip_index_has_fixed_reads_and_bytes_and_queries_skip_long_histories ... ok
+#12 7.261 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.09s
+#12 7.263 test text_merge_preserves_bytes_and_reports_ranges_without_markers ... ok
+#12 7.269 test text_clean_results_match_git_merge_file ... ok
+#12 7.276 test text_merge_identity_and_side_symmetry ... ok
+#12 7.294 test opaque_entries_and_binary_files_require_explicit_resolution ... ok
+#12 7.322 test tree_merge_combines_content_modes_and_directories_and_classifies_conflicts ... ok
+#12 7.343 test line_edits_match_git_across_insert_delete_replace_boundaries ... ok
+#12 7.343 test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+#12 7.350 test all_merge_bases_in_criss_cross_history ... ok
+#12 8.265 test merge_base_stops_at_a_recent_fork_in_a_long_persisted_history ... ok
+#12 8.523 test ancestry_matches_transitive_closure ... ok
+#12 9.790 test pruned_merge_bases_match_all_five_node_dags_and_tip_pairs ... ok
+#12 9.790 test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.45s
+#12 9.809 test merge_rebase_preserve_parents_metadata_and_conflicts ... ok
+#12 9.813 test three_best_bases_are_reduced_without_exposing_virtual_parents ... ok
+#12 9.814 test criss_cross_uses_all_bases_and_reports_conflicting_base_resolution ... ok
+#12 9.814 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+#12 9.830 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

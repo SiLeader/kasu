@@ -1,0 +1,8 @@
+#12 0.138 rustc 1.90.0 (1159e78c4 2025-09-14)
+#12 0.139 git version 2.39.5
+#12 0.140 Linux aarch64
+#12 0.141 3d40a0a6b0e7424483338570e4445caed5406fe1d1f4c30a473a88675b9a7312  crates/kasu-server/tests/oss_metadata.rs
+#12 0.141 57fb2bd7e38ec25de7dc377745f23b9cddeb9f2dab2f576bd0bc0bf3950ef41e  crates/kasu-ingest/tests/fixtures/oss-refs.txt
+#12 0.141 3fb36fff96dc398db4335d03e50f51adef0dc86d8eba60371de0c009299786a3  crates/kasu-ops/src/metadata.rs
+#12 0.141 9d99429cc2f7618f74d0cd675c563757b2032717a45951a9bd00fecd8b01c273  crates/kasu-ops/src/lib.rs
+#12 0.141 4ffc1d8044e7fa93c5c7b62fa176863f0642ad7b3d62da5382b7b88076a2bad5  crates/kasu-derived/src/history.rs

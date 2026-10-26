@@ -1,0 +1,6 @@
+#12 0.078 rustc 1.90.0 (1159e78c4 2025-09-14)
+#12 0.079 git version 2.39.5
+#12 0.080 Linux aarch64
+#12 0.080 3100aaa6004e27f14a2f0580739add00345df350fe0058417b7e2a36e5c97678  Cargo.lock
+#12 0.080 ba3644471d6b27370f0b7efd37b0225555b508de5614f05d3688392f1f0ba268  crates/kasu-ingest/Cargo.toml
+#12 0.080 e5464f0697b5031a141f234d4e986abbed8f6aa591a9c2ee85572bfee382e49f  crates/kasu-ingest/benches/throughput.rs

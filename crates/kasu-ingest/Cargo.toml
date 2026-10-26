@@ -1,0 +1,29 @@
+[package]
+name = "kasu-ingest"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[features]
+production = ["kasu-store/production"]
+
+[dependencies]
+kasu-telemetry.workspace = true
+kasu-core.workspace = true
+kasu-store.workspace = true
+kasu-derived.workspace = true
+kasu-git.workspace = true
+gix.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+kasu-ops.workspace = true
+criterion = { version = "=0.7.0", default-features = false, features = ["cargo_bench_support"] }
+
+[dependencies.tracing-subscriber]
+workspace = true
+
+[[bench]]
+name = "throughput"
+harness = false

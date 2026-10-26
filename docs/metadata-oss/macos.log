@@ -1,0 +1,10 @@
+rustc 1.98.1 (48a229cea 2026-09-01)
+git version 2.54.0 (Apple Git-157)
+Darwin arm64
+Running tests/oss_metadata.rs
+running 1 test
+fixed OSS metadata: commits=21, paths=9 (including missing), log=189, blame=77, merge-base=441
+test pinned_oss_metadata_matches_git_for_all_commits_paths_and_tip_pairs ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.00s
+

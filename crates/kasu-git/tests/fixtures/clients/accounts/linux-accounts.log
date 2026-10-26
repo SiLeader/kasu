@@ -1,0 +1,9 @@
+
+running 4 tests
+test concurrent_http_writers_keep_independent_account_policies ... ok
+test native_accounts_apply_intersection_final_tree_and_per_principal_land_replay ... ok
+test actual_servers_preserve_account_land_receipts_across_reorder_rotation_and_restart ... ok
+test git_http_push_uses_account_paths_and_atomic_ref_policy ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s
+

@@ -1,0 +1,12 @@
+Cloning into '<work>/missing'...
+Downloading asset.bin (2.1 MB)
+Error downloading object: asset.bin (4919ef7): Smudge error: Error downloading asset.bin (4919ef7afab9dda5afbcf9ba72e3a5fc7fd08e3e0cbc57e35cdc92900950f473): [4919ef7afab9dda5afbcf9ba72e3a5fc7fd08e3e0cbc57e35cdc92900950f473] missing fixture object: [404] missing fixture object
+
+Errors logged to '<work>/missing/.git/lfs/logs/<timestamp>.log'.
+Use `git lfs logs last` to view the log.
+error: external filter 'git-lfs filter-process' failed
+fatal: asset.bin: smudge filter lfs failed
+warning: Clone succeeded, but checkout failed.
+You can inspect what was checked out with 'git status'
+and retry with 'git restore --source=HEAD :/'
+

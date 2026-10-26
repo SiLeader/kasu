@@ -1,0 +1,1709 @@
+{
+  "leader": {
+    "name": "pd3",
+    "member_id": 4276097428945878878,
+    "peer_urls": [
+      "http://pd3:2380"
+    ],
+    "client_urls": [
+      "http://pd3:2379"
+    ]
+  },
+  "regions": [
+    {
+      "id": 128,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F363962613839FF3764306535336338FF3735663137366330FF3666633931613663FF3166373163303564FF6331623362363264FF3833326666306164FF6533623633366461FF35332F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F373164313861FF3665326234623562FF6466303932363035FF3633633635643830FF6230616336653336FF3766623363323064FF3730643534323334FF3831623734343666FF36322F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 129,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 130,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 131,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 130,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 39,
+      "read_bytes": 0,
+      "written_keys": 1,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 112,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F303539663136FF3065383066336239FF3734356630353461FF3762666331323564FF3433346537633061FF3235666633643739FF3463343331336633FF6431666233313036FF64622F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F303635303838FF3138336233626663FF3263643863623431FF3230356630646431FF6664616131356234FF3231323631326463FF6463653466303365FF3866643633643635FF37352F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 113,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 114,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 115,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 115,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 32,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F3035396631FF3630653830663362FF3937343566303534FF6137626663313235FF6434333465376330FF6132356666336437FF3934633433313366FF3364316662333130FF3664622F00000000FB",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 33,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 34,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 35,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 35,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 39,
+      "read_bytes": 0,
+      "written_keys": 1,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 36,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F3035396631FF3630653830663362FF3937343566303534FF6137626663313235FF6434333465376330FF6132356666336437FF3934633433313366FF3364316662333130FF3664622F00000000FB",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F3036353038FF3831383362336266FF6332636438636234FF3132303566306464FF3166646161313562FF3432313236313264FF6364636534663033FF6538666436336436FF3537352F00000000FB",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 37,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 38,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 39,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 38,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 39,
+      "read_bytes": 0,
+      "written_keys": 1,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 40,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F3036353038FF3831383362336266FF6332636438636234FF3132303566306464FF3166646161313562FF3432313236313264FF6364636534663033FF6538666436336436FF3537352F00000000FB",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F3130346364FF3538316666623232FF3964393935396438FF6564353731613362FF6465393136643430FF3436633739653661FF3738303064376262FF3335633564376466FF6431332F00000000FB",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 41,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 42,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 43,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 43,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 39,
+      "read_bytes": 0,
+      "written_keys": 1,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 136,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F396236333430FF3832316338376539FF6236663436346532FF3262326463333834FF6139383936343934FF3462363966653732FF3263386666636435FF6537376662306234FF62382F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F653437623333FF3962336233633438FF6266336439303932FF6666386238633531FF6138356635363834FF3733366664666532FF3238356237663465FF3366616663386136FF30322F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 137,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 138,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 139,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 138,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 172,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F396236333430FF3832316338376539FF6236663436346532FF3262326463333834FF6139383936343934FF3462363966653732FF3263386666636435FF6537376662306234FF62382F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F653437623333FF3962336233633438FF6266336439303932FF6666386238633531FF6138356635363834FF3733366664666532FF3238356237663465FF3366616663386136FF30322F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 173,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 174,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 175,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 174,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 64,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F6534376233FF3339623362336334FF3862663364393039FF3266663862386335FF3161383566353638FF3437333666646665FF3232383562376634FF6533666166633861FF3630322F00000000FB",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F000000000000F9",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 65,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 66,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 67,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 66,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 92,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F373164313861FF3665326234623562FF6466303932363035FF3633633635643830FF6230616336653336FF3766623363323064FF3730643534323334FF3831623734343666FF36322F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F396236333430FF3832316338376539FF6236663436346532FF3262326463333834FF6139383936343934FF3462363966653732FF3263386666636435FF6537376662306234FF62382F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 93,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 94,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 95,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 94,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 39,
+      "read_bytes": 0,
+      "written_keys": 1,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 148,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F303539663136FF3065383066336239FF3734356630353461FF3762666331323564FF3433346537633061FF3235666633643739FF3463343331336633FF6431666233313036FF64622F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F303635303838FF3138336233626663FF3263643863623431FF3230356630646431FF6664616131356234FF3231323631326463FF6463653466303365FF3866643633643635FF37352F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 149,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 150,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 151,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 150,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 164,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F363962613839FF3764306535336338FF3735663137366330FF3666633931613663FF3166373163303564FF6331623362363264FF3833326666306164FF6533623633366461FF35332F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F373164313861FF3665326234623562FF6466303932363035FF3633633635643830FF6230616336653336FF3766623363323064FF3730643534323334FF3831623734343666FF36322F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 165,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 166,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 167,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 166,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 39,
+      "read_bytes": 0,
+      "written_keys": 1,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 168,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F373164313861FF3665326234623562FF6466303932363035FF3633633635643830FF6230616336653336FF3766623363323064FF3730643534323334FF3831623734343666FF36322F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F396236333430FF3832316338376539FF6236663436346532FF3262326463333834FF6139383936343934FF3462363966653732FF3263386666636435FF6537376662306234FF62382F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 169,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 170,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 171,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 171,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 39,
+      "read_bytes": 0,
+      "written_keys": 1,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 16,
+      "start_key": "7800000000000000FB",
+      "end_key": "7800000100000000FB",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 5
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 17,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 18,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 26,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 18,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 68,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F000000000000F9",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F303539663136FF3065383066336239FF3734356630353461FF3762666331323564FF3433346537633061FF3235666633643739FF3463343331336633FF6431666233313036FF64622F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 69,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 70,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 71,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 70,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 120,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F313034636435FF3831666662323239FF6439393539643865FF6435373161336264FF6539313664343034FF3663373965366137FF3830306437626233FF3563356437646664FF31332F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F343161343366FF6437336561363661FF3736393864303462FF6536623636316236FF6636346665383935FF3137396330643234FF6439363336646362FF3262313466633832FF34302F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 121,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 122,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 123,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 123,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 160,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F343161343366FF6437336561363661FF3736393864303462FF6536623636316236FF6636346665383935FF3137396330643234FF6439363336646362FF3262313466633832FF34302F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F363962613839FF3764306535336338FF3735663137366330FF3666633931613663FF3166373163303564FF6331623362363264FF3833326666306164FF6533623633366461FF35332F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 161,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 162,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 163,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 162,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 28,
+      "start_key": "",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 29,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 30,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 31,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 30,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 84,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F343161343366FF6437336561363661FF3736393864303462FF6536623636316236FF6636346665383935FF3137396330643234FF6439363336646362FF3262313466633832FF34302F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F363962613839FF3764306535336338FF3735663137366330FF3666633931613663FF3166373163303564FF6331623362363264FF3833326666306164FF6533623633366461FF35332F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 85,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 86,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 87,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 86,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 39,
+      "read_bytes": 0,
+      "written_keys": 1,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 116,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F303635303838FF3138336233626663FF3263643863623431FF3230356630646431FF6664616131356234FF3231323631326463FF6463653466303365FF3866643633643635FF37352F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F313034636435FF3831666662323239FF6439393539643865FF6435373161336264FF6539313664343034FF3663373965366137FF3830306437626233FF3563356437646664FF31332F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 117,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 118,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 119,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 118,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 39,
+      "read_bytes": 0,
+      "written_keys": 1,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 124,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F343161343366FF6437336561363661FF3736393864303462FF6536623636316236FF6636346665383935FF3137396330643234FF6439363336646362FF3262313466633832FF34302F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F363962613839FF3764306535336338FF3735663137366330FF3666633931613663FF3166373163303564FF6331623362363264FF3833326666306164FF6533623633366461FF35332F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 125,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 126,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 127,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 126,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 12,
+      "start_key": "7200000000000000FB",
+      "end_key": "7200000100000000FB",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 5
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 13,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 21,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 24,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 24,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 44,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F3130346364FF3538316666623232FF3964393935396438FF6564353731613362FF6465393136643430FF3436633739653661FF3738303064376262FF3335633564376466FF6431332F00000000FB",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F3431613433FF6664373365613636FF6137363938643034FF6265366236363162FF3666363466653839FF3531373963306432FF3464393633366463FF6232623134666338FF3234302F00000000FB",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 45,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 46,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 47,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 47,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 48,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F3431613433FF6664373365613636FF6137363938643034FF6265366236363162FF3666363466653839FF3531373963306432FF3464393633366463FF6232623134666338FF3234302F00000000FB",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F3639626138FF3937643065353363FF3837356631373663FF3036666339316136FF6331663731633035FF6463316233623632FF6438333266663061FF6465336236333664FF6135332F00000000FB",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 49,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 50,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 51,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 50,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 88,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F363962613839FF3764306535336338FF3735663137366330FF3666633931613663FF3166373163303564FF6331623362363264FF3833326666306164FF6533623633366461FF35332F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F373164313861FF3665326234623562FF6466303932363035FF3633633635643830FF6230616336653336FF3766623363323064FF3730643534323334FF3831623734343666FF36322F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 89,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 90,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 91,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 91,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 104,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6D6574FF612F000000000000F9",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F000000000000F9",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 105,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 106,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 107,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 106,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 140,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F653437623333FF3962336233633438FF6266336439303932FF6666386238633531FF6138356635363834FF3733366664666532FF3238356237663465FF3366616663386136FF30322F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F000000000000F9",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 141,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 142,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 143,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 143,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 39,
+      "read_bytes": 0,
+      "written_keys": 1,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 152,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F303635303838FF3138336233626663FF3263643863623431FF3230356630646431FF6664616131356234FF3231323631326463FF6463653466303365FF3866643633643635FF37352F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F313034636435FF3831666662323239FF6439393539643865FF6435373161336264FF6539313664343034FF3663373965366137FF3830306437626233FF3563356437646664FF31332F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 153,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 154,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 155,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 154,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 27,
+      "read_bytes": 0,
+      "written_keys": 1,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 156,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F313034636435FF3831666662323239FF6439393539643865FF6435373161336264FF6539313664343034FF3663373965366137FF3830306437626233FF3563356437646664FF31332F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F343161343366FF6437336561363661FF3736393864303462FF6536623636316236FF6636346665383935FF3137396330643234FF6439363336646362FF3262313466633832FF34302F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 157,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 158,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 159,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 159,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 4,
+      "start_key": "7800000100000000FB",
+      "end_key": "",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 5
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 5,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 19,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 27,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 27,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 14,
+      "start_key": "7200000100000000FB",
+      "end_key": "7800000000000000FB",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 5
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 15,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 22,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 25,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 25,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 52,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F3639626138FF3937643065353363FF3837356631373663FF3036666339316136FF6331663731633035FF6463316233623632FF6438333266663061FF6465336236333664FF6135332F00000000FB",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F3731643138FF6136653262346235FF6264663039323630FF3536336336356438FF3062306163366533FF3637666233633230FF6437306435343233FF3438316237343436FF6636322F00000000FB",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 53,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 54,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 55,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 55,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 56,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F3731643138FF6136653262346235FF6264663039323630FF3536336336356438FF3062306163366533FF3637666233633230FF6437306435343233FF3438316237343436FF6636322F00000000FB",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F3962363334FF3038323163383765FF3962366634363465FF3232623264633338FF3461393839363439FF3434623639666537FF3232633866666364FF3565373766623062FF3462382F00000000FB",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 57,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 58,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 59,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 58,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 60,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F3962363334FF3038323163383765FF3962366634363465FF3232623264633338FF3461393839363439FF3434623639666537FF3232633866666364FF3565373766623062FF3462382F00000000FB",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F636F75FF6E742F6534376233FF3339623362336334FF3862663364393039FF3266663862386335FF3161383566353638FF3437333666646665FF3232383562376634FF6533666166633861FF3630322F00000000FB",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 61,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 62,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 63,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 63,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 76,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F303635303838FF3138336233626663FF3263643863623431FF3230356630646431FF6664616131356234FF3231323631326463FF6463653466303365FF3866643633643635FF37352F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F313034636435FF3831666662323239FF6439393539643865FF6435373161336264FF6539313664343034FF3663373965366137FF3830306437626233FF3563356437646664FF31332F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 77,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 78,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 79,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 78,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 80,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F313034636435FF3831666662323239FF6439393539643865FF6435373161336264FF6539313664343034FF3663373965366137FF3830306437626233FF3563356437646664FF31332F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F343161343366FF6437336561363661FF3736393864303462FF6536623636316236FF6636346665383935FF3137396330643234FF6439363336646362FF3262313466633832FF34302F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 81,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 82,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 83,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 83,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 100,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F653437623333FF3962336233633438FF6266336439303932FF6666386238633531FF6138356635363834FF3733366664666532FF3238356237663465FF3366616663386136FF30322F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6D6574FF612F000000000000F9",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 101,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 102,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 103,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 103,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 72,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F303539663136FF3065383066336239FF3734356630353461FF3762666331323564FF3433346537633061FF3235666633643739FF3463343331336633FF6431666233313036FF64622F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F303635303838FF3138336233626663FF3263643863623431FF3230356630646431FF6664616131356234FF3231323631326463FF6463653466303365FF3866643633643635FF37352F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 73,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 74,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 75,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 75,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 96,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F396236333430FF3832316338376539FF6236663436346532FF3262326463333834FF6139383936343934FF3462363966653732FF3263386666636435FF6537376662306234FF62382F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6C6F67FF732F653437623333FF3962336233633438FF6266336439303932FF6666386238633531FF6138356635363834FF3733366664666532FF3238356237663465FF3366616663386136FF30322F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 97,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 98,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 99,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 99,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 108,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F000000000000F9",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F303539663136FF3065383066336239FF3734356630353461FF3762666331323564FF3433346537633061FF3235666633643739FF3463343331336633FF6431666233313036FF64622F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 109,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 110,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 111,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 110,
+        "store_id": 3
+      },
+      "cpu_usage": 0,
+      "written_bytes": 39,
+      "read_bytes": 0,
+      "written_keys": 1,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 132,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F373164313861FF3665326234623562FF6466303932363035FF3633633635643830FF6230616336653336FF3766623363323064FF3730643534323334FF3831623734343666FF36322F0000000000FA",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F6F6E63FF652F396236333430FF3832316338376539FF6236663436346532FF3262326463333834FF6139383936343934FF3462363966653732FF3263386666636435FF6537376662306234FF62382F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 133,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 134,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 135,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 135,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 144,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F000000000000F9",
+      "end_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F303539663136FF3065383066336239FF3734356630353461FF3762666331323564FF3433346537633061FF3235666633643739FF3463343331336633FF6431666233313036FF64622F0000000000FA",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 145,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 146,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 147,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 147,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    },
+    {
+      "id": 10,
+      "start_key": "6B6173752D6B762DFF6576616C2F76312FFF72756E2D31386531FF3163613934356330FF356234382F726566FF732F653437623333FF3962336233633438FF6266336439303932FF6666386238633531FF6138356635363834FF3733366664666532FF3238356237663465FF3366616663386136FF30322F0000000000FA",
+      "end_key": "7200000000000000FB",
+      "epoch": {
+        "conf_ver": 5,
+        "version": 42
+      },
+      "peers": [
+        {
+          "role_name": "Voter",
+          "id": 11,
+          "store_id": 1
+        },
+        {
+          "role_name": "Voter",
+          "id": 20,
+          "store_id": 3
+        },
+        {
+          "role_name": "Voter",
+          "id": 23,
+          "store_id": 2
+        }
+      ],
+      "leader": {
+        "role_name": "Voter",
+        "id": 23,
+        "store_id": 2
+      },
+      "cpu_usage": 0,
+      "written_bytes": 0,
+      "read_bytes": 0,
+      "written_keys": 0,
+      "read_keys": 0,
+      "approximate_size": 0,
+      "approximate_keys": 0
+    }
+  ],
+  "stores": [
+    {
+      "store": {
+        "id": 1,
+        "address": "tikv3:20160",
+        "version": "8.5.8",
+        "peer_address": "tikv3:20160",
+        "status_address": "0.0.0.0:20180",
+        "git_hash": "a1fdd6a59bb9c8a282c15677e1894501a52425cf",
+        "start_timestamp": 1792745692,
+        "deploy_path": "/",
+        "last_heartbeat": 1792745667748031999,
+        "node_state": 1,
+        "state_name": "Disconnected"
+      },
+      "status": {
+        "capacity": "0B",
+        "available": "0B",
+        "used_size": "0B",
+        "leader_count": 0,
+        "leader_weight": 1,
+        "leader_score": 0,
+        "leader_size": 0,
+        "region_count": 42,
+        "region_weight": 1,
+        "region_score": 0,
+        "region_size": 0,
+        "start_ts": "2026-10-23T08:54:52Z",
+        "last_heartbeat_ts": "2026-10-23T08:54:27.748031999Z"
+      }
+    },
+    {
+      "store": {
+        "id": 2,
+        "address": "tikv1:20160",
+        "version": "8.5.8",
+        "peer_address": "tikv1:20160",
+        "status_address": "0.0.0.0:20180",
+        "git_hash": "a1fdd6a59bb9c8a282c15677e1894501a52425cf",
+        "start_timestamp": 1792745647,
+        "deploy_path": "/",
+        "last_heartbeat": 1792745657752863369,
+        "node_state": 1,
+        "state_name": "Disconnected"
+      },
+      "status": {
+        "capacity": "0B",
+        "available": "0B",
+        "used_size": "0B",
+        "leader_count": 21,
+        "leader_weight": 1,
+        "leader_score": 21,
+        "leader_size": 0,
+        "region_count": 42,
+        "region_weight": 1,
+        "region_score": 0,
+        "region_size": 0,
+        "start_ts": "2026-10-23T08:54:07Z",
+        "last_heartbeat_ts": "2026-10-23T08:54:17.752863369Z",
+        "uptime": "10.752863369s"
+      }
+    },
+    {
+      "store": {
+        "id": 3,
+        "address": "tikv2:20160",
+        "version": "8.5.8",
+        "peer_address": "tikv2:20160",
+        "status_address": "0.0.0.0:20180",
+        "git_hash": "a1fdd6a59bb9c8a282c15677e1894501a52425cf",
+        "start_timestamp": 1792745647,
+        "deploy_path": "/",
+        "last_heartbeat": 1792745657747667119,
+        "node_state": 1,
+        "state_name": "Disconnected"
+      },
+      "status": {
+        "capacity": "0B",
+        "available": "0B",
+        "used_size": "0B",
+        "leader_count": 21,
+        "leader_weight": 1,
+        "leader_score": 21,
+        "leader_size": 0,
+        "region_count": 42,
+        "region_weight": 1,
+        "region_score": 0,
+        "region_size": 0,
+        "start_ts": "2026-10-23T08:54:07Z",
+        "last_heartbeat_ts": "2026-10-23T08:54:17.747667119Z",
+        "uptime": "10.747667119s"
+      }
+    }
+  ],
+  "alive": {
+    "tikv1": true,
+    "tikv2": true,
+    "tikv3": true
+  }
+}

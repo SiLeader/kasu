@@ -1,0 +1,11 @@
+Running tests/layers.rs
+running 6 tests
+test stream_and_pending_limits_reject_excess_work_then_release_capacity ... ok
+test hierarchy_credentials_roles_scope_and_cancelled_leaders_are_enforced ... ok
+test thousand_clients_coalesce_across_two_nodes_and_warm_hits_survive_cache_loss ... ok
+test outage_opens_a_circuit_and_concurrent_requests_cannot_amplify_it ... ok
+test distinct_misses_obey_global_concurrency_and_request_spacing ... ok
+test cache_write_failures_stop_refetches_preserve_warm_hits_and_recover ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.59s
+

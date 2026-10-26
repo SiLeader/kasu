@@ -1,0 +1,414 @@
+# git version 2.54.0 (Apple Git-157)
+         git< version 2
+         git< version 2
+         git< agent=kasu/0.1.0
+         git< ls-refs=unborn
+         git< fetch=shallow filter
+         git< object-format=sha1
+         git< 0000
+       clone< version 2
+       clone< agent=kasu/0.1.0
+       clone< ls-refs=unborn
+       clone< fetch=shallow filter
+       clone< object-format=sha1
+       clone< 0000
+       clone> command=ls-refs
+       clone> agent=git/2.54.0-Darwin
+         git< command=ls-refs
+         git< agent=git/2.54.0-Darwin
+       clone> object-format=sha1
+       clone> 0001
+       clone> peel
+         git< object-format=sha1
+       clone> symrefs
+         git< 0001
+       clone> unborn
+         git< peel
+       clone> ref-prefix refs/heads/
+         git< symrefs
+       clone> ref-prefix refs/tags/
+         git< unborn
+       clone> ref-prefix HEAD
+         git< ref-prefix refs/heads/
+       clone> 0000
+         git< ref-prefix refs/tags/
+         git< ref-prefix HEAD
+         git< 0000
+         git> 0002
+       clone< 067401246fa62e98450b844e23c2bd98706d88b8 HEAD symref-target:refs/heads/main
+       clone< 067401246fa62e98450b844e23c2bd98706d88b8 refs/heads/main
+       clone< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested peeled:067401246fa62e98450b844e23c2bd98706d88b8
+       clone< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+       clone< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1 peeled:067401246fa62e98450b844e23c2bd98706d88b8
+       clone< 0000
+       clone< 0002
+       clone> command=fetch
+       clone> agent=git/2.54.0-Darwin
+       clone> object-format=sha1
+       clone> 0001
+       clone> thin-pack
+       clone> no-progress
+       clone> ofs-delta
+       clone> filter blob:none
+       clone> want 067401246fa62e98450b844e23c2bd98706d88b8
+       clone> want 067401246fa62e98450b844e23c2bd98706d88b8
+       clone> want 6e214d999f1173e9c65d09f595e29ec32418d497
+       clone> want 988c0fda611ee1b7acc4c1135365bb0b98745801
+       clone> want 326b8864c70510119a6f2f38b8e52d553e874dc1
+       clone> done
+       clone> 0000
+         git< command=fetch
+         git< agent=git/2.54.0-Darwin
+         git< object-format=sha1
+         git< 0001
+         git< thin-pack
+         git< no-progress
+         git< ofs-delta
+         git< filter blob:none
+         git< want 067401246fa62e98450b844e23c2bd98706d88b8
+         git< want 067401246fa62e98450b844e23c2bd98706d88b8
+         git< want 6e214d999f1173e9c65d09f595e29ec32418d497
+         git< want 988c0fda611ee1b7acc4c1135365bb0b98745801
+         git< want 326b8864c70510119a6f2f38b8e52d553e874dc1
+         git< done
+         git< 0000
+         git> 0002
+       clone< packfile
+    sideband< PACK ...
+    sideband< 0000
+       clone< 0002
+         git< version 2
+         git< version 2
+         git< agent=kasu/0.1.0
+         git< ls-refs=unborn
+         git< fetch=shallow filter
+         git< object-format=sha1
+         git< 0000
+       fetch< version 2
+       fetch< agent=kasu/0.1.0
+       fetch< ls-refs=unborn
+       fetch< fetch=shallow filter
+       fetch< object-format=sha1
+       fetch< 0000
+       fetch> command=fetch
+       fetch> agent=git/2.54.0-Darwin
+       fetch> object-format=sha1
+       fetch> 0001
+       fetch> thin-pack
+       fetch> no-progress
+       fetch> ofs-delta
+       fetch> filter blob:none
+       fetch> want 8c1384d825dbbe41309b7dc18ee7991a9085c46e
+       fetch> done
+       fetch> 0000
+         git< command=fetch
+         git< agent=git/2.54.0-Darwin
+         git< object-format=sha1
+         git< 0001
+         git< thin-pack
+         git< no-progress
+         git< ofs-delta
+         git< filter blob:none
+         git< want 8c1384d825dbbe41309b7dc18ee7991a9085c46e
+         git< done
+         git< 0000
+         git> 0002
+       fetch< packfile
+    sideband< PACK ...
+    sideband< 0000
+       fetch< 0002
+         git< version 2
+         git< version 2
+         git< agent=kasu/0.1.0
+         git< ls-refs=unborn
+         git< fetch=shallow filter
+         git< object-format=sha1
+         git< 0000
+       fetch< version 2
+       fetch< agent=kasu/0.1.0
+       fetch< ls-refs=unborn
+       fetch< fetch=shallow filter
+       fetch< object-format=sha1
+       fetch< 0000
+       fetch> command=ls-refs
+       fetch> agent=git/2.54.0-Darwin
+       fetch> object-format=sha1
+         git< command=ls-refs
+       fetch> 0001
+         git< agent=git/2.54.0-Darwin
+       fetch> peel
+         git< object-format=sha1
+       fetch> symrefs
+         git< 0001
+       fetch> unborn
+         git< peel
+       fetch> ref-prefix refs/tags/
+       fetch> 0000
+         git< symrefs
+         git< unborn
+         git< ref-prefix refs/tags/
+         git< 0000
+         git> 0002
+       fetch< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested peeled:067401246fa62e98450b844e23c2bd98706d88b8
+       fetch< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+       fetch< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1 peeled:067401246fa62e98450b844e23c2bd98706d88b8
+       fetch< 0000
+       fetch< 0002
+       fetch> command=fetch
+       fetch> agent=git/2.54.0-Darwin
+       fetch> object-format=sha1
+       fetch> 0001
+       fetch> thin-pack
+       fetch> no-progress
+       fetch> ofs-delta
+       fetch> filter blob:none
+       fetch> want aae70855a6c9c2d8db764494e0f7d3b8cac9feb5
+       fetch> have 067401246fa62e98450b844e23c2bd98706d88b8
+       fetch> 0000
+         git< command=fetch
+         git< agent=git/2.54.0-Darwin
+         git< object-format=sha1
+         git< 0001
+         git< thin-pack
+         git< no-progress
+         git< ofs-delta
+         git< filter blob:none
+         git< want aae70855a6c9c2d8db764494e0f7d3b8cac9feb5
+         git< have 067401246fa62e98450b844e23c2bd98706d88b8
+         git< 0000
+         git> 0002
+       fetch< 0002
+         git< version 2
+         git< version 2
+         git< agent=kasu/0.1.0
+         git< ls-refs=unborn
+         git< fetch=shallow filter
+         git< object-format=sha1
+         git< 0000
+       fetch< version 2
+       fetch< agent=kasu/0.1.0
+       fetch< ls-refs=unborn
+       fetch< fetch=shallow filter
+       fetch< object-format=sha1
+       fetch< 0000
+       fetch> command=ls-refs
+       fetch> agent=git/2.54.0-Darwin
+       fetch> object-format=sha1
+         git< command=ls-refs
+       fetch> 0001
+       fetch> peel
+         git< agent=git/2.54.0-Darwin
+       fetch> symrefs
+         git< object-format=sha1
+       fetch> unborn
+         git< 0001
+       fetch> ref-prefix refs/tags/
+         git< peel
+       fetch> 0000
+         git< symrefs
+         git< unborn
+         git< ref-prefix refs/tags/
+         git< 0000
+         git> 0002
+       fetch< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested peeled:067401246fa62e98450b844e23c2bd98706d88b8
+       fetch< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+       fetch< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1 peeled:067401246fa62e98450b844e23c2bd98706d88b8
+       fetch< 0000
+       fetch< 0002
+       fetch> command=fetch
+       fetch> agent=git/2.54.0-Darwin
+       fetch> object-format=sha1
+       fetch> 0001
+       fetch> thin-pack
+       fetch> no-progress
+       fetch> ofs-delta
+       fetch> filter blob:none
+       fetch> want 899f34a005b5f54a482f419bf464dd2acb2d9f41
+       fetch> have 067401246fa62e98450b844e23c2bd98706d88b8
+       fetch> 0000
+         git< command=fetch
+         git< agent=git/2.54.0-Darwin
+         git< object-format=sha1
+         git< 0001
+         git< thin-pack
+         git< no-progress
+         git< ofs-delta
+         git< filter blob:none
+         git< want 899f34a005b5f54a482f419bf464dd2acb2d9f41
+         git< have 067401246fa62e98450b844e23c2bd98706d88b8
+         git< 0000
+         git> 0002
+       fetch< 0002
+         git< version 2
+         git< version 2
+         git< agent=kasu/0.1.0
+         git< ls-refs=unborn
+         git< fetch=shallow filter
+         git< object-format=sha1
+         git< 0000
+       fetch< version 2
+       fetch< agent=kasu/0.1.0
+       fetch< ls-refs=unborn
+       fetch< fetch=shallow filter
+       fetch< object-format=sha1
+       fetch< 0000
+       fetch> command=ls-refs
+       fetch> agent=git/2.54.0-Darwin
+         git< command=ls-refs
+       fetch> object-format=sha1
+         git< agent=git/2.54.0-Darwin
+         git< object-format=sha1
+       fetch> 0001
+       fetch> peel
+       fetch> symrefs
+       fetch> unborn
+       fetch> ref-prefix refs/heads/main
+       fetch> ref-prefix refs/refs/heads/main
+       fetch> ref-prefix refs/tags/refs/heads/main
+       fetch> ref-prefix refs/heads/refs/heads/main
+       fetch> ref-prefix refs/remotes/refs/heads/main
+         git< 0001
+       fetch> ref-prefix refs/remotes/refs/heads/main/HEAD
+       fetch> ref-prefix refs/tags/
+         git< peel
+       fetch> 0000
+         git< symrefs
+         git< unborn
+         git< ref-prefix refs/heads/main
+         git< ref-prefix refs/refs/heads/main
+         git< ref-prefix refs/tags/refs/heads/main
+         git< ref-prefix refs/heads/refs/heads/main
+         git< ref-prefix refs/remotes/refs/heads/main
+         git< ref-prefix refs/remotes/refs/heads/main/HEAD
+         git< ref-prefix refs/tags/
+         git< 0000
+         git> 0002
+       fetch< 067401246fa62e98450b844e23c2bd98706d88b8 refs/heads/main
+       fetch< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested peeled:067401246fa62e98450b844e23c2bd98706d88b8
+       fetch< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+       fetch< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1 peeled:067401246fa62e98450b844e23c2bd98706d88b8
+       fetch< 0000
+       fetch< 0002
+         git< version 2
+         git< version 2
+         git< agent=kasu/0.1.0
+         git< ls-refs=unborn
+         git< fetch=shallow filter
+         git< object-format=sha1
+         git< 0000
+       fetch< version 2
+       fetch< agent=kasu/0.1.0
+       fetch< ls-refs=unborn
+       fetch< fetch=shallow filter
+       fetch< object-format=sha1
+       fetch< 0000
+       fetch> command=ls-refs
+       fetch> agent=git/2.54.0-Darwin
+         git< command=ls-refs
+       fetch> object-format=sha1
+         git< agent=git/2.54.0-Darwin
+       fetch> 0001
+         git< object-format=sha1
+       fetch> peel
+         git< 0001
+       fetch> symrefs
+         git< peel
+       fetch> unborn
+         git< symrefs
+       fetch> ref-prefix refs/heads/main
+         git< unborn
+       fetch> ref-prefix refs/refs/heads/main
+         git< ref-prefix refs/heads/main
+       fetch> ref-prefix refs/tags/refs/heads/main
+         git< ref-prefix refs/refs/heads/main
+       fetch> ref-prefix refs/heads/refs/heads/main
+         git< ref-prefix refs/tags/refs/heads/main
+       fetch> ref-prefix refs/remotes/refs/heads/main
+         git< ref-prefix refs/heads/refs/heads/main
+       fetch> ref-prefix refs/remotes/refs/heads/main/HEAD
+         git< ref-prefix refs/remotes/refs/heads/main
+       fetch> ref-prefix refs/tags/
+         git< ref-prefix refs/remotes/refs/heads/main/HEAD
+       fetch> 0000
+         git< ref-prefix refs/tags/
+         git< 0000
+         git> 0002
+       fetch< 4c0662f102de061233b074ffe995af9de8d28c1e refs/heads/main
+       fetch< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested peeled:067401246fa62e98450b844e23c2bd98706d88b8
+       fetch< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+       fetch< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1 peeled:067401246fa62e98450b844e23c2bd98706d88b8
+       fetch< 0000
+       fetch< 0002
+       fetch> command=fetch
+       fetch> agent=git/2.54.0-Darwin
+       fetch> object-format=sha1
+       fetch> 0001
+       fetch> thin-pack
+       fetch> no-progress
+       fetch> include-tag
+       fetch> ofs-delta
+       fetch> filter blob:none
+       fetch> want 4c0662f102de061233b074ffe995af9de8d28c1e
+       fetch> have 067401246fa62e98450b844e23c2bd98706d88b8
+       fetch> 0000
+         git< command=fetch
+         git< agent=git/2.54.0-Darwin
+         git< object-format=sha1
+         git< 0001
+         git< thin-pack
+         git< no-progress
+         git< include-tag
+         git< ofs-delta
+         git< filter blob:none
+         git< want 4c0662f102de061233b074ffe995af9de8d28c1e
+         git< have 067401246fa62e98450b844e23c2bd98706d88b8
+         git< 0000
+         git> 0002
+       fetch< acknowledgments
+       fetch< ACK 067401246fa62e98450b844e23c2bd98706d88b8
+       fetch< ready
+       fetch< 0001
+       fetch< packfile
+    sideband< PACK ...
+    sideband< 0000
+       fetch< 0002
+         git< version 2
+         git< version 2
+         git< agent=kasu/0.1.0
+         git< ls-refs=unborn
+         git< fetch=shallow filter
+         git< object-format=sha1
+         git< 0000
+       fetch< version 2
+       fetch< agent=kasu/0.1.0
+       fetch< ls-refs=unborn
+       fetch< fetch=shallow filter
+       fetch< object-format=sha1
+       fetch< 0000
+       fetch> command=fetch
+       fetch> agent=git/2.54.0-Darwin
+       fetch> object-format=sha1
+       fetch> 0001
+       fetch> thin-pack
+       fetch> no-progress
+       fetch> ofs-delta
+       fetch> filter blob:none
+       fetch> want 29ef827e8a45b1039d908884aae4490157bcb2b4
+       fetch> done
+       fetch> 0000
+         git< command=fetch
+         git< agent=git/2.54.0-Darwin
+         git< object-format=sha1
+         git< 0001
+         git< thin-pack
+         git< no-progress
+         git< ofs-delta
+         git< filter blob:none
+         git< want 29ef827e8a45b1039d908884aae4490157bcb2b4
+         git< done
+         git< 0000
+       fetch< packfile
+         git> 0002
+    sideband< PACK ...
+    sideband< 0000
+       fetch< 0002

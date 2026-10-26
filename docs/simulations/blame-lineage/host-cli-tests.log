@@ -1,0 +1,40 @@
+   Compiling kasu-cli v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.62s
+     Running unittests src/lib.rs (target/debug/deps/kasu_cli-8034a75612cede47)
+
+running 4 tests
+test remote::tests::frames_reject_truncation_wrong_ids_offsets_and_data_after_completion ... ok
+test working::tests::recovery_preserves_edits_after_install_and_keeps_the_original_backup ... ok
+test working::tests::recovery_does_not_remove_matching_user_files_before_install ... ok
+test working::tests::interrupted_install_rolls_back_and_committed_install_survives_cleanup_crash ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.38s
+
+     Running unittests src/main.rs (target/debug/deps/kasu-d1fe6a2406a58f3e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/e2e.rs (target/debug/deps/e2e-4ddbba01c1644607)
+
+running 10 tests
+test byte_paths_survive_the_remote_snapshot_and_platform_checkout_rules ... ok
+test notify_watch_observes_real_edits_and_does_not_hold_the_working_copy_lock ... ok
+test untracked_files_existing_destinations_and_symlink_parents_are_preserved ... ok
+test real_cli_blame_flags_change_moved_and_copied_line_origins ... ok
+test excluded_new_subtrees_stay_unrequested_and_specific_includes_override_exclusions ... ok
+test lost_land_reply_retains_the_key_and_blocks_a_new_commit_until_replay ... ok
+test amending_an_addition_to_deletion_and_file_directory_type_changes ... ok
+test real_cli_sparse_checkout_amend_rebase_land_and_metadata_queries ... ok
+test real_cli_uses_the_unix_daemon_and_a_snapshot_can_boot_without_the_cache ... ok
+test conflicts_replay_without_losing_files_and_gitlinks_can_be_committed ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.93s
+
+   Doc-tests kasu_cli
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

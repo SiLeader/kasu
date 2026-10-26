@@ -1,0 +1,20 @@
+#12 0.100 rustc 1.90.0 (1159e78c4 2025-09-14)
+#12 0.102 Linux aarch64
+#12 0.102 21b6da5875ac3f00735bb5b1341c0a347d5ed84fbaeb441308caa72492bcdaa6  Cargo.lock
+#12 0.102 409f87f628e3f093ccbfda7b95a6a9c5690164ea27963570e96e9378619f75c8  crates/kasu-cache/src/lib.rs
+#12 0.102 77d9ae8f7a2de84fead5d88a7a7120ed782778e3cc59f282ad50337f653a8123  crates/kasu-cache/Cargo.toml
+#12 0.102 43dbdfcf43402fb29629904552d8ccfdaa8486427c7adbdf0e66721ca9b41e60  crates/kasu-sim/Cargo.toml
+#12 0.102 bdf708b19a60cbf504568856372eb7bfafad637c840a69c84d9d8adec8f3fc30  crates/kasu-sim/src/cache.rs
+#12 0.102 35916e654ec6748592a8375eb81e09e0b49bf4742019794bfa3852f4eeac4619  crates/kasu-sim/src/main.rs
+#12 11.50 test clock_tests::circuit_cooldown_and_half_open_probe_follow_the_runtime_clock ... ok
+#12 11.50 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+#12 13.29 test cache::tests::seeded_cache_faults_repeat_with_real_layers_and_virtual_deadlines ... ok
+#12 14.53 test tests::seeded_schedule_is_repeatable_and_preserves_every_accepted_write ... ok
+#12 14.53 test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.02s
+#12 19.46 test hierarchy_credentials_roles_scope_and_cancelled_leaders_are_enforced ... ok
+#12 19.47 test stream_and_pending_limits_reject_excess_work_then_release_capacity ... ok
+#12 19.75 test outage_opens_a_circuit_and_concurrent_requests_cannot_amplify_it ... ok
+#12 19.86 test distinct_misses_obey_global_concurrency_and_request_spacing ... ok
+#12 20.28 test thousand_clients_coalesce_across_two_nodes_and_warm_hits_survive_cache_loss ... ok
+#12 21.76 test cache_write_failures_stop_refetches_preserve_warm_hits_and_recover ... ok
+#12 21.76 test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.86s

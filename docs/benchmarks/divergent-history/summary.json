@@ -1,0 +1,117 @@
+{
+  "captured_date": "2026-10-24",
+  "platforms": {
+    "macos": {
+      "tip_changeset": "0856f67453cc7dd6f29ab78b95150d070705d89e0ce0df6a6465343d57f48260",
+      "root_tree": "2bfdf8d07030c5ad9048586c18db3739d06c39168bfd5249db81020a2595ce8d",
+      "max_meta_get_calls": 43,
+      "blocks": {
+        "first_10000": {
+          "mean_create_microseconds": 416.729,
+          "main_mean_microseconds": 414.161,
+          "side_mean_microseconds": 413.496,
+          "merge_mean_microseconds": 440.487,
+          "mean_meta_get_calls": 35.479,
+          "mean_meta_put_calls": 4.0,
+          "mean_blob_get_calls": 3.0,
+          "mean_blob_put_calls": 2.0,
+          "max_meta_get_calls": 40
+        },
+        "middle_10000": {
+          "mean_create_microseconds": 531.224,
+          "main_mean_microseconds": 533.927,
+          "side_mean_microseconds": 509.813,
+          "merge_mean_microseconds": 531.021,
+          "mean_meta_get_calls": 39.3,
+          "mean_meta_put_calls": 4.0,
+          "mean_blob_get_calls": 3.0,
+          "mean_blob_put_calls": 2.0,
+          "max_meta_get_calls": 42
+        },
+        "last_10000": {
+          "mean_create_microseconds": 575.446,
+          "main_mean_microseconds": 565.645,
+          "side_mean_microseconds": 567.708,
+          "merge_mean_microseconds": 661.572,
+          "mean_meta_get_calls": 40.3,
+          "mean_meta_put_calls": 4.0,
+          "mean_blob_get_calls": 3.0,
+          "mean_blob_put_calls": 2.0,
+          "max_meta_get_calls": 43
+        }
+      }
+    },
+    "linux": {
+      "tip_changeset": "0856f67453cc7dd6f29ab78b95150d070705d89e0ce0df6a6465343d57f48260",
+      "root_tree": "2bfdf8d07030c5ad9048586c18db3739d06c39168bfd5249db81020a2595ce8d",
+      "max_meta_get_calls": 43,
+      "blocks": {
+        "first_10000": {
+          "mean_create_microseconds": 863.422,
+          "main_mean_microseconds": 865.155,
+          "side_mean_microseconds": 796.975,
+          "merge_mean_microseconds": 916.021,
+          "mean_meta_get_calls": 35.479,
+          "mean_meta_put_calls": 4.0,
+          "mean_blob_get_calls": 3.0,
+          "mean_blob_put_calls": 2.0,
+          "max_meta_get_calls": 40
+        },
+        "middle_10000": {
+          "mean_create_microseconds": 790.298,
+          "main_mean_microseconds": 796.664,
+          "side_mean_microseconds": 727.994,
+          "merge_mean_microseconds": 801.682,
+          "mean_meta_get_calls": 39.3,
+          "mean_meta_put_calls": 4.0,
+          "mean_blob_get_calls": 3.0,
+          "mean_blob_put_calls": 2.0,
+          "max_meta_get_calls": 42
+        },
+        "last_10000": {
+          "mean_create_microseconds": 836.835,
+          "main_mean_microseconds": 825.909,
+          "side_mean_microseconds": 790.948,
+          "merge_mean_microseconds": 970.111,
+          "mean_meta_get_calls": 40.3,
+          "mean_meta_put_calls": 4.0,
+          "mean_blob_get_calls": 3.0,
+          "mean_blob_put_calls": 2.0,
+          "max_meta_get_calls": 43
+        }
+      }
+    }
+  },
+  "scope": {
+    "changesets": 100000,
+    "divergent_merges": 10000,
+    "side_commits": 10000,
+    "samples_per_row": 1000,
+    "timed": "Operations::create_changeset including eager derived data",
+    "untimed": "source construction, fork/ancestry/merge-base/content assertions and reporting",
+    "counts": "MetaStore/BlobStore API calls, not physical disk I/O",
+    "validation": "13 kasu-ops tests per OS; 16 server Metadata/Writer/account regression tests on macOS",
+    "exhaustive_dags": 1024,
+    "exhaustive_tip_pairs": 25600,
+    "cold_merge_base_metadata_read_bound": 32
+  },
+  "limits": [
+    "one run per OS, no throughput or strict constant-time guarantee",
+    "small fixed-width tree with two reused blob contents",
+    "local SQLite WAL/FULL and filesystem; host and container storage differ",
+    "some build/test activity overlapped; no timing gate",
+    "FirstParentSkip construction and SQLite index costs still depend on history size",
+    "GitHub workflow execution unverified"
+  ],
+  "source_sha256": {
+    "Cargo.lock": "1206daefe8ee25fb4796e2f566d18e103c9454e0a7708096030e948a678747a8",
+    "crates/kasu-ops/Cargo.toml": "9a15a94a21721cc15e478b958c08189237075c098af8f442bbe41a01185c9a4e",
+    "crates/kasu-ops/src/lib.rs": "9d99429cc2f7618f74d0cd675c563757b2032717a45951a9bd00fecd8b01c273",
+    "crates/kasu-ops/tests/operations.rs": "75bd36e043761da14991354ca3b9679eb008a372c9c3954ad17d21e363837917",
+    "crates/kasu-ops/benches/divergent_history.rs": "69cae53603b664c32ac29fa679de2e5de7a45080c02b00853b35acfc8b66284d",
+    "crates/kasu-derived/src/types.rs": "84d951b060b0b504a0c35598596450d77e28765351bd78ffa939755062c8fbfe",
+    "tools/history-benchmark/Dockerfile": "544ecc110d4ffaf9e758da74a24d05916325c7d18e86fa90cf56a0f35869f8e1",
+    "tools/history-benchmark/record.py": "0b0e25a06f4e647111d623b8254a8ca85878f0f1c67c1cbc66ef4155defd06e2",
+    ".github/workflows/history-benchmark.yml": "378698627b12243e3c4c519e76ef88556638e4cdc4949dc148ec68d720d3e840"
+  }
+}

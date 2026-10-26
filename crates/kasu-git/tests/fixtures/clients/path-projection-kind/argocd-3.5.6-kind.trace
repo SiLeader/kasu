@@ -1,0 +1,134 @@
+pkt-line.c:85           packet:          git< version 2
+pkt-line.c:85           packet:          git< version 2
+pkt-line.c:85           packet:          git< agent=kasu/0.1.0
+pkt-line.c:85           packet:          git< ls-refs=unborn
+pkt-line.c:85           packet:          git< fetch=shallow filter
+pkt-line.c:85           packet:          git< object-format=sha1
+pkt-line.c:85           packet:          git< 0000
+pkt-line.c:85           packet:        fetch< version 2
+pkt-line.c:85           packet:        fetch< agent=kasu/0.1.0
+pkt-line.c:85           packet:        fetch< ls-refs=unborn
+pkt-line.c:85           packet:        fetch< fetch=shallow filter
+pkt-line.c:85           packet:        fetch< object-format=sha1
+pkt-line.c:85           packet:        fetch< 0000
+pkt-line.c:85           packet:        fetch> command=ls-refs
+pkt-line.c:85           packet:        fetch> agent=git/2.53.0-Linux
+pkt-line.c:85           packet:        fetch> object-format=sha1
+pkt-line.c:85           packet:        fetch> 0001
+pkt-line.c:85           packet:        fetch> peel
+pkt-line.c:85           packet:        fetch> symrefs
+pkt-line.c:85           packet:        fetch> unborn
+pkt-line.c:85           packet:        fetch> ref-prefix refs/heads/
+pkt-line.c:85           packet:        fetch> ref-prefix refs/tags/
+pkt-line.c:85           packet:        fetch> ref-prefix HEAD
+pkt-line.c:85           packet:        fetch> 0000
+pkt-line.c:85           packet:          git< command=ls-refs
+pkt-line.c:85           packet:          git< agent=git/2.53.0-Linux
+pkt-line.c:85           packet:          git< object-format=sha1
+pkt-line.c:85           packet:          git< 0001
+pkt-line.c:85           packet:          git< peel
+pkt-line.c:85           packet:          git< symrefs
+pkt-line.c:85           packet:          git< unborn
+pkt-line.c:85           packet:          git< ref-prefix refs/heads/
+pkt-line.c:85           packet:          git< ref-prefix refs/tags/
+pkt-line.c:85           packet:          git< ref-prefix HEAD
+pkt-line.c:85           packet:          git< 0000
+pkt-line.c:85           packet:          git> 0002
+pkt-line.c:85           packet:        fetch< e744c005c78892226ba7e42bcde4560f493eccd0 HEAD symref-target:refs/heads/main
+pkt-line.c:85           packet:        fetch< e744c005c78892226ba7e42bcde4560f493eccd0 refs/heads/main
+pkt-line.c:85           packet:        fetch< 0000
+pkt-line.c:85           packet:        fetch< 0002
+pkt-line.c:85           packet:        fetch> command=fetch
+pkt-line.c:85           packet:        fetch> agent=git/2.53.0-Linux
+pkt-line.c:85           packet:        fetch> object-format=sha1
+pkt-line.c:85           packet:        fetch> 0001
+pkt-line.c:85           packet:        fetch> thin-pack
+pkt-line.c:85           packet:        fetch> no-progress
+pkt-line.c:85           packet:        fetch> ofs-delta
+pkt-line.c:85           packet:        fetch> want e744c005c78892226ba7e42bcde4560f493eccd0
+pkt-line.c:85           packet:        fetch> done
+pkt-line.c:85           packet:        fetch> 0000
+pkt-line.c:85           packet:          git< command=fetch
+pkt-line.c:85           packet:          git< agent=git/2.53.0-Linux
+pkt-line.c:85           packet:          git< object-format=sha1
+pkt-line.c:85           packet:          git< 0001
+pkt-line.c:85           packet:          git< thin-pack
+pkt-line.c:85           packet:          git< no-progress
+pkt-line.c:85           packet:          git< ofs-delta
+pkt-line.c:85           packet:          git< want e744c005c78892226ba7e42bcde4560f493eccd0
+pkt-line.c:85           packet:          git< done
+pkt-line.c:85           packet:          git< 0000
+pkt-line.c:85           packet:          git> 0002
+pkt-line.c:85           packet:        fetch< packfile
+pkt-line.c:85           packet:     sideband< PACK ...
+pkt-line.c:85           packet:     sideband< 0000
+pkt-line.c:85           packet:        fetch< 0002
+pkt-line.c:85           packet:          git< version 2
+pkt-line.c:85           packet:          git< version 2
+pkt-line.c:85           packet:          git< agent=kasu/0.1.0
+pkt-line.c:85           packet:          git< ls-refs=unborn
+pkt-line.c:85           packet:          git< fetch=shallow filter
+pkt-line.c:85           packet:          git< object-format=sha1
+pkt-line.c:85           packet:          git< 0000
+pkt-line.c:85           packet:        fetch< version 2
+pkt-line.c:85           packet:        fetch< agent=kasu/0.1.0
+pkt-line.c:85           packet:        fetch< ls-refs=unborn
+pkt-line.c:85           packet:        fetch< fetch=shallow filter
+pkt-line.c:85           packet:        fetch< object-format=sha1
+pkt-line.c:85           packet:        fetch< 0000
+pkt-line.c:85           packet:        fetch> command=ls-refs
+pkt-line.c:85           packet:        fetch> agent=git/2.53.0-Linux
+pkt-line.c:85           packet:        fetch> object-format=sha1
+pkt-line.c:85           packet:        fetch> 0001
+pkt-line.c:85           packet:        fetch> peel
+pkt-line.c:85           packet:        fetch> symrefs
+pkt-line.c:85           packet:        fetch> unborn
+pkt-line.c:85           packet:        fetch> ref-prefix refs/heads/
+pkt-line.c:85           packet:        fetch> ref-prefix refs/tags/
+pkt-line.c:85           packet:        fetch> ref-prefix HEAD
+pkt-line.c:85           packet:          git< command=ls-refs
+pkt-line.c:85           packet:        fetch> 0000
+pkt-line.c:85           packet:          git< agent=git/2.53.0-Linux
+pkt-line.c:85           packet:          git< object-format=sha1
+pkt-line.c:85           packet:          git< 0001
+pkt-line.c:85           packet:          git< peel
+pkt-line.c:85           packet:          git< symrefs
+pkt-line.c:85           packet:          git< unborn
+pkt-line.c:85           packet:          git< ref-prefix refs/heads/
+pkt-line.c:85           packet:          git< ref-prefix refs/tags/
+pkt-line.c:85           packet:          git< ref-prefix HEAD
+pkt-line.c:85           packet:          git< 0000
+pkt-line.c:85           packet:          git> 0002
+pkt-line.c:85           packet:        fetch< 1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac HEAD symref-target:refs/heads/main
+pkt-line.c:85           packet:        fetch< 1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac refs/heads/main
+pkt-line.c:85           packet:        fetch< 0000
+pkt-line.c:85           packet:        fetch< 0002
+pkt-line.c:85           packet:        fetch> command=fetch
+pkt-line.c:85           packet:        fetch> agent=git/2.53.0-Linux
+pkt-line.c:85           packet:        fetch> object-format=sha1
+pkt-line.c:85           packet:        fetch> 0001
+pkt-line.c:85           packet:        fetch> thin-pack
+pkt-line.c:85           packet:        fetch> no-progress
+pkt-line.c:85           packet:        fetch> ofs-delta
+pkt-line.c:85           packet:        fetch> want 1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac
+pkt-line.c:85           packet:        fetch> have e744c005c78892226ba7e42bcde4560f493eccd0
+pkt-line.c:85           packet:        fetch> 0000
+pkt-line.c:85           packet:          git< command=fetch
+pkt-line.c:85           packet:          git< agent=git/2.53.0-Linux
+pkt-line.c:85           packet:          git< object-format=sha1
+pkt-line.c:85           packet:          git< 0001
+pkt-line.c:85           packet:          git< thin-pack
+pkt-line.c:85           packet:          git< no-progress
+pkt-line.c:85           packet:          git< ofs-delta
+pkt-line.c:85           packet:          git< want 1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac
+pkt-line.c:85           packet:          git< have e744c005c78892226ba7e42bcde4560f493eccd0
+pkt-line.c:85           packet:          git< 0000
+pkt-line.c:85           packet:          git> 0002
+pkt-line.c:85           packet:        fetch< acknowledgments
+pkt-line.c:85           packet:        fetch< ACK e744c005c78892226ba7e42bcde4560f493eccd0
+pkt-line.c:85           packet:        fetch< ready
+pkt-line.c:85           packet:        fetch< 0001
+pkt-line.c:85           packet:        fetch< packfile
+pkt-line.c:85           packet:     sideband< PACK ...
+pkt-line.c:85           packet:     sideband< 0000
+pkt-line.c:85           packet:        fetch< 0002

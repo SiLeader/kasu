@@ -1,0 +1,114 @@
+{
+  "allChecksPassed": true,
+  "backend": "PostgreSQL serializable KV prototype",
+  "benchmarks": [
+    {
+      "Name": "immutable-put-4KiB",
+      "Operations": 256,
+      "Concurrency": 1,
+      "Applied": 256,
+      "Retry": 0,
+      "Attempts": 256,
+      "ElapsedMS": 56.247,
+      "AcknowledgedPerSecond": 4551.343735346473,
+      "P50MS": 0.229,
+      "P95MS": 0.276,
+      "P99MS": 0.297,
+      "DrainMS": 0
+    },
+    {
+      "Name": "immutable-get-4KiB",
+      "Operations": 256,
+      "Concurrency": 1,
+      "Applied": 256,
+      "Retry": 0,
+      "Attempts": 256,
+      "ElapsedMS": 30.92,
+      "AcknowledgedPerSecond": 8279.386071879884,
+      "P50MS": 0.12,
+      "P95MS": 0.144,
+      "P99MS": 0.167,
+      "DrainMS": 0
+    },
+    {
+      "Name": "ref-cas-1-repos",
+      "Operations": 256,
+      "Concurrency": 8,
+      "Applied": 235,
+      "Retry": 21,
+      "Attempts": 319,
+      "ElapsedMS": 98.092,
+      "AcknowledgedPerSecond": 2395.703018133168,
+      "P50MS": 0.393,
+      "P95MS": 32.636,
+      "P99MS": 32.843,
+      "DrainMS": 9.466
+    },
+    {
+      "Name": "ref-cas-8-repos",
+      "Operations": 256,
+      "Concurrency": 8,
+      "Applied": 249,
+      "Retry": 7,
+      "Attempts": 315,
+      "ElapsedMS": 67.811,
+      "AcknowledgedPerSecond": 3671.925517777996,
+      "P50MS": 0.579,
+      "P95MS": 7.993,
+      "P99MS": 32.296,
+      "DrainMS": 3.311
+    }
+  ],
+  "contracts": {
+    "cancelledCommitRolledBack": true,
+    "fingerprintCollisionRejected": true,
+    "initialMixedReplies": {
+      "Applied": 1,
+      "Mismatch": 15
+    },
+    "initialReceiptReplies": {
+      "Applied": 1,
+      "Replay": 7
+    },
+    "longBinaryKeyAndEmptyValue": true,
+    "lostReplyReplayedOnce": true,
+    "mixedCasClients": 16,
+    "nativeAndGitABARejected": true,
+    "partialBatchRejected": true,
+    "receiptClients": 8,
+    "rollbackIncludesCountersAndReceipt": true,
+    "sameKeyPublishedOnce": true,
+    "singleMixedWinner": true
+  },
+  "isolationProbe": {
+    "sameValueFence": "not-run: PostgreSQL writes acquire a row lock",
+    "unfencedGuardAbortedAsConflict": true,
+    "unfencedGuardCommittedAfterObserver": false
+  },
+  "namespace": "run-18e11ca945c05b48",
+  "operations": 256,
+  "phase": "baseline",
+  "schema": 1,
+  "stableDataDigest": "36da1ef588f8260e877806a121c03acc6f68bdc7c84ef44182d0a34317d79281",
+  "stableDataRecords": 1853,
+  "valueLimits": [
+    {
+      "accepted": true,
+      "elapsedMS": 0.393,
+      "errorClass": "",
+      "rawBytes": 1024
+    },
+    {
+      "accepted": true,
+      "elapsedMS": 5.333,
+      "errorClass": "",
+      "rawBytes": 1048576
+    },
+    {
+      "accepted": true,
+      "elapsedMS": 26.432,
+      "errorClass": "",
+      "rawBytes": 8388608
+    }
+  ]
+}

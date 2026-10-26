@@ -1,0 +1,22 @@
+[package]
+name = "kasu-ops"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+kasu-core.workspace = true
+kasu-store.workspace = true
+kasu-derived.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+proptest.workspace = true
+
+[[bench]]
+name = "history"
+harness = false
+
+[[bench]]
+name = "divergent_history"
+harness = false

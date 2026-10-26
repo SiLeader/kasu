@@ -1,0 +1,17 @@
+Running tests/e2e.rs
+running 12 tests
+test metadata_snapshot_and_blob_sizes_do_not_download_file_contents ... ok
+test byte_paths_survive_the_remote_snapshot_and_platform_checkout_rules ... ok
+test notify_watch_observes_real_edits_and_does_not_hold_the_working_copy_lock ... ok
+test untracked_files_existing_destinations_and_symlink_parents_are_preserved ... ok
+test real_cli_blame_flags_change_moved_and_copied_line_origins ... ok
+test excluded_new_subtrees_stay_unrequested_and_specific_includes_override_exclusions ... ok
+test lost_land_reply_retains_the_key_and_blocks_a_new_commit_until_replay ... ok
+test read_scoped_account_checks_out_commits_and_lands_without_hidden_objects ... ok
+test amending_an_addition_to_deletion_and_file_directory_type_changes ... ok
+test real_cli_sparse_checkout_amend_rebase_land_and_metadata_queries ... ok
+test real_cli_uses_the_unix_daemon_and_a_snapshot_can_boot_without_the_cache ... ok
+test conflicts_replay_without_losing_files_and_gitlinks_can_be_committed ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.29s
+

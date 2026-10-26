@@ -1,0 +1,232 @@
+# git version 2.54.0 (Apple Git-157)
+         git< # service=git-upload-pack
+         git< 0000
+         git< version 1
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/heads/main
+         git< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/nested^{}
+         git< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+         git< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/v1^{}
+         git< 0000
+         git> 067401246fa62e98450b844e23c2bd98706d88b8 refs/heads/main
+         git> 067401246fa62e98450b844e23c2bd98706d88b8 refs/heads/main
+         git> 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested
+         git> 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+         git> 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1
+         git> 0000
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/heads/main
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/heads/main
+  fetch-pack< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested
+  fetch-pack< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+  fetch-pack< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1
+  fetch-pack< 0000
+  fetch-pack< version 1
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/heads/main
+  fetch-pack< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/nested^{}
+  fetch-pack< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+  fetch-pack< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/v1^{}
+  fetch-pack< 0000
+  fetch-pack> want 067401246fa62e98450b844e23c2bd98706d88b8 multi_ack_detailed side-band-64k no-progress ofs-delta deepen-since deepen-not agent=git/2.54.0-Darwin filter
+  fetch-pack> want 6e214d999f1173e9c65d09f595e29ec32418d497
+  fetch-pack> want 988c0fda611ee1b7acc4c1135365bb0b98745801
+  fetch-pack> want 326b8864c70510119a6f2f38b8e52d553e874dc1
+  fetch-pack> filter blob:none
+  fetch-pack> 0000
+  fetch-pack> done
+  fetch-pack> 0000
+         git< 00a0want 067401246fa62e98450b844e23c2bd98706d88b8 multi_ack_detailed side-band-64k no-progress ofs-delta deepen-since deepen-not agent=git/2.54.0-Darwin filter0032want 6e214d999f1173e9c65d09f595e29ec32418d4970032want 988c0fda611ee1b7acc4c1135365bb0b987458010032want 326b8864c70510119a6f2f38b8e52d553e874dc10014filter blob:none00000009done
+         git< 0000
+  fetch-pack< NAK
+  fetch-pack> 0000
+         git< 0000
+    sideband< PACK ...
+    sideband< 0000
+         git< # service=git-upload-pack
+         git< 0000
+         git< version 1
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/heads/main
+         git< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/nested^{}
+         git< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+         git< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/v1^{}
+         git< 0000
+         git> 8c1384d825dbbe41309b7dc18ee7991a9085c46e 8c1384d825dbbe41309b7dc18ee7991a9085c46e
+         git> 0000
+  fetch-pack< 8c1384d825dbbe41309b7dc18ee7991a9085c46e 8c1384d825dbbe41309b7dc18ee7991a9085c46e
+  fetch-pack< 0000
+  fetch-pack< version 1
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/heads/main
+  fetch-pack< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/nested^{}
+  fetch-pack< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+  fetch-pack< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/v1^{}
+  fetch-pack< 0000
+  fetch-pack> want 8c1384d825dbbe41309b7dc18ee7991a9085c46e multi_ack_detailed side-band-64k no-progress ofs-delta deepen-since deepen-not agent=git/2.54.0-Darwin filter
+  fetch-pack> filter blob:none
+  fetch-pack> 0000
+  fetch-pack> done
+  fetch-pack> 0000
+         git< 00a0want 8c1384d825dbbe41309b7dc18ee7991a9085c46e multi_ack_detailed side-band-64k no-progress ofs-delta deepen-since deepen-not agent=git/2.54.0-Darwin filter0014filter blob:none00000009done
+         git< 0000
+  fetch-pack< NAK
+  fetch-pack> 0000
+         git< 0000
+    sideband< PACK ...
+    sideband< 0000
+         git< # service=git-upload-pack
+         git< 0000
+         git< version 1
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/heads/main
+         git< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/nested^{}
+         git< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+         git< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/v1^{}
+         git< 0000
+         git> aae70855a6c9c2d8db764494e0f7d3b8cac9feb5 aae70855a6c9c2d8db764494e0f7d3b8cac9feb5
+         git> 0000
+  fetch-pack< aae70855a6c9c2d8db764494e0f7d3b8cac9feb5 aae70855a6c9c2d8db764494e0f7d3b8cac9feb5
+  fetch-pack< 0000
+  fetch-pack< version 1
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/heads/main
+  fetch-pack< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/nested^{}
+  fetch-pack< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+  fetch-pack< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/v1^{}
+  fetch-pack< 0000
+  fetch-pack> want aae70855a6c9c2d8db764494e0f7d3b8cac9feb5 multi_ack_detailed side-band-64k no-progress ofs-delta deepen-since deepen-not agent=git/2.54.0-Darwin filter
+  fetch-pack> filter blob:none
+  fetch-pack> 0000
+  fetch-pack> have 067401246fa62e98450b844e23c2bd98706d88b8
+  fetch-pack> done
+  fetch-pack> 0000
+         git< 00a0want aae70855a6c9c2d8db764494e0f7d3b8cac9feb5 multi_ack_detailed side-band-64k no-progress ofs-delta deepen-since deepen-not agent=git/2.54.0-Darwin filter0014filter blob:none00000032have 067401246fa62e98450b844e23c2bd98706d88b80009done
+         git< 0000
+         git< # service=git-upload-pack
+         git< 0000
+         git< version 1
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/heads/main
+         git< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/nested^{}
+         git< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+         git< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/v1^{}
+         git< 0000
+         git> 899f34a005b5f54a482f419bf464dd2acb2d9f41 899f34a005b5f54a482f419bf464dd2acb2d9f41
+         git> 0000
+  fetch-pack< 899f34a005b5f54a482f419bf464dd2acb2d9f41 899f34a005b5f54a482f419bf464dd2acb2d9f41
+  fetch-pack< 0000
+  fetch-pack< version 1
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/heads/main
+  fetch-pack< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/nested^{}
+  fetch-pack< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+  fetch-pack< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/v1^{}
+  fetch-pack< 0000
+  fetch-pack> want 899f34a005b5f54a482f419bf464dd2acb2d9f41 multi_ack_detailed side-band-64k no-progress ofs-delta deepen-since deepen-not agent=git/2.54.0-Darwin filter
+  fetch-pack> filter blob:none
+  fetch-pack> 0000
+  fetch-pack> have 067401246fa62e98450b844e23c2bd98706d88b8
+  fetch-pack> done
+  fetch-pack> 0000
+         git< 00a0want 899f34a005b5f54a482f419bf464dd2acb2d9f41 multi_ack_detailed side-band-64k no-progress ofs-delta deepen-since deepen-not agent=git/2.54.0-Darwin filter0014filter blob:none00000032have 067401246fa62e98450b844e23c2bd98706d88b80009done
+         git< 0000
+         git< # service=git-upload-pack
+         git< 0000
+         git< version 1
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/heads/main
+         git< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/nested^{}
+         git< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+         git< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/v1^{}
+         git< 0000
+         git< # service=git-upload-pack
+         git< 0000
+         git< version 1
+         git< 4c0662f102de061233b074ffe995af9de8d28c1e HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+         git< 4c0662f102de061233b074ffe995af9de8d28c1e refs/heads/main
+         git< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/nested^{}
+         git< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+         git< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/v1^{}
+         git< 0000
+         git> 4c0662f102de061233b074ffe995af9de8d28c1e refs/heads/main
+         git> 0000
+  fetch-pack< 4c0662f102de061233b074ffe995af9de8d28c1e refs/heads/main
+  fetch-pack< 0000
+  fetch-pack< version 1
+  fetch-pack< 4c0662f102de061233b074ffe995af9de8d28c1e HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+  fetch-pack< 4c0662f102de061233b074ffe995af9de8d28c1e refs/heads/main
+  fetch-pack< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/nested^{}
+  fetch-pack< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+  fetch-pack< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/v1^{}
+  fetch-pack< 0000
+  fetch-pack> want 4c0662f102de061233b074ffe995af9de8d28c1e multi_ack_detailed side-band-64k no-progress include-tag ofs-delta deepen-since deepen-not agent=git/2.54.0-Darwin filter
+  fetch-pack> filter blob:none
+  fetch-pack> 0000
+  fetch-pack> have 067401246fa62e98450b844e23c2bd98706d88b8
+  fetch-pack> done
+  fetch-pack> 0000
+         git< 00acwant 4c0662f102de061233b074ffe995af9de8d28c1e multi_ack_detailed side-band-64k no-progress include-tag ofs-delta deepen-since deepen-not agent=git/2.54.0-Darwin filter0014filter blob:none00000032have 067401246fa62e98450b844e23c2bd98706d88b80009done
+         git< 0000
+  fetch-pack< ACK 067401246fa62e98450b844e23c2bd98706d88b8
+  fetch-pack> 0000
+         git< 0000
+    sideband< PACK ...
+    sideband< 0000
+         git< # service=git-upload-pack
+         git< 0000
+         git< version 1
+         git< 4c0662f102de061233b074ffe995af9de8d28c1e HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+         git< 4c0662f102de061233b074ffe995af9de8d28c1e refs/heads/main
+         git< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/nested^{}
+         git< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+         git< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1
+         git< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/v1^{}
+         git< 0000
+         git> 29ef827e8a45b1039d908884aae4490157bcb2b4 29ef827e8a45b1039d908884aae4490157bcb2b4
+         git> 0000
+  fetch-pack< 29ef827e8a45b1039d908884aae4490157bcb2b4 29ef827e8a45b1039d908884aae4490157bcb2b4
+  fetch-pack< 0000
+  fetch-pack< version 1
+  fetch-pack< 4c0662f102de061233b074ffe995af9de8d28c1e HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+  fetch-pack< 4c0662f102de061233b074ffe995af9de8d28c1e refs/heads/main
+  fetch-pack< 6e214d999f1173e9c65d09f595e29ec32418d497 refs/tags/nested
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/nested^{}
+  fetch-pack< 988c0fda611ee1b7acc4c1135365bb0b98745801 refs/tags/tree
+  fetch-pack< 326b8864c70510119a6f2f38b8e52d553e874dc1 refs/tags/v1
+  fetch-pack< 067401246fa62e98450b844e23c2bd98706d88b8 refs/tags/v1^{}
+  fetch-pack< 0000
+  fetch-pack> want 29ef827e8a45b1039d908884aae4490157bcb2b4 multi_ack_detailed side-band-64k no-progress ofs-delta deepen-since deepen-not agent=git/2.54.0-Darwin filter
+  fetch-pack> filter blob:none
+  fetch-pack> 0000
+  fetch-pack> done
+  fetch-pack> 0000
+         git< 00a0want 29ef827e8a45b1039d908884aae4490157bcb2b4 multi_ack_detailed side-band-64k no-progress ofs-delta deepen-since deepen-not agent=git/2.54.0-Darwin filter0014filter blob:none00000009done
+         git< 0000
+  fetch-pack< NAK
+  fetch-pack> 0000
+         git< 0000
+    sideband< PACK ...
+    sideband< 0000

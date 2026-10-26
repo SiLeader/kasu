@@ -1,0 +1,38 @@
+{
+  "success": true,
+  "versions": {
+    "git": "git version 2.39.5",
+    "git_lfs": "git-lfs/3.3.0 (GitHub; linux arm64; go 1.19.8)"
+  },
+  "clone_cases": [
+    {
+      "mode": "full",
+      "hydrated_bytes": 2097152,
+      "strict_fsck": true
+    },
+    {
+      "mode": "depth1",
+      "hydrated_bytes": 2097152,
+      "strict_fsck": true
+    },
+    {
+      "mode": "partial",
+      "hydrated_bytes": 2097152,
+      "strict_fsck": true
+    }
+  ],
+  "payload_bytes": 2097152,
+  "pointer_bytes": 132,
+  "payload_sha256": "4919ef7afab9dda5afbcf9ba72e3a5fc7fd08e3e0cbc57e35cdc92900950f473",
+  "pushed_payload_sha256": "1120519a07811f407280d8af2cbc71263b07041c98904d8c053e3d45a35324e9",
+  "pushed_git_oid": "8511335d14a243aa1f6fbe6f91faf46f4d94917b",
+  "native_returns_pointer": true,
+  "missing_payload_checkout_fails": true,
+  "git_fsck_without_lfs": true,
+  "lfs_outage_skip_smudge_clone": true,
+  "lfs_outage_pull_fails": true,
+  "missing_payload_push_accepted": true,
+  "kasu_lfs_batch_status": 404,
+  "external_upload_count": 2,
+  "security_validation": "not performed; loopback fixture without auth"
+}

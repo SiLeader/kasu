@@ -1,0 +1,34 @@
+name: OSS Metadata parity
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 17 * * *'
+permissions:
+  contents: read
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch pinned external graph
+        shell: bash
+        run: |
+          source="$RUNNER_TEMP/oss-metadata.git"
+          git init --bare --object-format=sha1 --initial-branch=master "$source"
+          refspecs=()
+          while read -r oid ref; do
+            refspecs+=("$oid:$ref")
+          done < crates/kasu-ingest/tests/fixtures/oss-refs.txt
+          git -C "$source" fetch --no-tags https://github.com/libgit2/TestGitRepository.git "${refspecs[@]}"
+          git -C "$source" repack -ad
+          git -C "$source" fsck --strict
+      - name: Build pinned Rust 1.90 test
+        run: docker build -f tools/oss-fixtures/metadata.Dockerfile -t kasu:oss-metadata-test . > oss-metadata-build.log 2>&1
+      - name: Compare Metadata queries with Git without network
+        run: docker run --rm --network none --user "$(id -u):$(id -g)" --mount type=bind,source="$RUNNER_TEMP/oss-metadata.git",target=/fixtures/TestGitRepository.git,readonly kasu:oss-metadata-test > oss-metadata-run.log 2>&1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: oss-metadata-parity
+          path: oss-metadata-*.log

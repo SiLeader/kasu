@@ -1,0 +1,65 @@
+name: OSS Git roundtrip
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '21 17 * * *'
+permissions:
+  contents: read
+jobs:
+  oss:
+    runs-on: ubuntu-latest
+    env:
+      RUSTC_WRAPPER: ""
+      KASU_OSS_REPO: ${{ github.workspace }}/oss-fixture.git
+      KASU_OSS_SUBMODULE_REPO: ${{ github.workspace }}/oss-submodule.git
+      KASU_OSS_BYTE_PATH_REPO: ${{ github.workspace }}/oss-byte-paths.git
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Fetch pinned object graph
+        shell: bash
+        run: |
+          git init --bare --object-format=sha1 --initial-branch=master "$KASU_OSS_REPO"
+          refspecs=()
+          while read -r oid ref; do
+            refspecs+=("$oid:$ref")
+          done < crates/kasu-ingest/tests/fixtures/oss-refs.txt
+          git -C "$KASU_OSS_REPO" fetch --no-tags https://github.com/libgit2/TestGitRepository.git "${refspecs[@]}"
+          git -C "$KASU_OSS_REPO" repack -ad
+      - name: Prepare pinned upstream submodule object graph
+        run: python3 tools/oss-fixtures/prepare.py --output "$GITHUB_WORKSPACE/oss-submodule.git" > oss-submodule-prepare.json
+      - name: Prepare fixed upstream non-UTF8 path graph
+        run: python3 tools/oss-fixtures/prepare_byte_paths.py --output "$KASU_OSS_BYTE_PATH_REPO" > oss-byte-paths-prepare.json
+      - name: Validate all OIDs, strict pack and clone
+        run: cargo test -p kasu-ingest --test roundtrip --locked -- --include-ignored > oss-roundtrip.log 2>&1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: oss-roundtrip-evidence
+          path: |
+            oss-roundtrip.log
+            oss-submodule-prepare.json
+            oss-byte-paths-prepare.json
+
+  pinned-rust-upstream-submodule:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare fixed upstream gitlink graph
+        run: python3 tools/oss-fixtures/prepare.py --output "$RUNNER_TEMP/oss-submodule.git" > oss-submodule-prepare.json
+      - name: Prepare fixed upstream byte-path, tag and merge graph
+        run: python3 tools/oss-fixtures/prepare_byte_paths.py --output "$RUNNER_TEMP/oss-byte-paths.git" > oss-byte-paths-prepare.json
+      - name: Build with pinned Rust 1.90
+        run: docker build -f tools/oss-fixtures/Dockerfile -t kasu:oss-fixtures-test . > oss-fixtures-build.log 2>&1
+      - name: Roundtrip fixtures without network or submodule fetch
+        run: docker run --rm --network none --user "$(id -u):$(id -g)" --mount type=bind,source="$RUNNER_TEMP/oss-submodule.git",target=/fixtures/submodules.git,readonly --mount type=bind,source="$RUNNER_TEMP/oss-byte-paths.git",target=/fixtures/byte-paths.git,readonly kasu:oss-fixtures-test > oss-fixtures-run.log 2>&1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: oss-fixtures-pinned-rust-evidence
+          path: |
+            oss-fixtures-*.log
+            oss-submodule-prepare.json
+            oss-byte-paths-prepare.json

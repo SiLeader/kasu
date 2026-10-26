@@ -1,0 +1,3 @@
+blob_bytes,commits,objects,raw_bytes,pack_bytes,index_pack_strict,fsck_strict
+4096,101,109,38099,28605,true,true
+262144,101,109,554195,545088,true,true

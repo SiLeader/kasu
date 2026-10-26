@@ -1,0 +1,103 @@
+# git push --atomic main main:refs/heads/new :refs/heads/obsolete refs/tags/v2
+packet:          git< # service=git-receive-pack
+packet:          git< 0000
+packet:          git< f8e946642d17795a1fd3b184f1b72b9efad71e59 refs/heads/main\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet:          git< f8e946642d17795a1fd3b184f1b72b9efad71e59 refs/heads/obsolete
+packet:          git< 355b2e25c637fad4b5e7927d5e27b09b2ae486e0 refs/tags/v1
+packet:          git< 0000
+packet:          git> refs/heads/main:refs/heads/main
+packet:          git> :refs/heads/obsolete
+packet:          git> refs/heads/main:refs/heads/new
+packet:          git> refs/tags/v2:refs/tags/v2
+packet:          git> 0000
+packet:          git< refs/heads/main:refs/heads/main
+packet:          git< :refs/heads/obsolete
+packet:          git< refs/heads/main:refs/heads/new
+packet:          git< refs/tags/v2:refs/tags/v2
+packet:          git< 0000
+packet:          git< f8e946642d17795a1fd3b184f1b72b9efad71e59 refs/heads/main\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet:          git< f8e946642d17795a1fd3b184f1b72b9efad71e59 refs/heads/obsolete
+packet:          git< 355b2e25c637fad4b5e7927d5e27b09b2ae486e0 refs/tags/v1
+packet:          git< 0000
+packet:          git> f8e946642d17795a1fd3b184f1b72b9efad71e59 808db922926c5e97a224241d729d624a15371b9b refs/heads/main\0 report-status side-band-64k atomic object-format=sha1 agent=git/2.54.0-Darwin
+packet:          git> f8e946642d17795a1fd3b184f1b72b9efad71e59 0000000000000000000000000000000000000000 refs/heads/obsolete
+packet:          git> 0000000000000000000000000000000000000000 808db922926c5e97a224241d729d624a15371b9b refs/heads/new
+packet:          git> 0000000000000000000000000000000000000000 c98bb0d928ad5ef977d59f25f33d2282cbb32732 refs/tags/v2
+packet:          git> 0000
+packet:          git< 00b4f8e946642d17795a1fd3b184f1b72b9efad71e59 808db922926c5e97a224241d729d624a15371b9b refs/heads/main\0 report-status side-band-64k atomic object-format=sha1 agent=git/2.54.0-Darwin0069f8e946642d17795a1fd3b184f1b72b9efad71e59 0000000000000000000000000000000000000000 refs/heads/obsolete00640000000000000000000000000000000000000000 808db922926c5e97a224241d729d624a15371b9b refs/heads/new00620000000000000000000000000000000000000000 c98bb0d928ad5ef977d59f25f33d2282cbb32732 refs/tags/v20000
+packet:          git< PACK ...
+packet:          git> 0000
+packet:     sideband< \1000eunpack ok0017ok refs/heads/main001bok refs/heads/obsolete0016ok refs/heads/new0014ok refs/tags/v20000
+packet:     sideband< 0000
+packet:          git< unpack ok
+packet:          git< ok refs/heads/main
+packet:          git< ok refs/heads/obsolete
+packet:          git< ok refs/heads/new
+packet:          git< ok refs/tags/v2
+packet:          git< 0000
+packet:          git> 0000
+# git push --atomic --force main:refs/heads/untouched refs/tags/v1
+packet:          git< # service=git-receive-pack
+packet:          git< 0000
+packet:          git< 808db922926c5e97a224241d729d624a15371b9b refs/heads/main\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet:          git< 808db922926c5e97a224241d729d624a15371b9b refs/heads/new
+packet:          git< 355b2e25c637fad4b5e7927d5e27b09b2ae486e0 refs/tags/v1
+packet:          git< c98bb0d928ad5ef977d59f25f33d2282cbb32732 refs/tags/v2
+packet:          git< 0000
+packet:          git> +refs/tags/v1:refs/tags/v1
+packet:          git> +refs/heads/main:refs/heads/untouched
+packet:          git> 0000
+packet:          git< +refs/tags/v1:refs/tags/v1
+packet:          git< +refs/heads/main:refs/heads/untouched
+packet:          git< 0000
+packet:          git< 808db922926c5e97a224241d729d624a15371b9b refs/heads/main\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet:          git< 808db922926c5e97a224241d729d624a15371b9b refs/heads/new
+packet:          git< 355b2e25c637fad4b5e7927d5e27b09b2ae486e0 refs/tags/v1
+packet:          git< c98bb0d928ad5ef977d59f25f33d2282cbb32732 refs/tags/v2
+packet:          git< 0000
+packet:          git> 355b2e25c637fad4b5e7927d5e27b09b2ae486e0 808db922926c5e97a224241d729d624a15371b9b refs/tags/v1\0 report-status side-band-64k atomic object-format=sha1 agent=git/2.54.0-Darwin
+packet:          git> 0000000000000000000000000000000000000000 808db922926c5e97a224241d729d624a15371b9b refs/heads/untouched
+packet:          git> 0000
+packet:          git< 00b1355b2e25c637fad4b5e7927d5e27b09b2ae486e0 808db922926c5e97a224241d729d624a15371b9b refs/tags/v1\0 report-status side-band-64k atomic object-format=sha1 agent=git/2.54.0-Darwin006a0000000000000000000000000000000000000000 808db922926c5e97a224241d729d624a15371b9b refs/heads/untouched0000
+packet:          git< PACK ...
+packet:          git> 0000
+packet:     sideband< \1000eunpack ok0030ng refs/tags/v1 tag replacement is disabled002fng refs/heads/untouched atomic push failed0000
+packet:     sideband< 0000
+packet:          git< unpack ok
+packet:          git< ng refs/tags/v1 tag replacement is disabled
+packet:          git< ng refs/heads/untouched atomic push failed
+packet:          git< 0000
+packet:          git> 0000
+# git push --atomic :refs/heads/new :refs/tags/v2
+packet:          git< # service=git-receive-pack
+packet:          git< 0000
+packet:          git< 808db922926c5e97a224241d729d624a15371b9b refs/heads/main\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet:          git< 808db922926c5e97a224241d729d624a15371b9b refs/heads/new
+packet:          git< 355b2e25c637fad4b5e7927d5e27b09b2ae486e0 refs/tags/v1
+packet:          git< c98bb0d928ad5ef977d59f25f33d2282cbb32732 refs/tags/v2
+packet:          git< 0000
+packet:          git> :refs/heads/new
+packet:          git> :refs/tags/v2
+packet:          git> 0000
+packet:          git< :refs/heads/new
+packet:          git< :refs/tags/v2
+packet:          git< 0000
+packet:          git< 808db922926c5e97a224241d729d624a15371b9b refs/heads/main\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet:          git< 808db922926c5e97a224241d729d624a15371b9b refs/heads/new
+packet:          git< 355b2e25c637fad4b5e7927d5e27b09b2ae486e0 refs/tags/v1
+packet:          git< c98bb0d928ad5ef977d59f25f33d2282cbb32732 refs/tags/v2
+packet:          git< 0000
+packet:          git> 808db922926c5e97a224241d729d624a15371b9b 0000000000000000000000000000000000000000 refs/heads/new\0 report-status side-band-64k atomic object-format=sha1 agent=git/2.54.0-Darwin
+packet:          git> c98bb0d928ad5ef977d59f25f33d2282cbb32732 0000000000000000000000000000000000000000 refs/tags/v2
+packet:          git> 0000
+packet:          git> 0000
+packet:          git< 00b3808db922926c5e97a224241d729d624a15371b9b 0000000000000000000000000000000000000000 refs/heads/new\0 report-status side-band-64k atomic object-format=sha1 agent=git/2.54.0-Darwin0062c98bb0d928ad5ef977d59f25f33d2282cbb32732 0000000000000000000000000000000000000000 refs/tags/v20000
+packet:          git< 0000
+packet:     sideband< \1000eunpack ok0016ok refs/heads/new0014ok refs/tags/v20000
+packet:     sideband< 0000
+packet:          git< unpack ok
+packet:          git< ok refs/heads/new
+packet:          git< ok refs/tags/v2
+packet:          git< 0000
+packet:          git> 0000
+packet:          git< 0000

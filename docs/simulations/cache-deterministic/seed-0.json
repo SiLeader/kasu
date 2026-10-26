@@ -1,0 +1,119 @@
+{
+  "seed": 0,
+  "clients": 1000,
+  "virtual_time_ms": 170,
+  "initial_authority_requests": 1,
+  "initial_node_coalesced": [
+    499,
+    499
+  ],
+  "initial_cache_coalesced": 1,
+  "outage_authority_requests": 0,
+  "truncated_replies": 1,
+  "timed_out_replies": 1,
+  "persistence_failures": 4,
+  "authority_requests": 11,
+  "disk_reopen_authority_requests": 0,
+  "events": [
+    {
+      "phase": "coalesced_wave",
+      "virtual_ms": 5,
+      "authority_calls": 1,
+      "cache_rpc_calls": 2,
+      "cache_pending": 0,
+      "node_pending": [
+        0,
+        0
+      ]
+    },
+    {
+      "phase": "cache_unavailable_warm_and_cold",
+      "virtual_ms": 9,
+      "authority_calls": 1,
+      "cache_rpc_calls": 4,
+      "cache_pending": 0,
+      "node_pending": [
+        0,
+        0
+      ]
+    },
+    {
+      "phase": "empty_cache_restarted",
+      "virtual_ms": 18,
+      "authority_calls": 2,
+      "cache_rpc_calls": 6,
+      "cache_pending": 0,
+      "node_pending": [
+        0,
+        0
+      ]
+    },
+    {
+      "phase": "truncated_frame_rejected",
+      "virtual_ms": 20,
+      "authority_calls": 3,
+      "cache_rpc_calls": 7,
+      "cache_pending": 0,
+      "node_pending": [
+        0,
+        0
+      ]
+    },
+    {
+      "phase": "upstream_deadline",
+      "virtual_ms": 80,
+      "authority_calls": 5,
+      "cache_rpc_calls": 9,
+      "cache_pending": 0,
+      "node_pending": [
+        0,
+        0
+      ]
+    },
+    {
+      "phase": "persistence_circuit_blocks_burst",
+      "virtual_ms": 110,
+      "authority_calls": 9,
+      "cache_rpc_calls": 14,
+      "cache_pending": 0,
+      "node_pending": [
+        0,
+        0
+      ]
+    },
+    {
+      "phase": "failed_half_open_probe",
+      "virtual_ms": 140,
+      "authority_calls": 10,
+      "cache_rpc_calls": 16,
+      "cache_pending": 0,
+      "node_pending": [
+        0,
+        0
+      ]
+    },
+    {
+      "phase": "persistence_recovered",
+      "virtual_ms": 170,
+      "authority_calls": 11,
+      "cache_rpc_calls": 18,
+      "cache_pending": 0,
+      "node_pending": [
+        0,
+        0
+      ]
+    },
+    {
+      "phase": "daemon_disk_reopened",
+      "virtual_ms": 170,
+      "authority_calls": 11,
+      "cache_rpc_calls": 18,
+      "cache_pending": 0,
+      "node_pending": [
+        0,
+        0
+      ]
+    }
+  ],
+  "result_digest": "a56467317a619781354248b3e0217c7f3539d9fba9a33024bebaff6746767d80"
+}

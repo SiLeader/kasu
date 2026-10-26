@@ -1,0 +1,36 @@
+name: Git read compatibility
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 17 * * *'
+permissions:
+  contents: read
+jobs:
+  clients:
+    runs-on: ubuntu-latest
+    env:
+      RUSTC_WRAPPER: ""
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set client and packet capture paths
+        run: |
+          printf '%s\n' \
+            "KASU_GO_GIT_CLIENT=$RUNNER_TEMP/kasu-go-git-compat" \
+            "KASU_GO_GIT_PUSH_CLIENT=$RUNNER_TEMP/kasu-go-git-compat" \
+            "KASU_CAPTURE_DIR=$RUNNER_TEMP/kasu-git-traces" >> "$GITHUB_ENV"
+      - uses: dtolnay/rust-toolchain@stable
+      - run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.3'
+          cache-dependency-path: tools/git-compat/go.sum
+      - run: go -C tools/git-compat build -o "$KASU_GO_GIT_CLIENT" .
+      - run: git --version
+      - run: cargo test -p kasu-server --test git_http --locked -- --include-ignored
+      - run: cargo test -p kasu-server --test push --locked -- --include-ignored
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: git-client-packets
+          path: ${{ runner.temp }}/kasu-git-traces

@@ -1,0 +1,9 @@
+    Blocking waiting for file lock on build directory
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.02s
+     Running tests/oss_metadata.rs (target/debug/deps/oss_metadata-8b40cd1bae4627cf)
+
+running 1 test
+test pinned_oss_metadata_matches_git_for_all_commits_paths_and_tip_pairs ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.56s
+

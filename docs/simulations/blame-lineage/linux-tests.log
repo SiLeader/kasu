@@ -1,0 +1,275 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.62kB done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 1.2s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#3 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.0s done
+#3 CACHED
+
+#4 [internal] load metadata for docker.io/library/rust@sha256:3914072ca0c3b8aad871db9169a651ccfce30cf58303e5d6f2db16d1d8a7e58f
+#4 DONE 1.2s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 247B done
+#5 DONE 0.0s
+
+#6 [test 1/6] FROM docker.io/library/rust@sha256:3914072ca0c3b8aad871db9169a651ccfce30cf58303e5d6f2db16d1d8a7e58f
+#6 resolve docker.io/library/rust@sha256:3914072ca0c3b8aad871db9169a651ccfce30cf58303e5d6f2db16d1d8a7e58f done
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 250.89kB 0.0s done
+#7 DONE 0.0s
+
+#8 [test 2/6] RUN apt-get update && apt-get install -y --no-install-recommends protobuf-compiler git && rm -rf /var/lib/apt/lists/*
+#8 CACHED
+
+#9 [test 3/6] WORKDIR /app
+#9 CACHED
+
+#10 [test 4/6] COPY Cargo.toml Cargo.lock ./
+#10 CACHED
+
+#11 [test 5/6] COPY crates ./crates
+#11 DONE 0.0s
+
+#12 [test 6/6] RUN --mount=type=cache,target=/usr/local/cargo/registry     --mount=type=cache,target=/app/target     rustc --version && git --version && uname -sm &&     sha256sum crates/kasu-derived/src/fragments.rs crates/kasu-derived/src/history.rs crates/kasu-derived/tests/lineage.rs crates/kasu-proto/proto/kasu.proto crates/kasu-server/src/backend.rs crates/kasu-server/tests/metadata.rs crates/kasu-git/src/reachability.rs crates/kasu-git/src/upload.rs crates/kasu-git/src/refs.rs crates/kasu-git/tests/pack_plan.rs crates/kasu-server/src/admission.rs crates/kasu-server/src/observed_refs.rs crates/kasu-server/tests/runtime.rs crates/kasu-derived/src/scheduler.rs &&     RUSTC_WRAPPER= cargo test -p kasu-store --test publication --locked &&     RUSTC_WRAPPER= cargo test -p kasu-git --locked &&     RUSTC_WRAPPER= cargo test -p kasu-derived --test lineage --test scheduler --locked &&     KASU_CAPTURE_DIR=/out RUSTC_WRAPPER= cargo test -p kasu-server --test metadata --locked &&     RUSTC_WRAPPER= cargo test -p kasu-server --lib --test projection_accounts --test runtime --locked &&     KASU_CAPTURE_DIR=/out RUSTC_WRAPPER= cargo test -p kasu-server --test git_http --locked &&     RUSTC_WRAPPER= cargo test -p kasu-server --test push --locked
+#12 0.068 rustc 1.90.0 (1159e78c4 2025-09-14)
+#12 0.069 git version 2.39.5
+#12 0.069 Linux aarch64
+#12 0.069 a93f494f532b268d33422e6722905cdbf2d7b986004f919fc78a74fcf67e2f97  crates/kasu-derived/src/fragments.rs
+#12 0.069 4ffc1d8044e7fa93c5c7b62fa176863f0642ad7b3d62da5382b7b88076a2bad5  crates/kasu-derived/src/history.rs
+#12 0.069 2083a17f73d23e7a6afe00f66b572af1201a489ac2c79d476b05cc5294b33f3b  crates/kasu-derived/tests/lineage.rs
+#12 0.069 8a671861c519de0a728a59ce6c33991473852d8e72693cda0e0837cb3c16998b  crates/kasu-proto/proto/kasu.proto
+#12 0.070 de7b4e03dffd8740bc8952ddcaf4c3fc3cd44751269dc3f0269a92c72745c341  crates/kasu-server/src/backend.rs
+#12 0.070 8bb004cbf3fb5d61fcf6a44e8aac970cc28a7d2abe76a53abb2e46fa5a4aa41e  crates/kasu-server/tests/metadata.rs
+#12 0.070 8ea92db023327f7776765bcbb25f93d218cd0ee984812a91b3a23ffd43bd0da1  crates/kasu-git/src/reachability.rs
+#12 0.070 f83b35a9671fd0f98c4be50bd4bd7fb3544d0c1e2ec0ce04406e98044a41ebbf  crates/kasu-git/src/upload.rs
+#12 0.070 12c5cec2a37f94147d42e4ac54a78d48982b784fe50d73f1394625ffa90f22a4  crates/kasu-git/src/refs.rs
+#12 0.070 8a8a8e27fb0ca9bc3b8a6b155f1b30fedf96e6fdaf54a3c62c64a037e855906c  crates/kasu-git/tests/pack_plan.rs
+#12 0.070 ffab6ecf7565e63af71b7e63d5207838d9835fb7731d033b89f3acfff28a460e  crates/kasu-server/src/admission.rs
+#12 0.070 51d0ac95c162ca473234a321a8221a05fae5bd0e8eab6a4202477cc86ffe2c72  crates/kasu-server/src/observed_refs.rs
+#12 0.070 066eee60b0f1795af58d233983e21a85ee9cd529d4786bd1d86953e6fb6ee828  crates/kasu-server/tests/runtime.rs
+#12 0.070 5e7098b8871d7a807bb23783742166e56d9346205bc61f33bbdc9ce821b9fe0f  crates/kasu-derived/src/scheduler.rs
+#12 0.162     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.07s
+#12 0.164      Running tests/publication.rs (target/debug/deps/publication-09c8d317f0912ede)
+#12 0.166 
+#12 0.166 running 2 tests
+#12 0.180 test late_sql_failure_rolls_back_both_ref_models_and_both_logs ... ok
+#12 0.266 test independent_mixed_transactions_have_one_winner_and_matching_logs ... ok
+#12 0.266 
+#12 0.266 test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+#12 0.266 
+#12 0.377    Compiling kasu-derived v0.1.0 (/app/crates/kasu-derived)
+#12 0.528    Compiling kasu-ops v0.1.0 (/app/crates/kasu-ops)
+#12 0.606    Compiling kasu-git v0.1.0 (/app/crates/kasu-git)
+#12 3.362     Finished `test` profile [unoptimized + debuginfo] target(s) in 3.07s
+#12 3.367      Running unittests src/lib.rs (target/debug/deps/kasu_git-c62dcb5309434af2)
+#12 3.368 
+#12 3.368 running 2 tests
+#12 3.395 test reachability::tests::long_oid_prefixes_and_leaf_branch_differences ... ok
+#12 3.566 test reachability::tests::radix_sets_match_ordered_sets ... ok
+#12 3.566 
+#12 3.566 test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+#12 3.566 
+#12 3.567      Running tests/pack_input.rs (target/debug/deps/pack_input-3f36fb837e4449b2)
+#12 3.568 
+#12 3.568 running 4 tests
+#12 3.568 test delta_chain_depth_is_bounded_before_resolution ... ok
+#12 3.568 test non_delta_ofs_forward_ref_and_thin_packs_decode_losslessly ... ok
+#12 3.569 test corruption_sizes_counts_bombs_and_invalid_bases_are_rejected ... ok
+#12 3.588 test untrusted_pack_bytes_never_panic ... ok
+#12 3.588 
+#12 3.588 test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+#12 3.588 
+#12 3.588      Running tests/pack_plan.rs (target/debug/deps/pack_plan-2c39caa46197c7d3)
+#12 3.589 
+#12 3.589 running 4 tests
+#12 3.674 test zlib_cache_is_bounded_and_reuses_valid_objects ... ok
+#12 3.682 test pack_sets_include_intermediate_blobs_and_second_parents_and_respect_client_shallow ... ok
+#12 6.108 test cached_pack_sets_match_graph_walk_on_branching_merge_histories ... ok
+#12 7.382 test persistent_incremental_index_reads_only_changed_merkle_paths_and_no_warm_payloads ... ok
+#12 7.382 
+#12 7.382 test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.79s
+#12 7.382 
+#12 7.383      Running tests/path_projection.rs (target/debug/deps/path_projection-8a36fc5b43d92e80)
+#12 7.383 
+#12 7.383 running 2 tests
+#12 7.394 test non_utf8_path_and_file_replacing_directory_have_deterministic_history ... ok
+#12 7.429 test projected_dag_skips_outside_changes_preserves_merges_and_deletion_and_is_scoped ... ok
+#12 7.429 
+#12 7.429 test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+#12 7.429 
+#12 7.429      Running tests/projection.rs (target/debug/deps/projection-eaca17af67b57a7d)
+#12 7.430 
+#12 7.430 running 4 tests
+#12 7.432 test git_refs_are_atomic_scoped_and_keep_tombstone_versions ... ok
+#12 7.432 test atomic_native_and_git_publication_rolls_back_both_models ... ok
+#12 7.440 test native_projection_is_deterministic_and_sorts_directories_like_git ... ok
+#12 7.495 test git_parsers_never_panic ... ok
+#12 7.495 
+#12 7.495 test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+#12 7.495 
+#12 7.496      Running tests/protocol.rs (target/debug/deps/protocol-574b5a35031253c1)
+#12 7.496 
+#12 7.496 running 5 tests
+#12 7.497 test framing_and_unadvertised_capabilities_are_rejected ... ok
+#12 7.497 test unborn_head_and_tag_peeling_use_separate_protocol_encodings ... ok
+#12 7.497 test blob_filter_negotiation_is_protocol_specific_and_strict ... ok
+#12 7.609 test pktline_and_command_parsers_never_panic ... ok
+#12 9.348 test pktline_roundtrip ... ok
+#12 9.348 
+#12 9.348 test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.85s
+#12 9.348 
+#12 9.349      Running tests/receive.rs (target/debug/deps/receive-27232555ce7d54be)
+#12 9.349 
+#12 9.349 running 2 tests
+#12 9.350 test receive_framing_capabilities_and_report_status_are_separate_from_pack ... ok
+#12 9.384 test receive_commands_never_panic ... ok
+#12 9.384 
+#12 9.384 test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+#12 9.384 
+#12 9.384    Doc-tests kasu_git
+#12 9.410 
+#12 9.410 running 0 tests
+#12 9.410 
+#12 9.410 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+#12 9.410 
+#12 9.507    Compiling kasu-derived v0.1.0 (/app/crates/kasu-derived)
+#12 10.68     Finished `test` profile [unoptimized + debuginfo] target(s) in 1.24s
+#12 10.68      Running tests/lineage.rs (target/debug/deps/lineage-8e994e8085392820)
+#12 10.68 
+#12 10.68 running 11 tests
+#12 10.69 test late_dependency_cycles_fail_without_recursion ... ok
+#12 10.76 test deleted_source_is_not_renamed_to_two_destinations_and_binary_copies_are_exact ... ok
+#12 10.77 test merge_tracks_the_second_parents_rename_and_recreation_starts_new_history ... ok
+#12 10.78 test cold_rename_and_opt_in_copies_preserve_original_paths_and_line_numbers ... ok
+#12 10.82 test moved_and_copied_fragments_keep_byte_paths_and_survive_edits_and_second_parents ... ok
+#12 11.28 test reordered_unique_blocks_keep_all_original_line_numbers ... ok
+#12 11.51 test similarity_matching_is_one_to_one_and_the_pair_budget_is_explicit ... ok
+#12 11.61 test ambiguous_fragment_work_is_bounded_and_large_roots_need_no_search ... ok
+#12 12.24 test reverse_index_matches_independently_materialized_tree ... ok
+#12 13.23 test a_thousand_renames_keep_the_root_origin_without_recursive_derivation ... ok
+#12 14.88 test fragment_limits_fail_without_publishing_partial_results_and_short_copies_stay_new ... ok
+#12 14.88 
+#12 14.88 test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.19s
+#12 14.88 
+#12 14.88      Running tests/scheduler.rs (target/debug/deps/scheduler-be3997791e05e1ba)
+#12 14.88 
+#12 14.88 running 2 tests
+#12 14.88 test cycles_and_unregistered_types_are_errors ... ok
+#12 14.88 test lazy_keys_versions_dependencies_and_concurrent_singleflight ... ok
+#12 14.88 
+#12 14.88 test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+#12 14.88 
+#12 15.01    Compiling kasu-derived v0.1.0 (/app/crates/kasu-derived)
+#12 15.01    Compiling kasu-proto v0.1.0 (/app/crates/kasu-proto)
+#12 15.18    Compiling kasu-ops v0.1.0 (/app/crates/kasu-ops)
+#12 15.26    Compiling kasu-git v0.1.0 (/app/crates/kasu-git)
+#12 15.47    Compiling kasu-object v0.1.0 (/app/crates/kasu-object)
+#12 15.48    Compiling kasu-ingest v0.1.0 (/app/crates/kasu-ingest)
+#12 15.59    Compiling kasu-server v0.1.0 (/app/crates/kasu-server)
+#12 21.31     Finished `test` profile [unoptimized + debuginfo] target(s) in 6.40s
+#12 21.32      Running tests/metadata.rs (target/debug/deps/metadata-7c871944aed8c9f2)
+#12 21.42 
+#12 21.42 running 6 tests
+#12 21.74 test membership_filters_orphans_from_other_repositories_and_cursors_are_bound ... ok
+#12 21.74 test lazy_history_materializes_only_the_requested_path ... ok
+#12 21.86 test path_log_blame_diff_and_all_merge_bases_match_git ... ok
+#12 21.87 test grpc_over_tcp_and_http_json_preserve_bytes_and_enforce_access ... ok
+#12 22.08 test server_binary_serves_grpc_and_http_from_persistent_store ... ok
+#12 22.22 test rename_move_and_copy_fragment_blame_match_git_over_native_grpc_and_json ... ok
+#12 22.22 
+#12 22.22 test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.80s
+#12 22.22 
+#12 22.35     Blocking waiting for file lock on build directory
+#12 30.17    Compiling kasu-server v0.1.0 (/app/crates/kasu-server)
+#12 35.26     Finished `test` profile [unoptimized + debuginfo] target(s) in 13.01s
+#12 35.27      Running unittests src/lib.rs (target/debug/deps/kasu_server-631334e160cb9c00)
+#12 35.27 
+#12 35.27 running 12 tests
+#12 35.27 test admission::tests::buckets_refill_and_eviction_cannot_reset_quota_or_active_identity ... ok
+#12 35.27 test admission::tests::config_is_bounded_strict_and_validated ... ok
+#12 35.27 test admission::tests::streaming_body_holds_lease_until_completion_or_drop ... ok
+#12 35.27 test admission::tests::socket_extensions_are_used_and_mapped_addresses_share_an_identity ... ok
+#12 35.27 test admission::tests::metrics_has_a_separate_bounded_pool ... ok
+#12 35.27 test git_http::tests::directory_url_rejects_invalid_components_and_decodes_byte_paths ... ok
+#12 35.27 test admission::tests::cancelled_blocking_handler_keeps_capacity_and_metrics_stays_available ... ok
+#12 35.27 test auth::tests::projection_only_configuration_closes_anonymous_and_native_access ... ok
+#12 35.27 test observed_refs::tests::metrics_distinguish_conflict_replay_cancellation_and_storage_error ... ok
+#12 35.27 test auth::tests::file_configuration_is_strict_relative_and_supports_byte_paths ... ok
+#12 35.28 test auth::tests::account_and_hop_credentials_cannot_overlap_in_either_builder_order ... ok
+#12 35.29 test admission::tests::bounded_queue_timeout_and_cancellation_release_permits ... ok
+#12 35.29 
+#12 35.29 test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+#12 35.29 
+#12 35.29      Running tests/projection_accounts.rs (target/debug/deps/projection_accounts-46f40e90a13d3205)
+#12 35.29 
+#12 35.29 running 1 test
+#12 35.42 test actual_binary_loads_projection_only_configuration_and_invalid_config_fails_closed ... ok
+#12 35.42 
+#12 35.42 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+#12 35.42 
+#12 35.42      Running tests/runtime.rs (target/debug/deps/runtime-15ddac70e30a7c6c)
+#12 35.42 
+#12 35.42 running 6 tests
+#12 35.43 test trusted_socket_ip_budget_spans_http_grpc_and_ignores_forwarding_headers ... ok
+#12 35.45 test metrics_require_repository_access_and_unknown_paths_have_bounded_labels ... ok
+#12 35.45 test actual_binary_loads_limits_and_rejects_invalid_configuration_before_listening ... ok
+#12 35.47 test bearer_basic_and_both_transports_share_one_token_budget ... ok
+#12 35.84 test object_stream_backpressure_holds_admission_until_client_drops_stream ... ok
+#12 37.10 test git_pack_backpressure_holds_admission_until_client_drops_response ... ok
+#12 37.10 
+#12 37.10 test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.68s
+#12 37.10 
+#12 37.24    Compiling kasu-server v0.1.0 (/app/crates/kasu-server)
+#12 40.84     Finished `test` profile [unoptimized + debuginfo] target(s) in 3.70s
+#12 40.85      Running tests/git_http.rs (target/debug/deps/git_http-64f0557a06c1bbae)
+#12 40.85 
+#12 40.85 running 10 tests
+#12 40.85 test pinned_go_git_full_and_shallow_checkout ... ignored, requires tools/git-compat binary in KASU_GO_GIT_CLIENT
+#12 41.92 test git_versions_ls_remote_full_clone_and_depth_one ... ok
+#12 42.05 test empty_repository_and_basic_auth_and_incremental_fetch ... ok
+#12 42.52 test scoped_projection_pat_allows_git_but_denies_full_repository_and_native_services ... ok
+#12 42.72 test unreferenced_wants_require_explicit_publication_and_auth_precedes_parsing ... ok
+#12 43.19 test path_projection_clones_fetches_tags_and_isolates_source_objects ... ok
+#12 43.26 test partial_clone_omits_blobs_and_promisor_fetch_hydrates_history_and_sparse_checkout ... ok
+#12 43.40 test shallow_deepen_unshallow_and_v2_time_and_exclusion ... ok
+#12 43.42 test partial_clone_incremental_fetch_keeps_promises_across_common_commits ... ok
+#12 45.28 test repeated_multi_ref_fetch_preserves_divergent_and_merged_histories ... ok
+#12 45.28 
+#12 45.28 test result: ok. 9 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 4.43s
+#12 45.28 
+#12 45.40    Compiling kasu-server v0.1.0 (/app/crates/kasu-server)
+#12 48.33     Finished `test` profile [unoptimized + debuginfo] target(s) in 3.02s
+#12 48.34      Running tests/push.rs (target/debug/deps/push-372807225a7a59c0)
+#12 48.34 
+#12 48.34 running 8 tests
+#12 48.69 test atomic_capability_depends_on_the_backend_and_unadvertised_requests_are_rejected ... ok
+#12 48.75 test atomic_push_still_applies_final_tree_acl_to_every_ref ... ok
+#12 48.75 test pinned_go_git_full_and_shallow_clone_commit_push ... ignored, requires the pinned Go client in KASU_GO_GIT_PUSH_CLIENT
+#12 48.76 test malformed_connectivity_stale_refs_and_auth_never_publish_a_ref ... ok
+#12 48.78 test atomic_push_detects_branch_and_tag_aba_between_validation_and_commit ... ok
+#12 48.84 test atomic_push_creates_updates_and_deletes_branches_and_tags_together ... ok
+#12 48.84 test final_tree_acl_blocks_second_parent_changes_and_native_publication ... ok
+#12 49.10 test git_push_initial_incremental_tags_force_delete_and_partial_rejection ... ok
+#12 49.10 
+#12 49.10 test result: ok. 7 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.75s
+#12 49.10 
+#12 DONE 49.4s
+
+#13 exporting to image
+#13 exporting layers 0.1s done
+#13 exporting manifest sha256:4da0ff2019ab4d3fedcd32f059faaa01e9c698abaf524e42feb0675134541bc4 done
+#13 exporting config sha256:5eab7d182f47744ae5ed21356bc0159d90f524f88e6a950ce1b3a7daa3ba0ed1 0.0s done
+#13 exporting attestation manifest sha256:e2c017184990ce02d626a803a747f98feded244541e049be18f7077d26551dde 0.1s done
+#13 exporting manifest list sha256:52e115b80ee93998026fa810e38e7a7f961875ff849c41681bca602a184894f7
+#13 exporting manifest list sha256:52e115b80ee93998026fa810e38e7a7f961875ff849c41681bca602a184894f7 done
+#13 naming to docker.io/library/kasu:fragment-blame-test done
+#13 unpacking to docker.io/library/kasu:fragment-blame-test 0.0s done
+#13 DONE 0.3s

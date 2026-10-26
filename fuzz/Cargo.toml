@@ -1,0 +1,67 @@
+[package]
+name = "kasu-fuzz"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+members = ["."]
+
+[features]
+default = ["fuzzing"]
+fuzzing = ["dep:libfuzzer-sys"]
+
+[dependencies]
+libfuzzer-sys = { version = "=0.4.13", optional = true }
+kasu-core = { path = "../crates/kasu-core" }
+kasu-store = { path = "../crates/kasu-store" }
+kasu-git = { path = "../crates/kasu-git" }
+kasu-proto = { path = "../crates/kasu-proto" }
+kasu-server = { path = "../crates/kasu-server" }
+prost = "0.14"
+tonic = "0.14"
+flate2 = "1"
+sha1 = "0.10"
+
+[[bin]]
+name = "pack"
+path = "fuzz_targets/pack.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]
+
+[[bin]]
+name = "pack_delta"
+path = "fuzz_targets/pack_delta.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]
+
+[[bin]]
+name = "pktline"
+path = "fuzz_targets/pktline.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]
+
+[[bin]]
+name = "protobuf"
+path = "fuzz_targets/protobuf.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]
+
+[[bin]]
+name = "native_api"
+path = "fuzz_targets/native_api.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]

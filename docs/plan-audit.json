@@ -1,0 +1,622 @@
+{
+  "schema_version": 1,
+  "audited_at": "2026-10-26T11:40:50.007043+09:00",
+  "basis": "元の docs/plan の機能・受け入れ条件を基準に監査。履歴の実験は記録時ソースの証拠であり、現在の全外部サービスでの再実行とは区別する。",
+  "plan_sha256": {
+    "docs/plan/01-architecture.md": "ab682cc33ae3341cd2ba00606b8a3b0ccb24683c5d2163650ff6990aa398462c",
+    "docs/plan/02-data-model.md": "1223bfd5432d6620ab69e6db3bfcfb6eaec7079b237a0ceb6cc1891bccd2e696",
+    "docs/plan/03-protocols-and-api.md": "f430ed5a17cc65737992211edce23e7a2013e3b1b97e2f3799203a2a65a62db3",
+    "docs/plan/04-git-compat.md": "af7b2de54e4d8942460109df91fcb2818c7d4ae4b945e364d115700523be8364",
+    "docs/plan/05-roadmap.md": "1dd5c9b4a752e0ede2d26a39984080b88f6dc81f320194a955f7a0a9b6b852c2",
+    "docs/plan/README.md": "37b74d3684e93b0b39a0b849db89b51848ba0b699e798fa3334e78ec0e223642"
+  },
+  "requirements": [
+    {
+      "id": "architecture",
+      "plan": "README.md;01-architecture.md",
+      "requirement": "server 中心・stateless・12 crate workspace・履歴計算は server",
+      "state": "implemented",
+      "implementation": [
+        "Cargo.toml",
+        "crates/kasu-server/src/backend.rs",
+        "crates/kasu-cli/src/remote.rs"
+      ],
+      "evidence": [
+        "docs/native-cli.md",
+        "docs/production-storage.md"
+      ],
+      "scope": ""
+    },
+    {
+      "id": "storage",
+      "plan": "01-architecture.md;02-data-model.md",
+      "requirement": "不変 put-if-absent、SQLite/FS、ref CAS + log の原子性、能力別 multi-ref",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-store/src/lib.rs",
+        "crates/kasu-store/src/sqlite.rs",
+        "crates/kasu-store/src/fs.rs"
+      ],
+      "evidence": [
+        "crates/kasu-store/tests/storage.rs",
+        "crates/kasu-store/tests/publication.rs"
+      ],
+      "scope": ""
+    },
+    {
+      "id": "production",
+      "plan": "01-architecture.md;05-roadmap.md:M10",
+      "requirement": "PostgreSQL/S3・複数 server 整合性・KV 候補評価",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-store/src/postgres.rs",
+        "crates/kasu-store/src/s3.rs",
+        "crates/kasu-server/tests/shared_storage.rs"
+      ],
+      "evidence": [
+        "docs/production-storage.md",
+        "docs/benchmarks/kv-evaluation.md"
+      ],
+      "scope": "実サービスと2 server の記録。TiKV 評価を実施、製品用 TiKV adapter と FoundationDB の両方を要求する計画ではない。"
+    },
+    {
+      "id": "model",
+      "plan": "02-data-model.md;05-roadmap.md:M0",
+      "requirement": "型付き BLAKE3/SHA1・全バイト列・Entry 全種・canonical ID・provenance",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-core/src/model.rs",
+        "crates/kasu-core/src/codec.rs",
+        "crates/kasu-core/src/git.rs"
+      ],
+      "evidence": [
+        "crates/kasu-core/tests/model.rs"
+      ],
+      "scope": ""
+    },
+    {
+      "id": "create",
+      "plan": "02-data-model.md",
+      "requirement": "親・blob・Delete・パス重複/衝突検証、ref 独立作成、native provenance 非継承",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-ops/src/write.rs",
+        "crates/kasu-server/src/write.rs"
+      ],
+      "evidence": [
+        "crates/kasu-ops/tests/rewrite.rs",
+        "crates/kasu-server/tests/write.rs"
+      ],
+      "scope": ""
+    },
+    {
+      "id": "merkle",
+      "plan": "02-data-model.md",
+      "requirement": "第一親差分から RootTree、変更 Merkle パスのみ生成",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-derived/src/tree.rs",
+        "crates/kasu-derived/src/types.rs"
+      ],
+      "evidence": [
+        "crates/kasu-derived/tests/derived.rs",
+        "docs/benchmarks/first-parent-skip-v2.md"
+      ],
+      "scope": ""
+    },
+    {
+      "id": "derived",
+      "plan": "02-data-model.md",
+      "requirement": "型名/版/SubKey/親/依存・反復 schedule・singleflight・lazy 部分キー・版共存",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-derived/src/scheduler.rs",
+        "crates/kasu-derived/src/types.rs"
+      ],
+      "evidence": [
+        "crates/kasu-derived/tests/scheduler.rs",
+        "crates/kasu-derived/tests/derived.rs"
+      ],
+      "scope": ""
+    },
+    {
+      "id": "eager",
+      "plan": "02-data-model.md",
+      "requirement": "RootTree/Generation/FirstParentSkip eager、公開 ref 前 GitTree/GitCommit 準備",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-ops/src/write.rs",
+        "crates/kasu-git/src/derived.rs",
+        "crates/kasu-server/src/write.rs",
+        "crates/kasu-server/src/land.rs"
+      ],
+      "evidence": [
+        "crates/kasu-git/tests/projection.rs",
+        "crates/kasu-server/tests/write.rs"
+      ],
+      "scope": "ProjectionId は明示的に指定。全 repo の任意 projection を generic eager worker が列挙する設計ではない。"
+    },
+    {
+      "id": "history",
+      "plan": "02-data-model.md;05-roadmap.md:M1",
+      "requirement": "全親 ancestry/merge-base、Generation 枝刈り、第一親専用 skip",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-ops/src/metadata.rs",
+        "crates/kasu-derived/src/history.rs"
+      ],
+      "evidence": [
+        "crates/kasu-ops/tests/operations.rs",
+        "crates/kasu-ops/tests/first_parent.rs",
+        "docs/benchmarks/divergent-history.md",
+        "docs/benchmarks/first-parent-skip-v2.md"
+      ],
+      "scope": "10万件・1万分岐 merge の計測、全1024個の5 node DAG 比較。"
+    },
+    {
+      "id": "rewrite",
+      "plan": "02-data-model.md;05-roadmap.md:M6",
+      "requirement": "構造化競合、行 diff3、全 merge-base、3 tree rebase と delta 再計算",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-ops/src/merge.rs",
+        "crates/kasu-ops/src/write.rs"
+      ],
+      "evidence": [
+        "crates/kasu-ops/tests/merge.rs",
+        "crates/kasu-ops/tests/rewrite.rs",
+        "docs/native-merge.md"
+      ],
+      "scope": ""
+    },
+    {
+      "id": "land",
+      "plan": "02-data-model.md;03-protocols-and-api.md;05-roadmap.md:M6",
+      "requirement": "Land の冪等性・CAS・毎回 ACL・上限/backoff/cancel・有限結果",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-server/src/land.rs",
+        "crates/kasu-sim/src/lib.rs"
+      ],
+      "evidence": [
+        "crates/kasu-sim/tests/land_runtime.rs",
+        "docs/land.md",
+        "docs/simulations/README.md"
+      ],
+      "scope": "1000クライアントの決定的障害シミュレーション。実運用の全障害順列を保証するものではない。"
+    },
+    {
+      "id": "metadata",
+      "plan": "03-protocols-and-api.md;05-roadmap.md:M3",
+      "requirement": "全 Metadata RPC、HTTP JSON、Git log/blame/merge-base/diff 比較",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-proto",
+        "crates/kasu-server/src/backend.rs",
+        "crates/kasu-server/src/transport.rs"
+      ],
+      "evidence": [
+        "crates/kasu-server/tests/metadata.rs",
+        "crates/kasu-server/tests/oss_metadata.rs",
+        "docs/metadata-oss.md"
+      ],
+      "scope": "Log の第一親規則は API 03 に従い git log --first-parent と比較。通常 Git の全履歴 path simplification は別仕様。"
+    },
+    {
+      "id": "writer",
+      "plan": "03-protocols-and-api.md",
+      "requirement": "UploadBlobs/CreateChangeset/Merge/Rebase/UpdateRef/Land",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-proto",
+        "crates/kasu-server/src/write.rs",
+        "crates/kasu-server/src/land.rs"
+      ],
+      "evidence": [
+        "crates/kasu-server/tests/write.rs",
+        "docs/write-api.md"
+      ],
+      "scope": ""
+    },
+    {
+      "id": "objects",
+      "plan": "03-protocols-and-api.md;05-roadmap.md:M8",
+      "requirement": "ID 指定 Trees/Blobs、zstd 直接 chunk、バッチ/並列/中断後再取得、sparse 外非要求",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-object",
+        "crates/kasu-server/src/objects.rs",
+        "crates/kasu-cli/src/sparse.rs"
+      ],
+      "evidence": [
+        "crates/kasu-server/tests/objects.rs",
+        "crates/kasu-cli/tests/e2e.rs",
+        "docs/object-api.md"
+      ],
+      "scope": "中断 frame は非公開にし不変 ID を再要求する。途中 byte offset resume を約束する API ではない。"
+    },
+    {
+      "id": "cli",
+      "plan": "01-architecture.md;03-protocols-and-api.md;05-roadmap.md:M8",
+      "requirement": "working copy baseline/profile/stat・notify・全主要 CLI・server commit",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-cli/src/working.rs",
+        "crates/kasu-cli/src/commands.rs",
+        "crates/kasu-cli/src/main.rs"
+      ],
+      "evidence": [
+        "crates/kasu-cli/tests/e2e.rs",
+        "docs/native-cli.md"
+      ],
+      "scope": ""
+    },
+    {
+      "id": "cache",
+      "plan": "01-architecture.md;05-roadmap.md:M9",
+      "requirement": "共通 Objects、階層固定、singleflight、fan-in/rate 制限、cache 障害時過負荷防止",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-cache/src/lib.rs",
+        "crates/kasu-object/src/lib.rs",
+        "crates/kasu-sim/src/cache.rs"
+      ],
+      "evidence": [
+        "crates/kasu-cache/tests/layers.rs",
+        "docs/cache-hierarchy.md",
+        "docs/simulations/cache-deterministic/summary.json"
+      ],
+      "scope": "1000 client・2 node・cold authority 1取得。4 seed の仮想時計障害と実 RPC 負荷は別の記録。"
+    },
+    {
+      "id": "daemon",
+      "plan": "01-architecture.md;05-roadmap.md:M9",
+      "requirement": "Unix socket、node disk cache、snapshot 起動/定期保存",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-daemon",
+        "crates/kasu-cache/src"
+      ],
+      "evidence": [
+        "crates/kasu-daemon/tests/process.rs",
+        "crates/kasu-cache/tests/disk_lru.rs",
+        "crates/kasu-cache/tests/snapshot.rs",
+        "docs/disk-cache.md"
+      ],
+      "scope": "現状は単一 repo・同一 UID の共有。異なる ACL scope 間の共有は security-deferred。"
+    },
+    {
+      "id": "observability",
+      "plan": "01-architecture.md",
+      "requirement": "tracing/OTel・cache hit/derived latency/ref CAS 指標・client/token 制限",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-telemetry",
+        "crates/kasu-server/src/admission.rs",
+        "crates/kasu-server/src/observed_refs.rs"
+      ],
+      "evidence": [
+        "docs/telemetry.md",
+        "docs/server-runtime.md",
+        "crates/kasu-server/tests/runtime.rs",
+        "tools/telemetry/verify.py"
+      ],
+      "scope": "collector 実運用 SLA、webhook 非同期 trace 連結、クラスタ全体の global quota は追加運用課題。"
+    },
+    {
+      "id": "auth",
+      "plan": "01-architecture.md;04-git-compat.md",
+      "requirement": "PAT Basic/Bearer・repo/dir ACL・Git の repo と projection scope",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-server/src/auth.rs",
+        "crates/kasu-server/src/accounts.rs",
+        "crates/kasu-server/src/read_scope.rs"
+      ],
+      "evidence": [
+        "crates/kasu-server/tests/accounts.rs",
+        "crates/kasu-server/tests/projection_accounts.rs",
+        "docs/directory-read-acl.md"
+      ],
+      "scope": "OIDC と横断的なセキュリティ保証は security-deferred。"
+    },
+    {
+      "id": "git-lossless",
+      "plan": "04-git-compat.md;05-roadmap.md:M2",
+      "requirement": "raw commit/tree/tag、gitlink、全 OID 往復、接続/型/再現不能拒否",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-ingest/src/lib.rs",
+        "crates/kasu-git/src/object.rs",
+        "crates/kasu-git/src/derived.rs"
+      ],
+      "evidence": [
+        "crates/kasu-ingest/tests/roundtrip.rs",
+        "docs/git-import.md",
+        "docs/git-import-byte-paths/summary.json"
+      ],
+      "scope": "固定 OSS の完全到達集合183 object/50 commit/14 merge/非UTF8/tag/gitlinks、および別 OSS fixture。upstream 全 ref を無差別に検証した意味ではない。"
+    },
+    {
+      "id": "git-identity",
+      "plan": "04-git-compat.md",
+      "requirement": "Git ソート/mode・決定的合成版・ordered parents・repo/projection OID 分離",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-git/src/derived.rs",
+        "crates/kasu-git/src/index.rs",
+        "crates/kasu-core/src/git.rs"
+      ],
+      "evidence": [
+        "crates/kasu-git/tests/projection.rs",
+        "crates/kasu-git/tests/path_projection.rs"
+      ],
+      "scope": ""
+    },
+    {
+      "id": "git-refs",
+      "plan": "04-git-compat.md",
+      "requirement": "native branches、tag 連鎖/tree/blob、peel、HEAD/unborn、到達または明示公開 SHA want",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-git/src/refs.rs",
+        "crates/kasu-git/src/upload.rs"
+      ],
+      "evidence": [
+        "crates/kasu-git/tests/projection.rs",
+        "crates/kasu-server/tests/git_http.rs"
+      ],
+      "scope": ""
+    },
+    {
+      "id": "git-read",
+      "plan": "04-git-compat.md:G1/G2;05-roadmap.md:M4/M5",
+      "requirement": "Smart HTTP v0/v1/v2、lsrefs、ACK、shallow/deepen/unshallow、SHA/include-tag",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-git/src/upload.rs",
+        "crates/kasu-git/src/pktline.rs",
+        "crates/kasu-server/src/git_http.rs"
+      ],
+      "evidence": [
+        "crates/kasu-server/tests/git_http.rs",
+        "crates/kasu-git/tests/protocol.rs",
+        "docs/git-read.md"
+      ],
+      "scope": ""
+    },
+    {
+      "id": "git-pack",
+      "plan": "04-git-compat.md",
+      "requirement": "複数 want/common・merge/中間 blob/tag の正確な差集合、bounded streaming/zlib LRU",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-git/src/pack.rs",
+        "crates/kasu-git/src/reachability.rs",
+        "crates/kasu-git/src/pack_cache.rs"
+      ],
+      "evidence": [
+        "crates/kasu-git/tests/pack_plan.rs",
+        "docs/benchmarks/pack-reachability.md",
+        "docs/benchmarks/gitops-pack.md"
+      ],
+      "scope": "6 client の8回連続 fetch と strict fsck。delta は実測に基づき未採用。pack 全体の無制限 cache は追加しない。"
+    },
+    {
+      "id": "git-push",
+      "plan": "04-git-compat.md:G3/G4;05-roadmap.md:M7/M10",
+      "requirement": "gix pack/depth/size/count、接続/型検証、topological import、最終 tree ACL、ref policy、CAS status、能力別 atomic",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-git/src/pack_input.rs",
+        "crates/kasu-server/src/receive.rs"
+      ],
+      "evidence": [
+        "crates/kasu-server/tests/push.rs",
+        "crates/kasu-git/tests/pack_input.rs",
+        "docs/git-push.md"
+      ],
+      "scope": "既定 force/delete 禁止。作成可能 ref のパターンは管理者設定。既定の開発設定は全 heads/tags 許可のため main/release 限定運用では policy を設定する。"
+    },
+    {
+      "id": "webhook",
+      "plan": "04-git-compat.md;05-roadmap.md:M7",
+      "requirement": "永続 ref_log outbox・少なくとも1回・GitHub added/modified/removed・Argo/Flux refresh",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-server/src/webhook.rs",
+        "crates/kasu-store/src/webhook.rs"
+      ],
+      "evidence": [
+        "crates/kasu-server/tests/webhook.rs",
+        "docs/webhooks.md",
+        "docs/gitops-e2e.md"
+      ],
+      "scope": ""
+    },
+    {
+      "id": "matrix",
+      "plan": "04-git-compat.md;05-roadmap.md:M0/M4/M5/M7",
+      "requirement": "固定版 matrix/packet fixture・git/go-git・実 kind 4 controller・夜間 CI",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-git/tests/fixtures/clients/matrix.json",
+        "tools/gitops",
+        ".github/workflows/gitops.yml"
+      ],
+      "evidence": [
+        "docs/gitops-e2e.md",
+        "crates/kasu-git/tests/fixtures/clients/gitops-kind-summary.json",
+        "crates/kasu-git/tests/fixtures/clients/gitops-kind-writeback.json"
+      ],
+      "scope": "実行記録は各記録の当時の source hash に対応。全履歴記録を現在のビルドで再実行したとの主張ではない。GitHub 上の workflow 実行結果は未確認。"
+    },
+    {
+      "id": "partial",
+      "plan": "04-git-compat.md:G5;05-roadmap.md:M11",
+      "requirement": "blob:none partial clone と promisor の後続取得",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-git/src/upload.rs",
+        "crates/kasu-server/src/git_http.rs"
+      ],
+      "evidence": [
+        "docs/git-read.md",
+        "crates/kasu-git/tests/fixtures/clients/partial-clone-summary.json"
+      ],
+      "scope": "他 filter は必要性を確認して追加する条件付き拡張。"
+    },
+    {
+      "id": "path-projection",
+      "plan": "04-git-compat.md:G6;05-roadmap.md:M11",
+      "requirement": "subtree URL・影響した祖先に縮約した commit・固定 merge 規則・独立 OID・controllers",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-git/src/path.rs",
+        "crates/kasu-git/src/derived.rs"
+      ],
+      "evidence": [
+        "docs/git-projection.md",
+        "crates/kasu-git/tests/path_projection.rs",
+        "crates/kasu-git/tests/fixtures/clients/path-projection-kind/gitops-kind-summary.json"
+      ],
+      "scope": ""
+    },
+    {
+      "id": "ssh",
+      "plan": "04-git-compat.md:G6;05-roadmap.md:M11",
+      "requirement": "SSH Git transport",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-server/src/git_ssh.rs",
+        "crates/kasu-server/src/ssh_main.rs"
+      ],
+      "evidence": [
+        "crates/kasu-server/tests/git_ssh.rs",
+        "docs/git-ssh.md"
+      ],
+      "scope": "OpenSSH forced command と実公開鍵接続で Git/go-git を検証。"
+    },
+    {
+      "id": "lfs",
+      "plan": "04-git-compat.md:G6;README.md",
+      "requirement": "LFS 検討と非ゴールの内容追跡境界",
+      "state": "implemented",
+      "implementation": [
+        "tools/lfs"
+      ],
+      "evidence": [
+        "docs/git-lfs.md",
+        "crates/kasu-git/tests/fixtures/clients/lfs/summary.json"
+      ],
+      "scope": "外部 LFS と pointer の往復を評価。内蔵 LFS storage は非ゴールに従い追加しない。"
+    },
+    {
+      "id": "virtual",
+      "plan": "03-protocols-and-api.md;05-roadmap.md:M11",
+      "requirement": "Linux FUSE lazy read/COW、macOS FSKit/NFS 調査",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-cli/src/virtual_fs.rs",
+        "crates/kasu-cli/src/virtual_fs/lower.rs"
+      ],
+      "evidence": [
+        "docs/virtual-checkout.md",
+        "tools/virtual/Dockerfile"
+      ],
+      "scope": "Linux は実 kernel で検証。macOS adapter の実装は元計画の「調査」からの追加開発。"
+    },
+    {
+      "id": "lineage",
+      "plan": "02-data-model.md;05-roadmap.md:M11",
+      "requirement": "Lazy CopyDetect/PathIndex・rename/copy/move blame",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-derived/src/copies.rs",
+        "crates/kasu-derived/src/fragments.rs",
+        "crates/kasu-derived/src/lines.rs"
+      ],
+      "evidence": [
+        "crates/kasu-derived/tests/lineage.rs",
+        "docs/blame-lineage.md"
+      ],
+      "scope": "比較した Git fixture/flag に限定。Git の全 heuristic・任意 OSS 全般の parity を保証しない。"
+    },
+    {
+      "id": "automation",
+      "plan": "02-data-model.md;05-roadmap.md:M11",
+      "requirement": "Metadata 上の着地後/デプロイ前 check・DAG bisect/revert 参照実装",
+      "state": "implemented",
+      "implementation": [
+        "tools/automation",
+        "crates/kasu-server/src/land.rs"
+      ],
+      "evidence": [
+        "docs/automation.md",
+        "crates/kasu-server/tests/automation.rs"
+      ],
+      "scope": "check 自体の業務用テスト内容/本番 deploy 接続は利用者が設定する。"
+    },
+    {
+      "id": "testing",
+      "plan": "05-roadmap.md:テスト戦略",
+      "requirement": "golden/proptest/Git 差分/E2E/決定的 CAS-Land-cache 障害/Criterion",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-sim",
+        "crates/kasu-ingest/benches/throughput.rs",
+        ".github/workflows"
+      ],
+      "evidence": [
+        "docs/simulations/README.md",
+        "docs/benchmarks/criterion.md"
+      ],
+      "scope": "fuzz campaign は security-deferred。通常 test で ignore される外部 fixture と特権 kernel test は各受け入れ記録を参照。"
+    },
+    {
+      "id": "risks",
+      "plan": "05-roadmap.md:主要リスクと対策",
+      "requirement": "固定合成版/raw保存/strict pack/帯域判断/有限Land/射影ACL/ref能力/matrix/OID型",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-core/src/git.rs",
+        "crates/kasu-git/src/derived.rs",
+        "crates/kasu-server/src/land.rs"
+      ],
+      "evidence": [
+        "docs/git-import.md",
+        "docs/git-read.md",
+        "docs/git-push.md",
+        "docs/git-projection.md",
+        "docs/benchmarks/gitops-pack.md"
+      ],
+      "scope": "Git SHA256、CDC、到達 bitmap 等は明示された将来検討。SHA1 wire の現時点での安全性保証は含めない。"
+    }
+  ],
+  "security_deferred": [
+    {
+      "item": "OIDC 認証および scope を保つ多ユーザー共有 cache",
+      "state": "not_implemented",
+      "reason": "認証境界の設計とセキュリティ検証が必要なため、ユーザーが許可した保留枠。現状は PAT と単一 repo/UID の階層。"
+    },
+    {
+      "item": "pack/pkt-line/protobuf fuzz campaign・依存脆弱性評価・第三者 security review",
+      "state": "not_validated",
+      "reason": "ユーザー指示により保留。fuzz target と通常の不正入力/認可回帰テストは存在するが security 承認を意味しない。"
+    }
+  ],
+  "operational_followups": [
+    "GitHub 上での各 CI/nightly workflow 実行確認",
+    "本番 collector・非同期 workflow の trace 連結・クラスタ全体 quota",
+    "大容量/多数 node/クラウド HA と災害復旧・実 disk-full/電源断",
+    "任意 Git heuristic の網羅的 parity と追加 filter の必要性評価"
+  ],
+  "current_regression": {
+    "summary": "docs/verification/plan-regression/summary.json",
+    "source_manifest": "docs/verification/plan-regression/source-sha256.json",
+    "passed": 214,
+    "ignored": 21,
+    "criterion_smoke": 11,
+    "security_validation": "deferred"
+  }
+}

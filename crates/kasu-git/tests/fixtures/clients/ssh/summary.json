@@ -1,0 +1,42 @@
+{
+  "captured_date": "2026-10-24",
+  "source_sha256": {
+    "crates/kasu-server/src/accounts.rs": "a16651d6ac8011dbd4ae495735daa5f83b8568e8b0e62b6462aa0981b9d8da9e",
+    "crates/kasu-server/src/backend.rs": "310a135553b25e4565993c99a02c23128a5e367205f51e74848459e523fc0ab7",
+    "crates/kasu-server/src/auth.rs": "b24af6a56c04b25297eb6b4edc00c5bd47a18b33bd91a2bb91d9ec84f26cef09",
+    "crates/kasu-server/src/receive.rs": "41bf6fcd71b4cfe83402327fe79af02d84548299b001baf8939c3728a651661e",
+    "crates/kasu-server/src/write.rs": "a612954f93fceb09d6dad3f356831e74d2b81844e25e3fc439ee5810c78445e0",
+    "crates/kasu-server/src/write_transport.rs": "665ca6727eb88837b9f4ec9224fa81926c23768ae3a0d511d4fd650adfeccc0c",
+    "crates/kasu-server/src/land.rs": "c8e8554408221130bb68658d7a8d3a31be702ecbebdec16a46b067883d54fa8d",
+    "crates/kasu-server/tests/accounts.rs": "a2817dbac634d68243c6e690d4a79fa317cf793cf89f18af9eb441e98bd1ed8a",
+    "crates/kasu-server/Cargo.toml": "d1ea96a3ae06b856f8b08e34c6c7f942b69baf1febe6a074cb6c50368efc3ba3",
+    "crates/kasu-server/src/main.rs": "75e7a6e13238d5d7b68500c0b4c8488afbb8bf6d26b229746424a707b7e84112",
+    "crates/kasu-server/src/configuration.rs": "f084e502a6a15ef24409629353dabaaa9a97d95ffe3ef6202ebe5e5bd0076c57",
+    "crates/kasu-server/src/ssh_main.rs": "464eac5ae07494ff61180bcf018a5ba15b25f61127c28bf5398494df62cde659",
+    "crates/kasu-server/src/git_http.rs": "458fa414d2f010d08e02241addfe6f9d8cad3cfeaf7642f2b3a1acf79df0e626",
+    "crates/kasu-server/src/git_ssh.rs": "204038de3041386c8a14b6635f08d9d46aa6422a66d8a088be45ce1367246469",
+    "crates/kasu-server/src/git_ssh/pack_stream.rs": "e927b4026b15d9b3851a34804925fd52ed52218730d7071329f75173c53a6bb0",
+    "crates/kasu-server/tests/git_ssh.rs": "ccf6dabcae9ce95b5122b82a01f48740e9992fcbd640b23baca837715f67c9b1",
+    "tools/git-compat/main.go": "f9b8a40e103466df6ab75f104f6f4e76d793bef64c9872a8f8dac36488d83a7e",
+    "tools/ssh/Dockerfile": "c04918b8c54578def252d44e8b09009e7e3250619e946c6b58e0dfddd6a5a480",
+    ".github/workflows/ssh.yml": "00faac3edce527d0449f21286c892f82eae9e0aada5003b7f62eeef3de7a6914"
+  },
+  "scope": [
+    "macOS stdio shim: Git 2.54.0 (no SSH encryption)",
+    "Linux arm64: actual OpenSSH public-key authentication and pinned known_hosts",
+    "Git protocols 0/1/2 full/depth1, shallow incremental fetch, deepen/unshallow",
+    "Push, empty pack, deletion without pack, atomic branch/tag push",
+    "Partial clone hydration, path projection and reader authorization",
+    "go-git 5.19.3 full/depth1 clone/commit/push; native contents and OIDs",
+    "Strict fsck, Linux/macOS idle session deadline",
+    "Repository account forced key: allowed deploy push, forbidden path/ref/delete denial",
+    "Transport and account unit tests on macOS and Linux",
+    "49 server unit/HTTP/push/runtime/Writer/account regression tests on macOS"
+  ],
+  "not_verified": [
+    "GitHub workflow execution",
+    "production SSH deployment",
+    "security audit",
+    "shared cross-process SSH admission quota"
+  ]
+}

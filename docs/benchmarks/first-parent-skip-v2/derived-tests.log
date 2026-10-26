@@ -1,0 +1,14 @@
+Running tests/derived.rs
+running 3 tests
+test file_directory_replacement_and_parent_sharing ... ok
+test iterative_long_history_and_skip_pointers ... ok
+test apply_diff_roundtrip ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 47.86s
+Running tests/scheduler.rs
+running 2 tests
+test cycles_and_unregistered_types_are_errors ... ok
+test lazy_keys_versions_dependencies_and_concurrent_singleflight ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

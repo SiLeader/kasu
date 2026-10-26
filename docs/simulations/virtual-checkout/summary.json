@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "captured_date": "2026-10-24",
+  "platforms": {
+    "mount": "linux/arm64; Rust 1.90.0; real FUSE and OverlayFS kernel mounts",
+    "native_cli": [
+      "darwin/arm64; Rust 1.98.1",
+      "linux/arm64; Rust 1.90.0"
+    ]
+  },
+  "new_rpc": "kasu.v1.Metadata/GetBlobMetadata",
+  "mount_command": "docker run --rm --network none --mount type=volume,destination=/tmp --device /dev/fuse --cap-add SYS_ADMIN --security-opt apparmor=unconfined kasu:virtual-test",
+  "verified": [
+    "metadata-only snapshot and blob sizes without downloading file bodies",
+    "blob metadata values over real gRPC and HTTP JSON",
+    "stat/readdir: zero blob requests",
+    "first regular-file read: one blob request; repeated read: no additional request",
+    "reads do not copy working files into upper",
+    "non-UTF8 paths, symlinks, executable bit and gitlink placeholders",
+    "sparse exclusion of secret directory",
+    "create, modify and unlink through OverlayFS",
+    "native status/diff/commit, concurrent upstream edit, rebase and Land",
+    "native content matches modified mounted file",
+    "unchanged subtree working file remains absent from upper after native scans",
+    "SIGKILL restart preserves upper files, whiteouts and clean landed state",
+    "busy unmount keeps filesystem usable; closing handle and re-signalling unmounts both layers",
+    "standalone disk volume and tmpfs backing",
+    "native CLI regression tests: 11 passed on each platform"
+  ],
+  "limits": [
+    "Linux mount needs FUSE and OverlayFS mount authority, and a supported upper filesystem",
+    "mount control directory paths exclude whitespace, backslash, comma and colon",
+    "metadata for the sparse profile is loaded at startup; blob bodies are lazy",
+    "native status/commit scans can fetch unchanged file bodies without copying working files up",
+    "last-blob FUSE cache is bounded to 32 MiB; existing CLI object cache has no global capacity manager",
+    "macOS FSKit/NFS investigated, adapter not implemented or mounted",
+    "long-running, large-profile and power-loss behavior not evaluated",
+    "GitHub workflow execution not verified"
+  ],
+  "source_sha256": {
+    "Cargo.lock": "1206daefe8ee25fb4796e2f566d18e103c9454e0a7708096030e948a678747a8",
+    "crates/kasu-cli/Cargo.toml": "d6ae34c2f51accb01f0f72425ae26d2ca87284f4dcbd40350cb1dcd854c358f4",
+    "crates/kasu-cli/src/main.rs": "1144105dc21767262d2208874861a2383306ba946ba7d6051e760d1ca5e29499",
+    "crates/kasu-cli/src/lib.rs": "d8ec14ed9d5620371f3931a2e1909a528714ce3121d0d1d3ac9386b5a9de55a1",
+    "crates/kasu-cli/src/virtual_fs.rs": "8d6c02983ab0e206a132e31a41cad8ec5522f2a11e23bb51091f2aac13bc8eb1",
+    "crates/kasu-cli/src/virtual_fs/lower.rs": "df49a1595bf99e3e7be92c9092d5dc0858aa81ff858e3a076d759b7bed65358b",
+    "crates/kasu-cli/src/remote.rs": "b9d735702a00384c93b5ba1676908e3487127230a410b5d339a7dacb11b0c41f",
+    "crates/kasu-cli/src/commands.rs": "7735f6d4785386e289083e63ee8ad20b33fe5d6a052b10e8036556bb915e6a0b",
+    "crates/kasu-cli/tests/e2e.rs": "d29decf8af12a89b0611f74f8d7e48c4b356185d075172a8a8375bfa543d949c",
+    "crates/kasu-proto/proto/kasu.proto": "997717eeb6583bf656d45a92de91f51c3d30ecbc4053c4de7f4d959f21968b4c",
+    "crates/kasu-server/src/backend.rs": "7e5cb5ccf164e0ea753315cf1213414ecdbd392ff8c37ae1cd82eff1b5b1d934",
+    "crates/kasu-server/src/transport.rs": "67a5f76ee857dfe7a69853c746aad4f6c841a0aba439f9e77721971538abec75",
+    "crates/kasu-server/src/admission.rs": "58b1f32aa5c4a34bfaa14d09847041ff758fdbb14aa66ea5e85829d064b9f1f6",
+    "crates/kasu-server/tests/metadata.rs": "3f11d3bbdd8bb2ad304b954501de72d2b67c1f1b177c6ea4fadeab40e66a4d0c",
+    "tools/virtual/Dockerfile": "b4198cd85610db0dba55244430b9d18e2fa4db6d0ffeda79e335f9a7e62bfd59",
+    ".github/workflows/virtual.yml": "93475624f758de0dc41316f2fe12d51ce3ca8e759a86935589e411d67a9ac1db"
+  },
+  "report_sha256": {
+    "linux-build.log": "3e02aa56735fa37cc62f309bb5f1cfc3ddeb4cb47acb91df1e9957dc6ef83bd8",
+    "linux-mount-disk.log": "1d8d96237ab1d2293bc15c2bc22755485b48af9fba15685c24f28bda42dd9109",
+    "linux-mount-tmpfs.log": "74e1ffa9a6bed1b4cbdb0f7686c9dd04129fe298b1ba09df6c1ecfe65465970a",
+    "linux-cli.log": "95b743cd22069f053ab56b7864b5632db2a0a3449e2b5b490569463db044086b",
+    "host-cli.log": "aff1b47157bce2a7431c1353a28773902b3fbec33946d7c2b452360badff0ec8",
+    "host-metadata.log": "386ba6920b8c787a748000e11aec91b71db52478d494176334f83903fb327552",
+    "host-clippy.log": "e0954faa71a6d3caadc56e720e20559fc940ef5d94c46f420dec8d4362c69a06",
+    "workspace-check.log": "783dd487b1d62c8be89bdabd21aa1bc8194282e45985341ec53d1038edf6733b",
+    "fuzz-build.log": "e8631e7d2e0d60a64ce447e4c1b2c6c1723b9e35d85428e2ce1eba8d9dd3c166"
+  }
+}

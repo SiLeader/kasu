@@ -1,0 +1,27 @@
+[package]
+name = "kasu-telemetry"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tonic.workspace = true
+http = "1"
+http-body = "1"
+bytes = "1"
+tower = { version = "0.5", features = ["util"] }
+opentelemetry = { version = "=0.31.0", default-features = false, features = ["trace"] }
+opentelemetry_sdk = { version = "=0.31.0", default-features = false, features = ["trace"] }
+opentelemetry-otlp = { version = "=0.31.1", default-features = false, features = ["trace", "http-proto", "reqwest-blocking-client", "reqwest-rustls-webpki-roots"] }
+tracing-opentelemetry = { version = "=0.32.1", default-features = false }
+reqwest = { version = "=0.12.28", default-features = false, features = ["blocking", "rustls-tls"] }
+
+[dev-dependencies]
+serde_json.workspace = true
+http-body-util = "0.1"
+opentelemetry-proto = { version = "=0.31.0", default-features = false, features = ["gen-tonic-messages", "trace"] }
+prost.workspace = true
+tokio.workspace = true

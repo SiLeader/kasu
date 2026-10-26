@@ -1,0 +1,30 @@
+{
+  "clone_modes": [
+    "full",
+    "depth1"
+  ],
+  "git": "git version 2.39.5",
+  "git_cli_push": "64a121103947f59d9b3b7e61c30c9279a3a54884",
+  "go_git": [
+    {
+      "depth": 0,
+      "pushed": "154855e592f5433bbfdbde03aa1c9e0bec8554cd"
+    },
+    {
+      "depth": 1,
+      "pushed": "7487c54db2be141f04d588cd369df43419197b25"
+    }
+  ],
+  "initial": "8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5",
+  "native_contents_match": true,
+  "protocols": [
+    0,
+    1,
+    2
+  ],
+  "real_openssh": true,
+  "repository_account_writes": true,
+  "ssh": "OpenSSH_9.2p1 Debian-2+deb12u10, OpenSSL 3.0.22 25 Aug 2026",
+  "strict_fsck": true,
+  "success": true
+}

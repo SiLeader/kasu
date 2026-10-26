@@ -1,0 +1,10 @@
+{
+  "allChecksPassed": true,
+  "backend": "PostgreSQL serializable KV prototype",
+  "namespace": "run-18e11ca945c05b48",
+  "operations": 256,
+  "phase": "verify-baseline",
+  "schema": 1,
+  "stableDataDigest": "36da1ef588f8260e877806a121c03acc6f68bdc7c84ef44182d0a34317d79281",
+  "stableDataRecords": 1853
+}

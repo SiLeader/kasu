@@ -1,0 +1,7 @@
+{
+  "identities": [{
+    "name": "kasu-local-test",
+    "credentials": [{"accessKey": "kasu-test", "secretKey": "kasu-local-test-secret"}],
+    "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+  }]
+}

@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "captured_date": "2026-10-23",
+  "platforms": [
+    {
+      "platform": "darwin/arm64",
+      "python": "3.14.8"
+    },
+    {
+      "platform": "linux/arm64",
+      "python": "3.11.2",
+      "rust": "1.90.0"
+    }
+  ],
+  "authority": "SQLite and filesystem; real HTTP Metadata/Writer service",
+  "python_unit": {
+    "tests": 7,
+    "branched_dags": 12,
+    "possible_culprits_per_dag": 12,
+    "bisect_searches": 144,
+    "covered": [
+      "skip ambiguity",
+      "budget resume and verdict reuse",
+      "tester abort and deadline cleanup",
+      "exclusive journal lock and binding",
+      "checkpoint size failure retains durable state",
+      "strict ID input validation"
+    ]
+  },
+  "real_api_tests": 6,
+  "verified": [
+    "second-parent regression found with Metadata-only bisect",
+    "check passes/fails immutable IDs and rejects wrong ref/ABA; same bundled checker",
+    "3-way inverse keeps later edits in the same file and other files",
+    "root revert and explicit merge mainline",
+    "conflict leaves ref unchanged",
+    "post-commit reply loss; process restart resumes fixed Land ID/key",
+    "receipt replay after branch replacement causes no additional ref log",
+    "required ancestor rechecked after CAS mismatch",
+    "changed ancestor on reused idempotency key rejected",
+    "redirect not followed; empty ancestor on guarded endpoint rejected"
+  ],
+  "limits": [
+    "no real CI/deployment integration execution",
+    "no live PostgreSQL/S3 test of the new guard in this run",
+    "large DAG performance/capacity unmeasured",
+    "POSIX file locks and process groups; no Windows support",
+    "bisect assumes stable, monotonic single-cause test results",
+    "native Changeset IDs and UTF-8 repo names; map external Git SHA through Metadata first"
+  ],
+  "source_sha256": {
+    "tools/automation/check_file.py": "e7f4fdc6cc537bb02ab5ef5ca67ebaabec06f18d6c1e134032642ece8c3d8e8c",
+    "tools/automation/kasu_bot.py": "f55e5d11305e1cfc107f0461647c9cf004c227fd10367a81d1b27399ea130838",
+    "tools/automation/test_bot.py": "8c64f37573685e9d093302ee4c4e34ab9190463bbe4271a9ab89df58c1996e2f",
+    "tools/automation/Dockerfile": "a0e6bf3b0bbb03a5e6c48c86d5038e5724ba7e00842e2a49b7866c22f34103cd",
+    ".dockerignore": "55296dc23ce2b4330ae6c4583b6bfa3b98b0f80ab4085ee913adea52d90e4924",
+    ".github/workflows/ci.yml": "a65dffc3ed6f86b1133d5012a418f1055a413202abd7fd478888de4424e14200",
+    "crates/kasu-proto/proto/kasu.proto": "b0a97892f6675827453b304cc685a7d7e0374ff7895f82e0a68f13e7e10f2936",
+    "crates/kasu-proto/build.rs": "40a1e32da4fe8174badfee0d5f73775ca7d0c345ca6e69e1212a9220b107cce7",
+    "crates/kasu-server/src/land.rs": "a7b5b0dd0a524834d84121fb061d13fa9d709dfd756e30aa199af477302a1f7d",
+    "crates/kasu-server/src/write_transport.rs": "1fe9205cc5751c2521a51e423b01c4d4252892b03c33d9d2e0087c9212086949",
+    "crates/kasu-server/src/write.rs": "1c207817933ec03f80d164bbb412eddaaa6859235ba17fce3dea2aa717598dcb",
+    "crates/kasu-server/src/backend.rs": "51d4d919fc5d0cac136a59660a2d9ef84a407cffa83b1a3641e665c31546977d",
+    "crates/kasu-server/tests/automation.rs": "1d0db69483708ada30e61b97fdf6c7e12b4813717a175c0f911ea8011db808cd",
+    "crates/kasu-store/src/lib.rs": "569213e82cb687ba15ab3a6547b1454182d55ccf063ad1ce653b020ad89631cd",
+    "crates/kasu-store/src/sqlite.rs": "06f4699e43c5bcb5fd44b1a3dfcc267221cf2ac7ecf68608b75a79e971db192d",
+    "crates/kasu-store/src/postgres.rs": "6a83fd9b700bb31e591911be3e8af5da76e910101cd2eb721704fccc0ef5fbe1",
+    "crates/kasu-ops/src/write.rs": "7df3d737fd6e556d4ffeafad67f288f3fe4eec3298dcfd11204a776fc1108876",
+    "Cargo.lock": "3370f24126871bfe374431fdc7ed37db1cffdc48b5d2c6f66ddb3d3617e27307"
+  },
+  "log_sha256": {
+    "clippy.log": "b3e06661411f6c1191464335a09252dbfb1f98325f2e6c544018b9cb33dee792",
+    "host-api.log": "d3edcf0674933668e788625e37572a5fbd4d8631a35e50e75b0a1773be590eaa",
+    "linux.log": "3936cc62ee321f84a8af66fed9e2a682928bef4d58e723dab1ec4c50e356bd6f",
+    "python-unit.log": "c44e00206e6dde32db8efa20b45dec6209b0608bdd329eeb29670061f320b57c",
+    "workspace-all-features.log": "7fd190da34496d90c1402102c30a3af8d48a58e73814c272fbb11995bf06316a"
+  },
+  "validation": {
+    "workspace_all_targets_all_features": "passed",
+    "clippy_all_targets_all_features_warnings_as_errors": "passed",
+    "rustfmt": "passed",
+    "python_unit": "passed",
+    "host_and_fixed_linux_api_tests": "passed"
+  }
+}

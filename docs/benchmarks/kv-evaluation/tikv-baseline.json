@@ -1,0 +1,196 @@
+{
+  "allChecksPassed": true,
+  "backend": "TiKV optimistic TxnKV prototype",
+  "benchmarks": [
+    {
+      "Name": "immutable-put-4KiB",
+      "Operations": 256,
+      "Concurrency": 1,
+      "Applied": 256,
+      "Retry": 0,
+      "Attempts": 256,
+      "ElapsedMS": 507.03,
+      "AcknowledgedPerSecond": 504.900675416481,
+      "P50MS": 1.922,
+      "P95MS": 2.284,
+      "P99MS": 2.635,
+      "DrainMS": 0
+    },
+    {
+      "Name": "immutable-get-4KiB",
+      "Operations": 256,
+      "Concurrency": 1,
+      "Applied": 256,
+      "Retry": 0,
+      "Attempts": 256,
+      "ElapsedMS": 53.597,
+      "AcknowledgedPerSecond": 4776.36445899743,
+      "P50MS": 0.184,
+      "P95MS": 0.454,
+      "P99MS": 0.489,
+      "DrainMS": 0
+    },
+    {
+      "Name": "ref-cas-1-repos",
+      "Operations": 256,
+      "Concurrency": 8,
+      "Applied": 196,
+      "Retry": 60,
+      "Attempts": 443,
+      "ElapsedMS": 10144.649,
+      "AcknowledgedPerSecond": 19.320530369452417,
+      "P50MS": 2.614,
+      "P95MS": 3000.337,
+      "P99MS": 3000.978,
+      "DrainMS": 209.821
+    },
+    {
+      "Name": "ref-cas-8-repos",
+      "Operations": 256,
+      "Concurrency": 8,
+      "Applied": 254,
+      "Retry": 2,
+      "Attempts": 263,
+      "ElapsedMS": 241.396,
+      "AcknowledgedPerSecond": 1052.2098752067488,
+      "P50MS": 6.055,
+      "P95MS": 10.485,
+      "P99MS": 14.049,
+      "DrainMS": 6.544
+    }
+  ],
+  "contracts": {
+    "cancelledCommitRolledBack": true,
+    "fingerprintCollisionRejected": true,
+    "initialMixedReplies": {
+      "Applied": 1,
+      "Mismatch": 8,
+      "Retry": 7
+    },
+    "initialReceiptReplies": {
+      "Applied": 1,
+      "Replay": 1,
+      "Retry": 6
+    },
+    "longBinaryKeyAndEmptyValue": true,
+    "lostReplyReplayedOnce": true,
+    "mixedCasClients": 16,
+    "nativeAndGitABARejected": true,
+    "partialBatchRejected": true,
+    "receiptClients": 8,
+    "rollbackIncludesCountersAndReceipt": true,
+    "sameKeyPublishedOnce": true,
+    "singleMixedWinner": true
+  },
+  "faultRegion": {
+    "ID": 160,
+    "LeaderStore": 1,
+    "LeaderAddress": "tikv3:20160",
+    "Peers": 3
+  },
+  "isolationProbe": {
+    "sameValueRefFenceAbortsStaleGuard": true,
+    "unfencedGuardAbortedAsConflict": false,
+    "unfencedGuardCommittedAfterObserver": true
+  },
+  "namespace": "run-18e11ca945c05b48",
+  "operations": 256,
+  "phase": "baseline",
+  "regions": {
+    "counter": {
+      "ID": 48,
+      "LeaderStore": 3,
+      "LeaderAddress": "tikv2:20160",
+      "Peers": 3
+    },
+    "log": {
+      "ID": 84,
+      "LeaderStore": 3,
+      "LeaderAddress": "tikv2:20160",
+      "Peers": 3
+    },
+    "receipt": {
+      "ID": 124,
+      "LeaderStore": 1,
+      "LeaderAddress": "tikv3:20160",
+      "Peers": 3
+    },
+    "ref": {
+      "ID": 160,
+      "LeaderStore": 1,
+      "LeaderAddress": "tikv3:20160",
+      "Peers": 3
+    },
+    "shardCounter0": {
+      "ID": 52,
+      "LeaderStore": 1,
+      "LeaderAddress": "tikv3:20160",
+      "Peers": 3
+    },
+    "shardCounter1": {
+      "ID": 64,
+      "LeaderStore": 1,
+      "LeaderAddress": "tikv3:20160",
+      "Peers": 3
+    },
+    "shardCounter2": {
+      "ID": 56,
+      "LeaderStore": 3,
+      "LeaderAddress": "tikv2:20160",
+      "Peers": 3
+    },
+    "shardCounter3": {
+      "ID": 36,
+      "LeaderStore": 3,
+      "LeaderAddress": "tikv2:20160",
+      "Peers": 3
+    },
+    "shardCounter4": {
+      "ID": 48,
+      "LeaderStore": 3,
+      "LeaderAddress": "tikv2:20160",
+      "Peers": 3
+    },
+    "shardCounter5": {
+      "ID": 60,
+      "LeaderStore": 2,
+      "LeaderAddress": "tikv1:20160",
+      "Peers": 3
+    },
+    "shardCounter6": {
+      "ID": 40,
+      "LeaderStore": 2,
+      "LeaderAddress": "tikv1:20160",
+      "Peers": 3
+    },
+    "shardCounter7": {
+      "ID": 44,
+      "LeaderStore": 1,
+      "LeaderAddress": "tikv3:20160",
+      "Peers": 3
+    }
+  },
+  "schema": 1,
+  "stableDataDigest": "a9372b867e1315dfe61aa4c082bef50ea40c7c3d2ae199a390dc912540d44a20",
+  "stableDataRecords": 1857,
+  "valueLimits": [
+    {
+      "accepted": true,
+      "elapsedMS": 5.576,
+      "errorClass": "",
+      "rawBytes": 1024
+    },
+    {
+      "accepted": true,
+      "elapsedMS": 15.166,
+      "errorClass": "",
+      "rawBytes": 1048576
+    },
+    {
+      "accepted": false,
+      "elapsedMS": 26.108,
+      "errorClass": "raft-entry-too-large",
+      "rawBytes": 8388608
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+name: Divergent history benchmark
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'crates/kasu-core/**'
+      - 'crates/kasu-store/**'
+      - 'crates/kasu-derived/**'
+      - 'crates/kasu-ops/**'
+      - 'Cargo.*'
+      - 'tools/history-benchmark/**'
+      - '.github/workflows/history-benchmark.yml'
+permissions:
+  contents: read
+jobs:
+  history:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build pinned Rust benchmark and run DAG correctness tests
+        run: docker build -f tools/history-benchmark/Dockerfile -t kasu:history-benchmark . > history-build.log 2>&1
+      - name: Measure 100000 changesets with 10000 divergent merges
+        run: docker run --rm --network none kasu:history-benchmark > history-linux.csv 2> history-linux.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: divergent-history-evidence
+          path: |
+            history-*.csv
+            history-*.log

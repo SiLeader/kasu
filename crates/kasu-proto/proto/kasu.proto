@@ -1,0 +1,99 @@
+syntax = "proto3";
+package kasu.v1;
+
+service Objects {
+  rpc GetTrees(ObjectRequest) returns (stream TreeObject);
+  rpc GetBlobs(ObjectRequest) returns (stream BlobChunk);
+}
+message ObjectRequest { bytes repo = 1; repeated bytes ids = 2; }
+// Each object's chunks are contiguous. Offsets address the stored zstd frame,
+// not decompressed content. Verify the complete frame and content ID before use.
+message TreeObject { bytes id = 1; uint64 offset = 2; bytes data = 3; bool last = 4; }
+message BlobChunk { bytes id = 1; uint64 offset = 2; bytes data = 3; bool last = 4; }
+
+service Metadata {
+  rpc GetChangeset(ChangesetRequest) returns (Changeset);
+  rpc GetRootTree(ChangesetRequest) returns (RootTreeResponse);
+  rpc GetBlobMetadata(ObjectRequest) returns (BlobMetadataResponse);
+  rpc ResolveRef(RefRequest) returns (Ref);
+  rpc ListRefs(ListRefsRequest) returns (ListRefsResponse);
+  rpc Log(LogRequest) returns (LogResponse);
+  rpc IsAncestor(CompareRequest) returns (AncestorResponse);
+  rpc MergeBase(CompareRequest) returns (MergeBaseResponse);
+  rpc Diff(DiffRequest) returns (DiffResponse);
+  rpc Blame(PathRequest) returns (BlameResponse);
+  rpc ReadFile(PathRequest) returns (ReadFileResponse);
+  rpc ListDir(PathRequest) returns (ListDirResponse);
+  rpc FindChangesetByGitOid(GitOidRequest) returns (FindChangesetResponse);
+}
+service Writer {
+  rpc UploadBlobs(stream BlobUpload) returns (UploadBlobsResponse);
+  rpc CreateChangeset(CreateChangesetRequest) returns (Changeset);
+  rpc Merge(MergeRequest) returns (RewriteResponse);
+  rpc Rebase(RebaseRequest) returns (RewriteResponse);
+  rpc UpdateRef(UpdateRefRequest) returns (UpdateRefResponse);
+  rpc Land(LandRequest) returns (LandResponse);
+}
+message LandRequest { bytes repo = 1; bytes id = 2; bytes name = 3; bytes idempotency_key = 4; uint32 max_attempts = 5; uint32 timeout_ms = 6; bytes required_ancestor = 7; }
+enum LandOutcome { LANDED = 0; CONFLICT = 1; RETRY = 2; DENIED = 3; }
+message LandResponse { LandOutcome outcome = 1; optional bytes id = 2; Ref actual = 3; RewriteResponse conflict = 4; uint32 attempts = 5; bool replayed = 6; string message = 7; }
+// Chunks for each blob are contiguous and offsets start at zero. A zero-data,
+// last=true chunk checks for an existing blob without retransmitting its data.
+message BlobUpload { bytes repo = 1; bytes id = 2; uint64 offset = 3; bytes data = 4; bool last = 5; }
+message BlobReceipt { bytes id = 1; uint64 size = 2; bool existing = 3; }
+message UploadBlobsResponse { repeated BlobReceipt blobs = 1; }
+message UploadBlobsHttpRequest { repeated BlobUpload chunks = 1; }
+message CommitMetadata { Signature author = 1; Signature committer = 2; bytes message = 3; }
+message CreateChangesetRequest { bytes repo = 1; repeated bytes parents = 2; repeated FileChange changes = 3; CommitMetadata metadata = 4; }
+message MergeRequest { bytes repo = 1; bytes a = 2; bytes b = 3; CommitMetadata metadata = 4; }
+message RebaseRequest { bytes repo = 1; bytes id = 2; bytes onto = 3; Signature committer = 4; }
+enum ConflictKind { CONTENT = 0; BINARY = 1; ADD_ADD = 2; DELETE_MODIFY = 3; FILE_DIRECTORY = 4; TYPE_CHANGE = 5; SYMLINK = 6; GITLINK = 7; }
+enum ConflictStage { RESULT = 0; MERGE_BASES = 1; }
+message MergeEntry { oneof kind { Entry leaf = 1; bytes tree = 2; } }
+message LineConflict { uint64 base_start = 1; uint64 base_end = 2; bytes ours = 3; bytes theirs = 4; }
+message TreeConflict { bytes path = 1; ConflictKind kind = 2; MergeEntry base = 3; MergeEntry ours = 4; MergeEntry theirs = 5; repeated LineConflict lines = 6; }
+message RewriteResponse { optional bytes id = 1; repeated bytes bases = 2; ConflictStage stage = 3; repeated TreeConflict conflicts = 4; }
+message UpdateRefRequest { bytes repo = 1; bytes name = 2; Ref expected = 3; optional bytes target = 4; bool force = 5; }
+message UpdateRefResponse { bool applied = 1; Ref actual = 2; }
+message ChangesetRequest { bytes repo = 1; bytes id = 2; }
+// Account-filtered roots have their own canonical TreeId; source Changeset IDs remain references.
+message RootTreeResponse { bytes id = 1; bool read_filtered = 2; }
+message Signature { bytes name = 1; bytes email = 2; sint64 timestamp = 3; bytes tz = 4; }
+message File { bytes blob = 1; bool executable = 2; }
+message Entry {
+  oneof kind { File file = 1; bytes symlink = 2; bytes gitlink = 3; }
+}
+message FileChange { bytes path = 1; Entry entry = 2; } // no entry = Delete
+message Changeset {
+  bytes id = 1; repeated bytes parents = 2;
+  Signature author = 3; Signature committer = 4;
+  bytes message = 5; repeated FileChange changes = 6;
+  optional bytes raw_git_commit = 7;
+  // A metadata view: changes are filtered and raw Git provenance is omitted.
+  // id names the source changeset; these fields cannot reconstruct its canonical bytes.
+  bool read_filtered = 8;
+}
+message RefRequest { bytes repo = 1; bytes name = 2; }
+message Ref { bytes name = 1; optional bytes target = 2; uint64 version = 3; }
+message ListRefsRequest { bytes repo = 1; bytes prefix = 2; }
+message ListRefsResponse { repeated Ref refs = 1; }
+message LogRequest { bytes repo = 1; bytes start = 2; optional bytes path = 3; uint32 limit = 4; bytes cursor = 5; }
+message LogResponse { repeated Changeset changesets = 1; bytes cursor = 2; }
+message CompareRequest { bytes repo = 1; bytes base = 2; bytes head = 3; }
+message AncestorResponse { bool is_ancestor = 1; }
+message MergeBaseResponse { repeated bytes ids = 1; }
+message DiffRequest { bytes repo = 1; bytes base = 2; bytes head = 3; repeated bytes paths = 4; bool content = 5; }
+message ContentEdit { uint64 before_start = 1; uint64 after_start = 2; repeated bytes before = 3; repeated bytes after = 4; }
+message FileDiff { bytes path = 1; Entry before = 2; Entry after = 3; repeated ContentEdit edits = 4; bool binary = 5; }
+message DiffResponse { repeated FileDiff files = 1; }
+message PathRequest { bytes repo = 1; bytes id = 2; bytes path = 3; bool follow_copies = 4; bool follow_moves = 5; } // Blame only: copies imply moves; ListDir: empty path = root
+message LineOrigin { bytes changeset = 1; bytes path = 2; uint64 line = 3; }
+message BlameResponse { bytes blob = 1; repeated LineOrigin lines = 2; }
+message ReadFileResponse { Entry entry = 1; bytes content = 2; }
+message DirEntry { bytes name = 1; oneof kind { Entry entry = 2; bytes tree = 3; } }
+message ListDirResponse { repeated DirEntry entries = 1; }
+message GitOidRequest { bytes repo = 1; bytes oid = 2; }
+message FindChangesetResponse { optional bytes id = 1; }
+
+message BlobMetadata { bytes id = 1; uint64 size = 2; bytes git_oid = 3; }
+message BlobMetadataResponse { repeated BlobMetadata blobs = 1; }

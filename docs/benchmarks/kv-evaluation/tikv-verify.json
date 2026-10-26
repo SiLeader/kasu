@@ -1,0 +1,10 @@
+{
+  "allChecksPassed": true,
+  "backend": "TiKV optimistic TxnKV prototype",
+  "namespace": "run-18e11ca945c05b48",
+  "operations": 256,
+  "phase": "verify",
+  "schema": 1,
+  "stableDataDigest": "a9372b867e1315dfe61aa4c082bef50ea40c7c3d2ae199a390dc912540d44a20",
+  "stableDataRecords": 1857
+}

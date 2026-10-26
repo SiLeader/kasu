@@ -1,0 +1,101 @@
+Running unittests src/lib.rs
+running 18 tests
+test git_ssh::tests::command_words_preserve_quoted_bytes_and_never_interpret_shell_expressions ... ok
+test git_ssh::tests::incremental_pkt_line_reader_handles_fragmentation_delimiters_and_done ... ok
+test git_http::tests::directory_url_rejects_invalid_components_and_decodes_byte_paths ... ok
+test admission::tests::buckets_refill_and_eviction_cannot_reset_quota_or_active_identity ... ok
+test observed_refs::tests::metrics_distinguish_conflict_replay_cancellation_and_storage_error ... ok
+test auth::tests::projection_only_configuration_closes_anonymous_and_native_access ... ok
+test admission::tests::streaming_body_holds_lease_until_completion_or_drop ... ok
+test admission::tests::socket_extensions_are_used_and_mapped_addresses_share_an_identity ... ok
+test admission::tests::metrics_has_a_separate_bounded_pool ... ok
+test admission::tests::cancelled_blocking_handler_keeps_capacity_and_metrics_stays_available ... ok
+test auth::tests::account_and_hop_credentials_cannot_overlap_in_either_builder_order ... ok
+test admission::tests::config_is_bounded_strict_and_validated ... ok
+test accounts::tests::account_credentials_are_unambiguous_in_each_builder_order ... ok
+test admission::tests::bounded_queue_timeout_and_cancellation_release_permits ... ok
+test auth::tests::file_configuration_is_strict_relative_and_supports_byte_paths ... ok
+test git_ssh::pack_stream::tests::pack_boundaries_do_not_consume_following_messages_or_require_eof ... ok
+test accounts::tests::bounded_file_config_is_strict_relative_and_defaults_to_read_only ... ok
+test accounts::read_config_tests::read_directory_configuration_is_explicit_bounded_and_normalized ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+Running tests/accounts.rs
+running 5 tests
+test concurrent_http_writers_keep_independent_account_policies ... ok
+test native_accounts_apply_intersection_final_tree_and_per_principal_land_replay ... ok
+test directory_read_views_filter_metadata_objects_and_writer_blob_references ... ok
+test actual_servers_preserve_account_land_receipts_across_reorder_rotation_and_restart ... ok
+test git_http_push_uses_account_paths_and_atomic_ref_policy ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.37s
+Running tests/git_http.rs
+running 10 tests
+test pinned_go_git_full_and_shallow_checkout ... ignored, requires tools/git-compat binary in KASU_GO_GIT_CLIENT
+test scoped_projection_pat_allows_git_but_denies_full_repository_and_native_services ... ok
+test unreferenced_wants_require_explicit_publication_and_auth_precedes_parsing ... ok
+test git_versions_ls_remote_full_clone_and_depth_one ... ok
+test empty_repository_and_basic_auth_and_incremental_fetch ... ok
+test shallow_deepen_unshallow_and_v2_time_and_exclusion ... ok
+test partial_clone_omits_blobs_and_promisor_fetch_hydrates_history_and_sparse_checkout ... ok
+test path_projection_clones_fetches_tags_and_isolates_source_objects ... ok
+test partial_clone_incremental_fetch_keeps_promises_across_common_commits ... ok
+test repeated_multi_ref_fetch_preserves_divergent_and_merged_histories ... ok
+
+test result: ok. 9 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 15.03s
+Running tests/metadata.rs
+running 6 tests
+test membership_filters_orphans_from_other_repositories_and_cursors_are_bound ... ok
+test lazy_history_materializes_only_the_requested_path ... ok
+test grpc_over_tcp_and_http_json_preserve_bytes_and_enforce_access ... ok
+test server_binary_serves_grpc_and_http_from_persistent_store ... ok
+test rename_move_and_copy_fragment_blame_match_git_over_native_grpc_and_json ... ok
+test path_log_blame_diff_and_all_merge_bases_match_git ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.19s
+Running tests/objects.rs
+running 5 tests
+test empty_or_missing_stored_frame_is_an_explicit_stream_error ... ok
+test authorization_precedes_validation_and_batches_do_not_leak_foreign_objects ... ok
+test grpc_sparse_requests_transfer_exact_stored_frames_in_bounded_chunks ... ok
+test cancelling_a_backpressured_stream_does_not_read_the_next_object ... ok
+test rewrite_conflict_trees_are_available_without_a_successful_changeset ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+Running tests/projection_accounts.rs
+running 1 test
+test actual_binary_loads_projection_only_configuration_and_invalid_config_fails_closed ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+Running tests/push.rs
+running 8 tests
+test pinned_go_git_full_and_shallow_clone_commit_push ... ignored, requires the pinned Go client in KASU_GO_GIT_PUSH_CLIENT
+test atomic_capability_depends_on_the_backend_and_unadvertised_requests_are_rejected ... ok
+test malformed_connectivity_stale_refs_and_auth_never_publish_a_ref ... ok
+test atomic_push_still_applies_final_tree_acl_to_every_ref ... ok
+test atomic_push_detects_branch_and_tag_aba_between_validation_and_commit ... ok
+test atomic_push_creates_updates_and_deletes_branches_and_tags_together ... ok
+test final_tree_acl_blocks_second_parent_changes_and_native_publication ... ok
+test git_push_initial_incremental_tags_force_delete_and_partial_rejection ... ok
+
+test result: ok. 7 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 2.00s
+Running tests/runtime.rs
+running 6 tests
+test trusted_socket_ip_budget_spans_http_grpc_and_ignores_forwarding_headers ... ok
+test bearer_basic_and_both_transports_share_one_token_budget ... ok
+test metrics_require_repository_access_and_unknown_paths_have_bounded_labels ... ok
+test actual_binary_loads_limits_and_rejects_invalid_configuration_before_listening ... ok
+test object_stream_backpressure_holds_admission_until_client_drops_stream ... ok
+test git_pack_backpressure_holds_admission_until_client_drops_response ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.88s
+Running tests/write.rs
+running 5 tests
+test write_policy_json_patterns_and_byte_path_boundaries_are_enforced ... ok
+test http_rejects_foreign_objects_malformed_uploads_and_unfinished_streams ... ok
+test ref_policy_force_deletion_and_aba_are_enforced ... ok
+test land_grpc_and_http_replay_the_durable_result_after_ref_moves ... ok
+test grpc_upload_create_merge_rebase_and_ref_are_readable_by_git ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.96s
+

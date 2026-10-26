@@ -1,0 +1,21 @@
+{
+  "clone_modes": [
+    "full",
+    "depth1"
+  ],
+  "git": "git version 2.54.0 (Apple Git-157)",
+  "git_cli_push": "64a121103947f59d9b3b7e61c30c9279a3a54884",
+  "go_git": [],
+  "initial": "8f88747b7abd4e3a01e3d041d8a676e9cf4f4dc5",
+  "native_contents_match": true,
+  "protocols": [
+    0,
+    1,
+    2
+  ],
+  "real_openssh": false,
+  "repository_account_writes": true,
+  "ssh": "OpenSSH_10.3p1, LibreSSL 3.3.6",
+  "strict_fsck": true,
+  "success": true
+}

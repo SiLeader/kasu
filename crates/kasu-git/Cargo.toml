@@ -1,0 +1,22 @@
+[package]
+name = "kasu-git"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+kasu-core.workspace = true
+kasu-store.workspace = true
+kasu-derived.workspace = true
+kasu-ops.workspace = true
+gix.workspace = true
+gix-pack.workspace = true
+gix-zlib.workspace = true
+hex.workspace = true
+flate2.workspace = true
+sha1.workspace = true
+hashlink.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+proptest.workspace = true

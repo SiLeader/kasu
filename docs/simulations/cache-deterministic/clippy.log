@@ -1,0 +1,1 @@
+cargo clippy -p kasu-cache -p kasu-sim --all-targets --locked -- -D warnings: passed

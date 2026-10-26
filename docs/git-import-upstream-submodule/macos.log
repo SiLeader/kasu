@@ -1,0 +1,19 @@
+rustc 1.98.1 (48a229cea 2026-09-01)
+git version 2.54.0 (Apple Git-157)
+Darwin arm64
+Running tests/roundtrip.rs
+running 11 tests
+test native_projected_commits_keep_identity_when_imported_back ... ok
+test noncanonical_trees_keep_raw_variants_without_poisoning_native_projection ... ok
+test empty_repository_has_unborn_head_and_cli_imports_it ... ok
+test pinned_upstream_submodule_fixture_roundtrips_all_reachable_objects ... ok
+test rejects_missing_wrong_type_and_unrepresentable_trees_before_publication ... ok
+test publication_revalidates_ref_kind_peeling_and_symbolic_targets ... ok
+test native_edits_after_import_reuse_unchanged_merkle_subtrees_and_blobs ... ok
+test rejects_shallow_and_sha256_repositories_explicitly ... ok
+test packed_repository_roundtrips_every_object_and_ref_through_strict_pack ... ok
+test pinned_oss_repository_roundtrips_all_objects_through_pack_and_clone ... ok
+test pinned_gitlab_byte_paths_tags_and_merges_roundtrip ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.91s
+

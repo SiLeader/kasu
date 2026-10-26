@@ -1,0 +1,442 @@
+{
+  "schema": 1,
+  "captured_date": "2026-10-24",
+  "clients": [
+    {
+      "client": "git",
+      "version": "2.54.0 (Apple Git-157)",
+      "runtime": "darwin/arm64",
+      "protocols": [
+        0,
+        1,
+        2
+      ],
+      "verified": [
+        "ls-remote",
+        "full-bare-clone",
+        "depth-1-bare-clone",
+        "incremental-fetch",
+        "deepen",
+        "unshallow",
+        "deepen-since",
+        "deepen-not",
+        "strict-fsck",
+        "8-round-multi-ref-fetch-full-and-shallow",
+        "divergent-branches-and-merges-with-annotated-tags",
+        "initial-and-incremental-push",
+        "depth-1-clone-commit-push",
+        "annotated-nested-and-blob-tags",
+        "force-ref-pattern",
+        "ref-deletion",
+        "non-atomic-partial-rejection",
+        "final-tree-acl-including-merge-with-empty-first-parent-diff",
+        "atomic-mixed-branch-tag-create-update-delete",
+        "atomic-policy-rejection-rolls-back-all-refs-and-logs",
+        "blob-none-partial-clone-full-and-depth-1",
+        "promisor-single-and-batch-blob-fetch",
+        "partial-clone-sparse-checkout",
+        "partial-clone-unshallow",
+        "partial-clone-3-incremental-fetches",
+        "partial-clone-strict-fsck-and-hydrated-object-parity",
+        "path-projection-full-depth1-and-partial-clone",
+        "path-projection-outside-update-stability-and-incremental-fetch",
+        "path-projection-annotated-nested-and-tree-tags",
+        "path-projection-source-and-other-projection-want-denial",
+        "path-projection-push-denial",
+        "path-projection-non-UTF8-hex-URL-clone"
+      ],
+      "fixtures": [
+        "git-2.54.0-http-v0-depth1.trace",
+        "git-2.54.0-http-v0-full.trace",
+        "git-2.54.0-http-v1-depth1.trace",
+        "git-2.54.0-http-v1-full.trace",
+        "git-2.54.0-http-v2-depth1.trace",
+        "git-2.54.0-http-v2-full.trace",
+        "git-2.54.0-v0-depth1.trace",
+        "git-2.54.0-v0-full.trace",
+        "git-2.54.0-v1-depth1.trace",
+        "git-2.54.0-v1-full.trace",
+        "git-2.54.0-v2-depth1.trace",
+        "git-2.54.0-v2-full.trace",
+        "git-2.54.0-http-push.trace",
+        "git-2.54.0-http-push-acl.trace",
+        "git-2.54.0-http-atomic-push.trace",
+        "git-2.54.0-http-v0-partial-depth1.trace",
+        "git-2.54.0-http-v0-partial-full.trace",
+        "git-2.54.0-http-v1-partial-depth1.trace",
+        "git-2.54.0-http-v1-partial-full.trace",
+        "git-2.54.0-http-v2-partial-depth1.trace",
+        "git-2.54.0-http-v2-partial-full.trace",
+        "git-2.54.0-http-v0-path-depth1.trace",
+        "git-2.54.0-http-v0-path-full.trace",
+        "git-2.54.0-http-v0-path-partial.trace",
+        "git-2.54.0-http-v1-path-depth1.trace",
+        "git-2.54.0-http-v1-path-full.trace",
+        "git-2.54.0-http-v1-path-partial.trace",
+        "git-2.54.0-http-v2-path-depth1.trace",
+        "git-2.54.0-http-v2-path-full.trace",
+        "git-2.54.0-http-v2-path-partial.trace"
+      ]
+    },
+    {
+      "client": "go-git",
+      "version": "v5.19.3",
+      "go": "go1.27.3",
+      "runtime": "linux/arm64 container",
+      "protocols": [
+        0
+      ],
+      "verified": [
+        "full-clone-and-checkout",
+        "depth-1-clone-and-checkout",
+        "basic-token-auth",
+        "non-utf8-path",
+        "symlink",
+        "gitlink-entry",
+        "host-strict-fsck-of-git-directory",
+        "all-checked-out-file-content-and-executable-modes"
+      ],
+      "fixtures": [
+        "go-git-5.19.3-http-depth0.trace",
+        "go-git-5.19.3-http-depth1.trace"
+      ]
+    },
+    {
+      "client": "ArgoCD",
+      "version": "v3.5.6",
+      "git": "2.53.0",
+      "runtime": "kind v0.33.0 / Kubernetes v1.37.0 / linux arm64",
+      "protocols": [
+        0,
+        2
+      ],
+      "verified": [
+        "basic-token-auth",
+        "initial-sync",
+        "ref-update-sync",
+        "application-healthy-and-synced",
+        "exact-commit-and-configmap-content",
+        "signed-github-push-webhook",
+        "1h-polling-without-manual-refresh",
+        "path-projection-initial-and-incremental-sync",
+        "path-projection-outside-only-update-stable-oid",
+        "path-projection-refresh-acknowledged-and-subtree-parity"
+      ],
+      "fixtures": [
+        "argocd-3.5.6-kind.trace",
+        "gitops-kind-server.trace",
+        "gitops-kind-summary.json",
+        "gitops-kind-argocd-server.log",
+        "path-projection-kind/gitops-kind-summary.json",
+        "path-projection-kind/gitops-kind-server.trace",
+        "path-projection-kind/argocd-3.5.6-kind.trace"
+      ]
+    },
+    {
+      "client": "Flux",
+      "version": "v2.9.6",
+      "sourceController": "v1.9.6",
+      "kustomizeController": "v1.9.6",
+      "goGitDeclaredVersion": "v5.19.1",
+      "goGitVersionSource": "https://github.com/fluxcd/source-controller/blob/v1.9.6/go.mod",
+      "runtime": "kind v0.33.0 / Kubernetes v1.37.0 / linux arm64",
+      "protocols": [
+        0
+      ],
+      "verified": [
+        "basic-token-auth",
+        "depth-1-fetch",
+        "initial-sync",
+        "ref-update-sync",
+        "source-and-kustomization-ready",
+        "exact-commit-and-configmap-content",
+        "signed-github-push-webhook",
+        "1h-polling-without-manual-refresh",
+        "path-projection-initial-and-incremental-sync",
+        "path-projection-outside-only-update-stable-oid",
+        "path-projection-refresh-acknowledged-and-subtree-parity"
+      ],
+      "fixtures": [
+        "gitops-kind-server.trace",
+        "gitops-kind-summary.json",
+        "gitops-kind-flux-notification.log",
+        "path-projection-kind/gitops-kind-summary.json",
+        "path-projection-kind/gitops-kind-server.trace"
+      ]
+    },
+    {
+      "client": "go-git push",
+      "version": "v5.19.3",
+      "go": "go1.27.3",
+      "runtime": "darwin/arm64",
+      "protocols": [
+        0
+      ],
+      "verified": [
+        "full-clone-commit-push",
+        "depth-1-clone-commit-push",
+        "basic-token-auth",
+        "exact-server-branch-oid-and-native-file-content",
+        "strict-fsck"
+      ],
+      "fixtures": [
+        "go-git-5.19.3-http-push-depth0.trace",
+        "go-git-5.19.3-http-push-depth1.trace"
+      ]
+    },
+    {
+      "client": "Argo CD Image Updater",
+      "version": "v1.4.0",
+      "git": "2.54.0",
+      "runtime": "kind v0.33.0 / Kubernetes v1.37.0 / linux arm64",
+      "verified": [
+        "real-registry-semver-tag-update",
+        "depth-1-fetch-commit-and-git-write-back",
+        "kustomization-update",
+        "webhook-driven-deployment-manifest-sync",
+        "native-file-content-equals-git",
+        "strict-fsck"
+      ],
+      "fixtures": [
+        "gitops-kind-writeback.json",
+        "gitops-kind-image-updater.log",
+        "gitops-kind-server.trace"
+      ]
+    },
+    {
+      "client": "Flux Image Automation",
+      "version": "v1.2.5",
+      "imageReflector": "v1.2.5",
+      "flux": "v2.9.6",
+      "runtime": "kind v0.33.0 / Kubernetes v1.37.0 / linux arm64",
+      "verified": [
+        "real-registry-semver-tag-update",
+        "setters-commit-and-push",
+        "webhook-driven-deployment-manifest-sync",
+        "native-file-content-equals-git",
+        "strict-fsck"
+      ],
+      "fixtures": [
+        "gitops-kind-writeback.json",
+        "gitops-kind-image-automation.log",
+        "gitops-kind-image-reflector.log",
+        "gitops-kind-server.trace"
+      ]
+    },
+    {
+      "client": "git",
+      "version": "2.39.5",
+      "runtime": "linux/arm64; Rust 1.90.0 container",
+      "protocols": [
+        0,
+        1,
+        2
+      ],
+      "verified": [
+        "blob-none-partial-clone-full-and-depth-1",
+        "promisor-single-and-batch-blob-fetch",
+        "partial-clone-sparse-checkout",
+        "partial-clone-unshallow",
+        "partial-clone-3-incremental-fetches",
+        "partial-clone-strict-fsck-and-hydrated-object-parity",
+        "path-projection-full-depth1-and-partial-clone",
+        "path-projection-outside-update-stability-and-incremental-fetch",
+        "path-projection-annotated-nested-and-tree-tags",
+        "path-projection-source-and-other-projection-want-denial",
+        "path-projection-push-denial",
+        "path-projection-non-UTF8-hex-URL-clone"
+      ],
+      "fixtures": [
+        "git-2.39.5-http-v0-partial-depth1.trace",
+        "git-2.39.5-http-v0-partial-full.trace",
+        "git-2.39.5-http-v1-partial-depth1.trace",
+        "git-2.39.5-http-v1-partial-full.trace",
+        "git-2.39.5-http-v2-partial-depth1.trace",
+        "git-2.39.5-http-v2-partial-full.trace",
+        "git-2.39.5-http-v0-path-depth1.trace",
+        "git-2.39.5-http-v0-path-full.trace",
+        "git-2.39.5-http-v0-path-partial.trace",
+        "git-2.39.5-http-v1-path-depth1.trace",
+        "git-2.39.5-http-v1-path-full.trace",
+        "git-2.39.5-http-v1-path-partial.trace",
+        "git-2.39.5-http-v2-path-depth1.trace",
+        "git-2.39.5-http-v2-path-full.trace",
+        "git-2.39.5-http-v2-path-partial.trace"
+      ]
+    },
+    {
+      "client": "git SSH",
+      "version": "2.54.0 (Apple Git-157)",
+      "runtime": "darwin/arm64 stdio shim (no encryption)",
+      "protocols": [
+        0,
+        1,
+        2
+      ],
+      "verified": [
+        "full-and-depth1-clone",
+        "shallow-incremental-fetch",
+        "deepen-unshallow",
+        "push-empty-pack-and-delete-no-pack",
+        "atomic-branch-tag-push",
+        "partial-clone-hydration",
+        "projection-and-credential-scope",
+        "strict-fsck",
+        "native-content-parity",
+        "repository-account-scoped-path-ref-and-delete-policy"
+      ],
+      "fixtures": [
+        "ssh/ssh-stdio.json",
+        "ssh/git-ssh-stdio.trace",
+        "ssh/summary.json"
+      ]
+    },
+    {
+      "client": "git SSH",
+      "version": "2.39.5",
+      "runtime": "linux/arm64 OpenSSH 9.2p1; Rust 1.90.0",
+      "protocols": [
+        0,
+        1,
+        2
+      ],
+      "verified": [
+        "full-and-depth1-clone",
+        "shallow-incremental-fetch",
+        "deepen-unshallow",
+        "push-empty-pack-and-delete-no-pack",
+        "atomic-branch-tag-push",
+        "partial-clone-hydration",
+        "projection-and-credential-scope",
+        "strict-fsck",
+        "native-content-parity",
+        "repository-account-scoped-path-ref-and-delete-policy"
+      ],
+      "fixtures": [
+        "ssh/ssh-openssh.json",
+        "ssh/git-ssh-openssh.trace",
+        "ssh/summary.json"
+      ]
+    },
+    {
+      "client": "go-git SSH",
+      "version": "v5.19.3",
+      "runtime": "linux/arm64 Go 1.27.3; OpenSSH 9.2p1",
+      "protocols": [
+        0
+      ],
+      "verified": [
+        "full-and-depth1-clone-commit-push",
+        "pinned-known-hosts",
+        "native-oid-and-content-parity",
+        "strict-fsck"
+      ],
+      "fixtures": [
+        "ssh/ssh-openssh.json",
+        "ssh/go-git-ssh-depth0.trace",
+        "ssh/go-git-ssh-depth1.trace",
+        "ssh/summary.json"
+      ]
+    },
+    {
+      "client": "Git LFS external Basic transfer",
+      "version": "3.3.0 (Debian 3.3.0-1+deb12u2)",
+      "git": "2.39.5",
+      "runtime": "linux/arm64; Rust 1.90.0; loopback in-memory LFS peer",
+      "verified": [
+        "opaque-pointer-import-and-native-read",
+        "full-depth1-partial-clone-hydration",
+        "pre-push-upload-and-git-pointer-writeback",
+        "shallow-pull-hydration",
+        "git-and-lfs-fsck",
+        "missing-payload-checkout-failure",
+        "skip-pre-push-accepts-missing-external-payload",
+        "lfs-outage-skip-smudge-clone-and-pull-failure",
+        "no-built-in-batch-endpoint"
+      ],
+      "fixtures": [
+        "lfs/result.json",
+        "lfs/requests.json",
+        "lfs/commands.json",
+        "lfs/initial.pointer",
+        "lfs/pushed.pointer",
+        "lfs/missing-object.log",
+        "lfs/outage.log",
+        "lfs/summary.json"
+      ]
+    },
+    {
+      "client": "Repository accounts: native API and Git transports",
+      "versions": {
+        "macos_git": "2.54.0 (Apple Git-157)",
+        "linux_git": "2.39.5",
+        "linux_openssh": "9.2p1",
+        "linux_rust": "1.90.0"
+      },
+      "runtime": "macOS arm64 and Linux arm64",
+      "verified": [
+        "grpc-and-http-writer-account-scopes",
+        "repository-read-only-pat",
+        "global-and-account-policy-intersection",
+        "final-tree-acl-and-non-utf8-path",
+        "git-http-and-real-openssh-scoped-push",
+        "atomic-policy-rejection-rolls-back",
+        "concurrent-request-policy-isolation",
+        "per-account-land-idempotency",
+        "two-actual-servers-with-reordered-accounts",
+        "pat-rotation-hard-restart-receipt-replay",
+        "account-name-ref-log-actor"
+      ],
+      "fixtures": [
+        "accounts/summary.json",
+        "accounts/macos-accounts.log",
+        "accounts/linux-accounts.log",
+        "accounts/macos-regression.log",
+        "accounts/linux-openssh.log",
+        "ssh/ssh-openssh.json",
+        "ssh/git-ssh-openssh.trace"
+      ]
+    },
+    {
+      "client": "Native directory read scopes and CLI",
+      "runtime": "macOS arm64 and Linux arm64 Rust 1.90.0",
+      "verified": [
+        "canonical-filtered-root-and-parent-directory-listing",
+        "read-filtered-changeset-and-log",
+        "grpc-and-http-path-scope",
+        "non-utf8-readable-directory",
+        "scoped-object-and-blob-metadata-index",
+        "private-object-id-and-batch-denial",
+        "private-blob-copy-and-upload-probe-denial",
+        "hidden-conflict-denial",
+        "permission-change-index-separation",
+        "filtered-view-and-grants-persist-across-real-server-restart",
+        "real-cli-checkout-commit-land-without-hidden-blob-fetch",
+        "hidden-native-content-preserved-after-land",
+        "full-git-denial-and-allowed-projection-read"
+      ],
+      "fixtures": [
+        "read-acl/summary.json",
+        "read-acl/macos-server.log",
+        "read-acl/macos-cli.log",
+        "read-acl/linux-server.log",
+        "read-acl/linux-cli.log",
+        "read-acl/linux-ssh.log"
+      ]
+    }
+  ],
+  "pending": [],
+  "notes": [
+    "File transport reference uses the fixed libgit2/TestGitRepository ref fixture.",
+    "HTTP captures use the deterministic source generated by kasu-server/tests/git_http.rs.",
+    "Timestamps/PIDs are removed. Go sideband payloads are omitted.",
+    "macOS filesystem rejects checkout of the raw 0xff filename; Linux checkout is used with the identical fixture.",
+    "GitHub workflow execution has not been verified.",
+    "GitOps captures come from tools/gitops/run.py; timestamps are removed by record.py. The server trace combines both controllers.",
+    "Flux go-git version is from the pinned source-controller go.mod; the wire agent only identifies go-git/5.x.",
+    "Push captures come from kasu-server/tests/push.rs. Git timestamp/PID prefixes are removed; HTTP Authorization headers are never captured. GitHub workflows may use a different system Git version and capture filenames reflect it.",
+    "Write-back fixtures use replicas=0; they verify commits and Deployment image fields, not workload execution. Controller evidence logs retain timestamps.",
+    "Path projection kind evidence uses explicit controller refresh and checks acknowledgement; webhook-only refresh remains covered by the ordinary repository URL scenario.",
+    "LFS evaluation uses a separate in-memory Basic-transfer peer; Kasu stores opaque pointers. Authentication, SSH+LFS, projection+LFS and a production LFS service are not verified."
+  ]
+}

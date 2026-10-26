@@ -1,0 +1,104 @@
+    Blocking waiting for file lock on build directory
+   Compiling regex-syntax v0.8.11
+   Compiling rustix v1.1.5
+   Compiling tokio v1.54.1
+   Compiling serde v1.0.229
+   Compiling zerocopy v0.8.57
+   Compiling num-traits v0.2.19
+   Compiling rusqlite v0.38.0
+   Compiling regex-automata v0.4.18
+   Compiling tokio-util v0.7.20
+   Compiling tokio-rustls v0.26.6
+   Compiling tokio-stream v0.1.19
+   Compiling serde_urlencoded v0.7.1
+   Compiling quick-xml v0.41.0
+   Compiling chrono v0.4.45
+   Compiling bstr v1.13.1
+   Compiling matchers v0.2.0
+   Compiling tempfile v3.27.0
+   Compiling ppv-lite86 v0.2.21
+   Compiling h2 v0.4.20
+   Compiling tower v0.5.3
+   Compiling tokio-postgres v0.7.18
+   Compiling tracing-subscriber v0.3.23
+   Compiling prost-build v0.14.4
+   Compiling gix-validate v0.11.4
+   Compiling gix-utils v0.3.6
+   Compiling gix-error v0.3.2
+   Compiling kasu-core v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-core)
+   Compiling gix-packetline v0.22.2
+   Compiling gix-imara-diff v0.2.5
+   Compiling rand_chacha v0.9.0
+   Compiling tower-http v0.6.11
+   Compiling postgres v0.19.14
+   Compiling tokio-postgres-rustls v0.14.0
+   Compiling gix-path v0.12.6
+   Compiling gix-date v0.16.0
+   Compiling gix-chunk v0.8.0
+   Compiling gix-quote v0.8.0
+   Compiling tonic-prost-build v0.14.6
+   Compiling tracing-opentelemetry v0.32.1
+   Compiling hyper v1.12.0
+   Compiling rand v0.9.5
+   Compiling gix-features v0.49.1
+   Compiling gix-command v0.10.1
+   Compiling gix-url v0.38.0
+   Compiling gix-config-value v0.19.1
+   Compiling gix-actor v0.42.0
+   Compiling kasu-proto v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-proto)
+   Compiling opentelemetry_sdk v0.31.0
+   Compiling hyper-util v0.1.21
+   Compiling gix-hash v0.26.2
+   Compiling gix-fs v0.22.1
+   Compiling gix-glob v0.27.1
+   Compiling gix-transport v0.59.2
+   Compiling hyper-rustls v0.27.10
+   Compiling hyper-timeout v0.5.2
+   Compiling axum v0.8.9
+   Compiling gix-tempfile v24.0.0
+   Compiling gix-hashtable v0.16.0
+   Compiling gix-commitgraph v0.39.0
+   Compiling gix-refspec v0.45.1
+   Compiling reqwest v0.13.5
+   Compiling reqwest v0.12.28
+   Compiling gix-object v0.64.1
+   Compiling gix-lock v24.0.0
+   Compiling tonic v0.14.6
+   Compiling gix-shallow v0.13.0
+   Compiling gix-ref v0.67.1
+   Compiling gix-revwalk v0.35.0
+   Compiling gix-pack v0.74.2
+   Compiling gix-diff v0.67.1
+   Compiling object_store v0.14.2
+   Compiling opentelemetry-http v0.31.0
+   Compiling tonic-prost v0.14.6
+   Compiling gix-traverse v0.61.0
+   Compiling gix-revision v0.49.1
+   Compiling gix-protocol v0.65.1
+   Compiling gix-config v0.60.0
+   Compiling gix-discover v0.55.0
+   Compiling gix-odb v0.84.0
+   Compiling opentelemetry-proto v0.31.0
+   Compiling kasu-store v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-store)
+   Compiling gix v0.87.1
+   Compiling opentelemetry-otlp v0.31.1
+   Compiling kasu-telemetry v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-telemetry)
+   Compiling kasu-derived v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-derived)
+   Compiling kasu-object v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-object)
+   Compiling kasu-ops v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-ops)
+   Compiling kasu-git v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-git)
+   Compiling kasu-ingest v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-ingest)
+   Compiling kasu-server v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 02s
+     Running tests/webhook.rs (target/debug/deps/webhook-ae4f505b097cbf69)
+
+running 6 tests
+test signature_matches_rfc4231_test_case_one ... ok
+test failures_and_restart_replay_identical_signed_payload_before_advancing ... ok
+test oversized_body_is_not_acknowledged_and_worker_shuts_down ... ok
+test timeout_after_receipt_replays_the_body_and_redirects_are_not_followed ... ok
+test final_paths_cover_forward_force_rewind_delete_and_tag_streams ... ok
+test native_update_and_real_git_push_feed_the_durable_outbox ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.45s
+

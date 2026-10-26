@@ -1,0 +1,95 @@
+Benchmarking changeset_create/100
+Benchmarking changeset_create/100: Warming up for 200.00 ms
+Benchmarking changeset_create/100: Collecting 20 samples in estimated 1.0078 s (12k iterations)
+Benchmarking changeset_create/100: Analyzing
+changeset_create/100    time:   [90.087 µs 92.519 µs 94.375 µs]
+                        thrpt:  [10.596 Kelem/s 10.809 Kelem/s 11.100 Kelem/s]
+Benchmarking changeset_create/1000
+Benchmarking changeset_create/1000: Warming up for 200.00 ms
+Benchmarking changeset_create/1000: Collecting 20 samples in estimated 1.0039 s (12k iterations)
+Benchmarking changeset_create/1000: Analyzing
+changeset_create/1000   time:   [92.622 µs 94.599 µs 96.181 µs]
+                        thrpt:  [10.397 Kelem/s 10.571 Kelem/s 10.797 Kelem/s]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high mild
+Benchmarking changeset_create/10000
+Benchmarking changeset_create/10000: Warming up for 200.00 ms
+Benchmarking changeset_create/10000: Collecting 20 samples in estimated 1.0106 s (11k iterations)
+Benchmarking changeset_create/10000: Analyzing
+changeset_create/10000  time:   [101.11 µs 104.09 µs 105.95 µs]
+                        thrpt:  [9.4385 Kelem/s 9.6072 Kelem/s 9.8902 Kelem/s]
+Benchmarking path_history/cold/100
+Benchmarking path_history/cold/100: Warming up for 200.00 ms
+
+Benchmarking path_history/cold/100: Collecting 20 samples in estimated 1.2335 s (60 iterations)
+Benchmarking path_history/cold/100: Analyzing
+path_history/cold/100   time:   [3.9781 ms 4.0426 ms 4.1556 ms]
+                        thrpt:  [24.304 Kelem/s 24.984 Kelem/s 25.389 Kelem/s]
+Found 2 outliers among 20 measurements (10.00%)
+  1 (5.00%) high mild
+  1 (5.00%) high severe
+Benchmarking path_history/warm/100
+Benchmarking path_history/warm/100: Warming up for 200.00 ms
+Benchmarking path_history/warm/100: Collecting 20 samples in estimated 1.0004 s (360k iterations)
+Benchmarking path_history/warm/100: Analyzing
+path_history/warm/100   time:   [2.7373 µs 2.7730 µs 2.8143 µs]
+                        thrpt:  [355.33 Kelem/s 360.62 Kelem/s 365.33 Kelem/s]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high mild
+Benchmarking path_history/cold/1000
+Benchmarking path_history/cold/1000: Warming up for 200.00 ms
+
+Warning: Unable to complete 20 samples in 1.0s. You may wish to increase target time to 2.6s, or reduce sample count to 10.
+Benchmarking path_history/cold/1000: Collecting 20 samples in estimated 2.5907 s (20 iterations)
+Benchmarking path_history/cold/1000: Analyzing
+path_history/cold/1000  time:   [39.436 ms 39.528 ms 39.620 ms]
+                        thrpt:  [25.265 Kelem/s 25.324 Kelem/s 25.383 Kelem/s]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) low mild
+Benchmarking path_history/warm/1000
+Benchmarking path_history/warm/1000: Warming up for 200.00 ms
+Benchmarking path_history/warm/1000: Collecting 20 samples in estimated 1.0003 s (372k iterations)
+Benchmarking path_history/warm/1000: Analyzing
+path_history/warm/1000  time:   [2.6614 µs 2.6679 µs 2.6745 µs]
+                        thrpt:  [373.90 Kelem/s 374.83 Kelem/s 375.75 Kelem/s]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high mild
+
+Benchmarking pack_encode/cold/4096
+Benchmarking pack_encode/cold/4096: Warming up for 200.00 ms
+Benchmarking pack_encode/cold/4096: Collecting 20 samples in estimated 1.0270 s (630 iterations)
+Benchmarking pack_encode/cold/4096: Analyzing
+pack_encode/cold/4096   time:   [1.6632 ms 1.6796 ms 1.6898 ms]
+                        thrpt:  [21.502 MiB/s 21.633 MiB/s 21.845 MiB/s]
+Found 4 outliers among 20 measurements (20.00%)
+  3 (15.00%) low severe
+  1 (5.00%) low mild
+Benchmarking pack_encode/warm/4096
+Benchmarking pack_encode/warm/4096: Warming up for 200.00 ms
+Benchmarking pack_encode/warm/4096: Collecting 20 samples in estimated 1.0172 s (7560 iterations)
+Benchmarking pack_encode/warm/4096: Analyzing
+pack_encode/warm/4096   time:   [134.08 µs 134.32 µs 134.55 µs]
+                        thrpt:  [270.04 MiB/s 270.50 MiB/s 270.99 MiB/s]
+Found 5 outliers among 20 measurements (25.00%)
+  3 (15.00%) low mild
+  2 (10.00%) high severe
+Benchmarking pack_encode/cold/262144
+Benchmarking pack_encode/cold/262144: Warming up for 200.00 ms
+Benchmarking pack_encode/cold/262144: Collecting 20 samples in estimated 1.6460 s (420 iterations)
+Benchmarking pack_encode/cold/262144: Analyzing
+pack_encode/cold/262144 time:   [3.8951 ms 3.9067 ms 3.9189 ms]
+                        thrpt:  [134.87 MiB/s 135.28 MiB/s 135.69 MiB/s]
+Found 3 outliers among 20 measurements (15.00%)
+  2 (10.00%) low mild
+  1 (5.00%) high mild
+Benchmarking pack_encode/warm/262144
+Benchmarking pack_encode/warm/262144: Warming up for 200.00 ms
+Benchmarking pack_encode/warm/262144: Collecting 20 samples in estimated 1.0565 s (2100 iterations)
+Benchmarking pack_encode/warm/262144: Analyzing
+pack_encode/warm/262144 time:   [490.16 µs 492.23 µs 495.63 µs]
+                        thrpt:  [1.0414 GiB/s 1.0486 GiB/s 1.0530 GiB/s]
+
+blob_bytes,commits,objects,raw_bytes,pack_bytes,index_pack_strict,fsck_strict
+4096,101,109,38099,28605,true,true
+262144,101,109,554195,545088,true,true
+

@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "postgres": "18",
+  "s3": "SeaweedFS 4.45 / 79b872021",
+  "runtime": "host",
+  "elapsedSeconds": 52.56,
+  "anonymousS3Rejected": true,
+  "tlsVerifiedAndUntrustedCaRejected": true,
+  "mixedCasClients": 16,
+  "landReplayClients": 8,
+  "conditionalPutClients": 16,
+  "sharedServerProcesses": 2,
+  "allTestsPassed": true
+}

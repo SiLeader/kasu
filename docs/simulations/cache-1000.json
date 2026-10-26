@@ -1,0 +1,59 @@
+{
+  "authorityRequestsAfterCacheStop": 1,
+  "authorityRequestsBeforeCacheStop": 1,
+  "cache": {
+    "active": 0,
+    "bytes": 24,
+    "circuit_rejections": 0,
+    "coalesced": 1,
+    "entries": 1,
+    "errors": 0,
+    "hits": 1,
+    "max_active": 1,
+    "misses": 2,
+    "pending": 0,
+    "rejected": 0,
+    "requests": 3,
+    "upstream": 1
+  },
+  "cacheStopped": true,
+  "clients": 1000,
+  "coldMissRejected": true,
+  "configuredMaxFills": 2,
+  "daemons": [
+    {
+      "active": 0,
+      "bytes": 24,
+      "circuit_rejections": 0,
+      "coalesced": 499,
+      "entries": 1,
+      "errors": 1,
+      "hits": 10,
+      "max_active": 1,
+      "misses": 500,
+      "pending": 0,
+      "rejected": 0,
+      "requests": 511,
+      "upstream": 2
+    },
+    {
+      "active": 0,
+      "bytes": 24,
+      "circuit_rejections": 0,
+      "coalesced": 499,
+      "entries": 1,
+      "errors": 0,
+      "hits": 10,
+      "max_active": 1,
+      "misses": 500,
+      "pending": 0,
+      "rejected": 0,
+      "requests": 510,
+      "upstream": 1
+    }
+  ],
+  "framesEqualStoredBytes": true,
+  "nodes": 2,
+  "schema": 1,
+  "warmReadsPerNode": 10
+}

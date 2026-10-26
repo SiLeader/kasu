@@ -1,0 +1,50 @@
+{
+  "success": true,
+  "captured_date": "2026-10-26",
+  "source": {
+    "url": "https://github.com/libgit2/libgit2.git",
+    "commit": "338e6fb681369ff0537719095e22ce9dc602dbf0",
+    "resource": "tests/resources/submodules.git",
+    "objects": {
+      "09176a980273d801a3e37cc45c84af1366501ed9": "commit",
+      "092bfb9bdf74dd8cfd22e812151281ee9aa6f01a": "blob",
+      "0f8fb758578188a8fdf04e29bac3ace81b4f3c9c": "tree",
+      "78308c9251cf4eee8b25a76c7d2790c73d797357": "blob",
+      "97896810b3210244a62a82458b8e0819ecfc6850": "commit",
+      "b60fd986699ba4e9e68bea07cf8e793f323ef888": "tree"
+    }
+  },
+  "reachable_objects": 6,
+  "commits": 2,
+  "gitlinks": 1,
+  "dangling_blobs_omitted": 3,
+  "gitlink_path_hex": "746573747265706f",
+  "gitlink_target": "a65fedf39aefe402d3bb6e24df4d4f5fe4547750",
+  "verified": [
+    "cached and network preparation match",
+    "all reachable raw object bytes and OIDs match",
+    "strict source fsck, strict index-pack, strict exported/clone fsck",
+    "refs, peeled tags and symbolic HEAD preserved",
+    "clone object graph equals source",
+    "native Entry::Gitlink exactly retains target OID",
+    "gitlink target has no imported changeset",
+    "Linux run uses no network and a read-only input mount",
+    "macOS 11 tests including original TestGitRepository and GitLab; Linux 10 tests with pinned Rust 1.90"
+  ],
+  "not_verified": [
+    "non-UTF8 paths in this libgit2 fixture; covered separately by the GitLab input",
+    "submodule content checkout",
+    "GitHub workflow execution"
+  ],
+  "source_sha256": {
+    "Cargo.lock": "1206daefe8ee25fb4796e2f566d18e103c9454e0a7708096030e948a678747a8",
+    "crates/kasu-ingest/tests/roundtrip.rs": "9da58c1e4c16900c7ef6be57d5177f3af999b2f038c97540e68b725276803271",
+    "crates/kasu-ingest/src/lib.rs": "bb7f140feff215b773d75483b6a9ba0ad44690fc55d85aaf0887a10f154456c4",
+    "crates/kasu-ingest/tests/fixtures/upstream-submodule-refs.txt": "765ac714ad87ab60c5e3f7db175209912d019ca1d34bfcc103767ea35c9f2cfe",
+    "tools/oss-fixtures/prepare.py": "1c160dc24935c891ea974f0e955f653bfd6306bf43801cd5d3f5b434405816f3",
+    "tools/oss-fixtures/run.sh": "2418c54a0f89f96eb0ef216776ac027b07e4b7f198c2b43a1d2b27fda71e1627",
+    "tools/oss-fixtures/Dockerfile": "743ea881805a2b47563831d15c310af0b67a46ac653e00c68f7af3d8e0cd91a6",
+    "tools/oss-fixtures/record.py": "31fdad09971eac6705a7064d561746fef1a75a8abab6ec954ef30d2cf7e334c8",
+    ".github/workflows/oss-roundtrip.yml": "d2f70cbfd6207adfe3930f4c38f3f5ae8ce7b85909a6f3e45f3172a9980ff9c7"
+  }
+}

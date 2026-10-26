@@ -1,0 +1,25 @@
+HTTP/1.1 200 OK
+content-type: text/plain; version=0.0.4
+content-length: 893
+connection: close
+date: Fri, 23 Oct 2026 22:13:27 GMT
+
+kasu_object_requests_total{layer="daemon"} 4
+kasu_object_hits_total{layer="daemon"} 1
+kasu_object_misses_total{layer="daemon"} 3
+kasu_object_coalesced_total{layer="daemon"} 0
+kasu_object_rejected_total{layer="daemon"} 0
+kasu_object_upstream_requests_total{layer="daemon"} 3
+kasu_object_errors_total{layer="daemon"} 0
+kasu_object_upstream_active{layer="daemon"} 0
+kasu_object_upstream_max_active{layer="daemon"} 1
+kasu_object_circuit_rejections_total{layer="daemon"} 0
+kasu_object_pending{layer="daemon"} 0
+kasu_object_entries{layer="daemon"} 1
+kasu_object_bytes{layer="daemon"} 26
+kasu_object_disk_limit_bytes{layer="daemon"} 4096
+kasu_object_disk_limit_entries{layer="daemon"} 1
+kasu_object_disk_evictions_total{layer="daemon"} 2
+kasu_object_disk_evicted_bytes_total{layer="daemon"} 53
+kasu_object_disk_admission_skips_total{layer="daemon"} 2
+kasu_object_disk_repairs_total{layer="daemon"} 0

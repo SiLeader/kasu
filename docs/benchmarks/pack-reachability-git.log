@@ -1,0 +1,73 @@
+   Compiling kasu-git v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-git)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.46s
+     Running unittests src/lib.rs (target/debug/deps/kasu_git-2dff134d7f51018d)
+
+running 2 tests
+test reachability::tests::long_oid_prefixes_and_leaf_branch_differences ... ok
+test reachability::tests::radix_sets_match_ordered_sets ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.24s
+
+     Running tests/pack_input.rs (target/debug/deps/pack_input-518d7d0569133cc8)
+
+running 4 tests
+test delta_chain_depth_is_bounded_before_resolution ... ok
+test non_delta_ofs_forward_ref_and_thin_packs_decode_losslessly ... ok
+test corruption_sizes_counts_bombs_and_invalid_bases_are_rejected ... ok
+test untrusted_pack_bytes_never_panic ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/pack_plan.rs (target/debug/deps/pack_plan-c009f60b0f8b7a41)
+
+running 4 tests
+test zlib_cache_is_bounded_and_reuses_valid_objects ... ok
+test pack_sets_include_intermediate_blobs_and_second_parents_and_respect_client_shallow ... ok
+test cached_pack_sets_match_graph_walk_on_branching_merge_histories ... ok
+test persistent_incremental_index_reads_only_changed_merkle_paths_and_no_warm_payloads ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 37.74s
+
+     Running tests/path_projection.rs (target/debug/deps/path_projection-21824b2510ef3064)
+
+running 2 tests
+test non_utf8_path_and_file_replacing_directory_have_deterministic_history ... ok
+test projected_dag_skips_outside_changes_preserves_merges_and_deletion_and_is_scoped ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.78s
+
+     Running tests/projection.rs (target/debug/deps/projection-b6f2a02d49fe62a2)
+
+running 4 tests
+test git_refs_are_atomic_scoped_and_keep_tombstone_versions ... ok
+test atomic_native_and_git_publication_rolls_back_both_models ... ok
+test git_parsers_never_panic ... ok
+test native_projection_is_deterministic_and_sorts_directories_like_git ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+     Running tests/protocol.rs (target/debug/deps/protocol-2e884269a9970cf7)
+
+running 5 tests
+test unborn_head_and_tag_peeling_use_separate_protocol_encodings ... ok
+test framing_and_unadvertised_capabilities_are_rejected ... ok
+test blob_filter_negotiation_is_protocol_specific_and_strict ... ok
+test pktline_and_command_parsers_never_panic ... ok
+test pktline_roundtrip ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.45s
+
+     Running tests/receive.rs (target/debug/deps/receive-ed696a4ae13bf7f1)
+
+running 2 tests
+test receive_framing_capabilities_and_report_status_are_separate_from_pack ... ok
+test receive_commands_never_panic ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+   Doc-tests kasu_git
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

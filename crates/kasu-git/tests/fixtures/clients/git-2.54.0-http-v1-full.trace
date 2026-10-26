@@ -1,0 +1,40 @@
+# git version 2.54.0 (Apple Git-157)
+         git< # service=git-upload-pack
+         git< 0000
+         git< version 1
+         git< 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+         git< 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35 refs/heads/main
+         git< c0c294595b1c61ccecce5ed23239ad64d470ca51 refs/heads/release
+         git< 3d12084a0ff4394e7cbe96bbee047b4bf77f63e2 refs/tags/v1
+         git< 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35 refs/tags/v1^{}
+         git< 0000
+         git> 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35 refs/heads/main
+         git> 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35 refs/heads/main
+         git> c0c294595b1c61ccecce5ed23239ad64d470ca51 refs/heads/release
+         git> 3d12084a0ff4394e7cbe96bbee047b4bf77f63e2 refs/tags/v1
+         git> 0000
+  fetch-pack< 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35 refs/heads/main
+  fetch-pack< 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35 refs/heads/main
+  fetch-pack< c0c294595b1c61ccecce5ed23239ad64d470ca51 refs/heads/release
+  fetch-pack< 3d12084a0ff4394e7cbe96bbee047b4bf77f63e2 refs/tags/v1
+  fetch-pack< 0000
+  fetch-pack< version 1
+  fetch-pack< 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35 HEAD\0multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main
+  fetch-pack< 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35 refs/heads/main
+  fetch-pack< c0c294595b1c61ccecce5ed23239ad64d470ca51 refs/heads/release
+  fetch-pack< 3d12084a0ff4394e7cbe96bbee047b4bf77f63e2 refs/tags/v1
+  fetch-pack< 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35 refs/tags/v1^{}
+  fetch-pack< 0000
+  fetch-pack> want 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35 multi_ack_detailed side-band-64k no-progress ofs-delta deepen-since deepen-not agent=git/2.54.0-Darwin
+  fetch-pack> want c0c294595b1c61ccecce5ed23239ad64d470ca51
+  fetch-pack> want 3d12084a0ff4394e7cbe96bbee047b4bf77f63e2
+  fetch-pack> 0000
+  fetch-pack> done
+  fetch-pack> 0000
+         git< 0099want 032fb3e1fbc38e6571e3ef5bb3659c5d7ecbda35 multi_ack_detailed side-band-64k no-progress ofs-delta deepen-since deepen-not agent=git/2.54.0-Darwin0032want c0c294595b1c61ccecce5ed23239ad64d470ca510032want 3d12084a0ff4394e7cbe96bbee047b4bf77f63e200000009done
+         git< 0000
+  fetch-pack< NAK
+  fetch-pack> 0000
+         git< 0000
+    sideband< PACK ...
+    sideband< 0000

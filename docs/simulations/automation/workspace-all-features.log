@@ -1,0 +1,508 @@
+   Compiling kasu-server v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.18s
+     Running unittests src/lib.rs (target/debug/deps/kasu_cache-cb92d831190fa2bc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/kasu_cache-1cf0af49add85838)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/layers.rs (target/debug/deps/layers-161109caab5213ed)
+
+running 5 tests
+test stream_and_pending_limits_reject_excess_work_then_release_capacity ... ok
+test hierarchy_credentials_roles_scope_and_cancelled_leaders_are_enforced ... ok
+test thousand_clients_coalesce_across_two_nodes_and_warm_hits_survive_cache_loss ... ok
+test outage_opens_a_circuit_and_concurrent_requests_cannot_amplify_it ... ok
+test distinct_misses_obey_global_concurrency_and_request_spacing ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.64s
+
+     Running tests/process.rs (target/debug/deps/process-1d802a1d8a96a62d)
+
+running 1 test
+test cache_executable_serves_only_objects_exposes_metrics_and_uses_its_hop_token ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.54s
+
+     Running tests/snapshot.rs (target/debug/deps/snapshot-85e635305cf3ea8b)
+
+running 3 tests
+test lru_budget_and_disk_type_index_do_not_expose_unregistered_data ... ok
+test invalid_snapshot_never_publishes_a_prefix_and_never_extracts_archive_paths ... ok
+test disk_reopen_and_snapshot_preserve_exact_frames_and_repo_scope ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_cli-b6475d23917a68e3)
+
+running 4 tests
+test remote::tests::frames_reject_truncation_wrong_ids_offsets_and_data_after_completion ... ok
+test working::tests::recovery_preserves_edits_after_install_and_keeps_the_original_backup ... ok
+test working::tests::recovery_does_not_remove_matching_user_files_before_install ... ok
+test working::tests::interrupted_install_rolls_back_and_committed_install_survives_cleanup_crash ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+
+     Running unittests src/main.rs (target/debug/deps/kasu-994505075306c085)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/e2e.rs (target/debug/deps/e2e-87423541845451ae)
+
+running 9 tests
+test byte_paths_survive_the_remote_snapshot_and_platform_checkout_rules ... ok
+test notify_watch_observes_real_edits_and_does_not_hold_the_working_copy_lock ... ok
+test untracked_files_existing_destinations_and_symlink_parents_are_preserved ... ok
+test excluded_new_subtrees_stay_unrequested_and_specific_includes_override_exclusions ... ok
+test lost_land_reply_retains_the_key_and_blocks_a_new_commit_until_replay ... ok
+test amending_an_addition_to_deletion_and_file_directory_type_changes ... ok
+test real_cli_sparse_checkout_amend_rebase_land_and_metadata_queries ... ok
+test real_cli_uses_the_unix_daemon_and_a_snapshot_can_boot_without_the_cache ... ok
+test conflicts_replay_without_losing_files_and_gitlinks_can_be_committed ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.99s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_core-dda3d709cbd0596e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/model.rs (target/debug/deps/model-19d423ac7a112e47)
+
+running 6 tests
+test paths_and_structural_validation ... ok
+test root_changeset_golden ... ok
+test blob_git_golden ... ok
+test changeset_roundtrip ... ok
+test tree_roundtrip ... ok
+test arbitrary_decoding_never_panics ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_daemon-f8c5673976d174bb)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/kasu_daemon-0f6470624f063d2e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/process.rs (target/debug/deps/process-80c55cda8150c2eb)
+
+running 2 tests
+test socket_lease_preserves_non_socket_files_and_requires_a_private_directory ... ok
+test executable_boots_offline_snapshots_periodically_and_reclaims_only_stale_sockets ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.00s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_derived-a894a43760d47381)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/derived.rs (target/debug/deps/derived-0ef96dc6cfe4ad50)
+
+running 3 tests
+test file_directory_replacement_and_parent_sharing ... ok
+test iterative_long_history_and_skip_pointers ... ok
+test apply_diff_roundtrip ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 40.85s
+
+     Running tests/lineage.rs (target/debug/deps/lineage-f6fb7816891abecd)
+
+running 7 tests
+test late_dependency_cycles_fail_without_recursion ... ok
+test deleted_source_is_not_renamed_to_two_destinations_and_binary_copies_are_exact ... ok
+test merge_tracks_the_second_parents_rename_and_recreation_starts_new_history ... ok
+test cold_rename_and_opt_in_copies_preserve_original_paths_and_line_numbers ... ok
+test similarity_matching_is_one_to_one_and_the_pair_budget_is_explicit ... ok
+test reverse_index_matches_independently_materialized_tree ... ok
+test a_thousand_renames_keep_the_root_origin_without_recursive_derivation ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.91s
+
+     Running tests/lines.rs (target/debug/deps/lines-550bbe7829e1ab7f)
+
+running 1 test
+test line_patch_reconstructs_bytes_and_matches_are_monotone ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/scheduler.rs (target/debug/deps/scheduler-5699b808013c5202)
+
+running 2 tests
+test cycles_and_unregistered_types_are_errors ... ok
+test lazy_keys_versions_dependencies_and_concurrent_singleflight ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_git-300362a0ce6f4686)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/pack_input.rs (target/debug/deps/pack_input-6d040066cddf9a83)
+
+running 4 tests
+test delta_chain_depth_is_bounded_before_resolution ... ok
+test non_delta_ofs_forward_ref_and_thin_packs_decode_losslessly ... ok
+test corruption_sizes_counts_bombs_and_invalid_bases_are_rejected ... ok
+test untrusted_pack_bytes_never_panic ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/pack_plan.rs (target/debug/deps/pack_plan-bb9c7b7c02776614)
+
+running 2 tests
+test zlib_cache_is_bounded_and_reuses_valid_objects ... ok
+test pack_sets_include_intermediate_blobs_and_second_parents_and_respect_client_shallow ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.57s
+
+     Running tests/path_projection.rs (target/debug/deps/path_projection-772b8c482763a525)
+
+running 2 tests
+test non_utf8_path_and_file_replacing_directory_have_deterministic_history ... ok
+test projected_dag_skips_outside_changes_preserves_merges_and_deletion_and_is_scoped ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.95s
+
+     Running tests/projection.rs (target/debug/deps/projection-af23b76e2ca745f3)
+
+running 4 tests
+test git_refs_are_atomic_scoped_and_keep_tombstone_versions ... ok
+test atomic_native_and_git_publication_rolls_back_both_models ... ok
+test git_parsers_never_panic ... ok
+test native_projection_is_deterministic_and_sorts_directories_like_git ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+     Running tests/protocol.rs (target/debug/deps/protocol-17fee13f4bc06ef2)
+
+running 5 tests
+test framing_and_unadvertised_capabilities_are_rejected ... ok
+test unborn_head_and_tag_peeling_use_separate_protocol_encodings ... ok
+test blob_filter_negotiation_is_protocol_specific_and_strict ... ok
+test pktline_and_command_parsers_never_panic ... ok
+test pktline_roundtrip ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.42s
+
+     Running tests/receive.rs (target/debug/deps/receive-b31d5616e91a32e8)
+
+running 2 tests
+test receive_framing_capabilities_and_report_status_are_separate_from_pack ... ok
+test receive_commands_never_panic ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_ingest-643003c825a49bf6)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/kasu_ingest-a11e46d9b4cee1df)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/roundtrip.rs (target/debug/deps/roundtrip-5f23b6a8ea83d7f6)
+
+running 9 tests
+test pinned_oss_repository_roundtrips_all_objects_through_pack_and_clone ... ignored, requires pinned libgit2/TestGitRepository checkout in KASU_OSS_REPO
+test native_projected_commits_keep_identity_when_imported_back ... ok
+test noncanonical_trees_keep_raw_variants_without_poisoning_native_projection ... ok
+test empty_repository_has_unborn_head_and_cli_imports_it ... ok
+test rejects_missing_wrong_type_and_unrepresentable_trees_before_publication ... ok
+test publication_revalidates_ref_kind_peeling_and_symbolic_targets ... ok
+test rejects_shallow_and_sha256_repositories_explicitly ... ok
+test native_edits_after_import_reuse_unchanged_merkle_subtrees_and_blobs ... ok
+test packed_repository_roundtrips_every_object_and_ref_through_strict_pack ... ok
+
+test result: ok. 8 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.45s
+
+     Running unittests examples/pack_bandwidth.rs (target/debug/examples/pack_bandwidth-20cfb65f60465b03)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_object-9d4c455e0e90a2e4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_ops-85a0490c5a3d4435)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/merge.rs (target/debug/deps/merge-8e9faf270a433a7f)
+
+running 6 tests
+test text_merge_preserves_bytes_and_reports_ranges_without_markers ... ok
+test text_merge_identity_and_side_symmetry ... ok
+test text_clean_results_match_git_merge_file ... ok
+test opaque_entries_and_binary_files_require_explicit_resolution ... ok
+test tree_merge_combines_content_modes_and_directories_and_classifies_conflicts ... ok
+test line_edits_match_git_across_insert_delete_replace_boundaries ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.87s
+
+     Running tests/operations.rs (target/debug/deps/operations-3bd5b93890e22091)
+
+running 2 tests
+test all_merge_bases_in_criss_cross_history ... ok
+test ancestry_matches_transitive_closure ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.39s
+
+     Running tests/rewrite.rs (target/debug/deps/rewrite-8054870e1767d372)
+
+running 3 tests
+test merge_rebase_preserve_parents_metadata_and_conflicts ... ok
+test three_best_bases_are_reduced_without_exposing_virtual_parents ... ok
+test criss_cross_uses_all_bases_and_reports_conflicting_base_resolution ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+
+     Running benches/history.rs (target/debug/deps/history-f34fbf5b579ea84c)
+     Running unittests src/lib.rs (target/debug/deps/kasu_proto-fa2ceb901f40d0a4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_server-354f5d880fd2c96f)
+
+running 4 tests
+test git_http::tests::directory_url_rejects_invalid_components_and_decodes_byte_paths ... ok
+test auth::tests::projection_only_configuration_closes_anonymous_and_native_access ... ok
+test auth::tests::account_and_hop_credentials_cannot_overlap_in_either_builder_order ... ok
+test auth::tests::file_configuration_is_strict_relative_and_supports_byte_paths ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running unittests src/main.rs (target/debug/deps/kasu_server-96e39ed79665c7a1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/automation.rs (target/debug/deps/automation-f1b3bbc8c82eb369)
+
+running 6 tests
+test ancestor_guard_is_rechecked_after_cas_loss_and_bound_to_receipts ... ok
+test redirects_and_unguarded_requests_fail_without_publication ... ok
+test lost_land_reply_resumes_the_same_key_even_after_branch_replacement ... ok
+test conflicts_mainline_and_root_reverts_are_explicit ... ok
+test metadata_only_bisect_finds_second_parent_regression_and_guarded_revert_preserves_later_edits ... ok
+test check_gates_immutable_revisions_and_detects_ref_aba_during_testing ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.33s
+
+     Running tests/git_http.rs (target/debug/deps/git_http-9b5570d3512b5b8e)
+
+running 10 tests
+test pinned_go_git_full_and_shallow_checkout ... ignored, requires tools/git-compat binary in KASU_GO_GIT_CLIENT
+test scoped_projection_pat_allows_git_but_denies_full_repository_and_native_services ... ok
+test unreferenced_wants_require_explicit_publication_and_auth_precedes_parsing ... ok
+test git_versions_ls_remote_full_clone_and_depth_one ... ok
+test empty_repository_and_basic_auth_and_incremental_fetch ... ok
+test shallow_deepen_unshallow_and_v2_time_and_exclusion ... ok
+test partial_clone_omits_blobs_and_promisor_fetch_hydrates_history_and_sparse_checkout ... ok
+test path_projection_clones_fetches_tags_and_isolates_source_objects ... ok
+test partial_clone_incremental_fetch_keeps_promises_across_common_commits ... ok
+test repeated_multi_ref_fetch_preserves_divergent_and_merged_histories ... ok
+
+test result: ok. 9 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 13.93s
+
+     Running tests/metadata.rs (target/debug/deps/metadata-d67ae26d6e378b74)
+
+running 6 tests
+test rename_and_opt_in_copy_blame_match_git_over_native_grpc_and_json ... ok
+test membership_filters_orphans_from_other_repositories_and_cursors_are_bound ... ok
+test lazy_history_materializes_only_the_requested_path ... ok
+test grpc_over_tcp_and_http_json_preserve_bytes_and_enforce_access ... ok
+test server_binary_serves_grpc_and_http_from_persistent_store ... ok
+test path_log_blame_diff_and_all_merge_bases_match_git ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.96s
+
+     Running tests/objects.rs (target/debug/deps/objects-6826d46f0fc51538)
+
+running 5 tests
+test authorization_precedes_validation_and_batches_do_not_leak_foreign_objects ... ok
+test empty_or_missing_stored_frame_is_an_explicit_stream_error ... ok
+test grpc_sparse_requests_transfer_exact_stored_frames_in_bounded_chunks ... ok
+test rewrite_conflict_trees_are_available_without_a_successful_changeset ... ok
+test cancelling_a_backpressured_stream_does_not_read_the_next_object ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+
+     Running tests/projection_accounts.rs (target/debug/deps/projection_accounts-b2f9d1ac1195a777)
+
+running 1 test
+test actual_binary_loads_projection_only_configuration_and_invalid_config_fails_closed ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/push.rs (target/debug/deps/push-76e0da336ef8ebc2)
+
+running 8 tests
+test pinned_go_git_full_and_shallow_clone_commit_push ... ignored, requires the pinned Go client in KASU_GO_GIT_PUSH_CLIENT
+test atomic_capability_depends_on_the_backend_and_unadvertised_requests_are_rejected ... ok
+test malformed_connectivity_stale_refs_and_auth_never_publish_a_ref ... ok
+test atomic_push_still_applies_final_tree_acl_to_every_ref ... ok
+test atomic_push_detects_branch_and_tag_aba_between_validation_and_commit ... ok
+test atomic_push_creates_updates_and_deletes_branches_and_tags_together ... ok
+test final_tree_acl_blocks_second_parent_changes_and_native_publication ... ok
+test git_push_initial_incremental_tags_force_delete_and_partial_rejection ... ok
+
+test result: ok. 7 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 2.08s
+
+     Running tests/shared_storage.rs (target/debug/deps/shared_storage-b288d883dbdef2ba)
+
+running 1 test
+test two_server_processes_share_ingest_git_atomic_push_native_cas_and_land_replay ... ignored, requires PostgreSQL/S3 env and KASU_TEST_INGEST_BIN built with production
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/webhook.rs (target/debug/deps/webhook-e5505928b286e130)
+
+running 6 tests
+test signature_matches_rfc4231_test_case_one ... ok
+test timeout_after_receipt_replays_the_body_and_redirects_are_not_followed ... ok
+test oversized_body_is_not_acknowledged_and_worker_shuts_down ... ok
+test final_paths_cover_forward_force_rewind_delete_and_tag_streams ... ok
+test failures_and_restart_replay_identical_signed_payload_before_advancing ... ok
+test native_update_and_real_git_push_feed_the_durable_outbox ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.15s
+
+     Running tests/write.rs (target/debug/deps/write-0899e94ef56ba351)
+
+running 5 tests
+test write_policy_json_patterns_and_byte_path_boundaries_are_enforced ... ok
+test http_rejects_foreign_objects_malformed_uploads_and_unfinished_streams ... ok
+test ref_policy_force_deletion_and_aba_are_enforced ... ok
+test land_grpc_and_http_replay_the_durable_result_after_ref_moves ... ok
+test grpc_upload_create_merge_rebase_and_ref_are_readable_by_git ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.43s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_sim-0592f1605bdde0dc)
+
+running 1 test
+test tests::seeded_schedule_is_repeatable_and_preserves_every_accepted_write ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.86s
+
+     Running unittests src/main.rs (target/debug/deps/kasu_sim-b7bda621cf3f8568)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/land_runtime.rs (target/debug/deps/land_runtime-402018157e7702d5)
+
+running 4 tests
+test policy_is_rechecked_between_preparation_and_commit ... ok
+test exhausted_budget_can_resubmit_the_same_key ... ok
+test transient_failure_and_lost_reply_recover_without_duplicate_landing ... ok
+test cancellation_deadline_and_dropped_future_prevent_a_late_commit ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_store-b3d1b6a6aec898c4)
+
+running 2 tests
+test postgres::ordering_tests::committed_feed_cannot_overtake_an_uncommitted_lower_sequence ... ignored, requires KASU_TEST_POSTGRES
+test postgres::reconnect_tests::a_closed_connection_recovers_on_a_subsequent_call_without_replaying_a_query ... ignored, requires KASU_TEST_POSTGRES
+
+test result: ok. 0 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/land.rs (target/debug/deps/land-c6b213502f54dd50)
+
+running 2 tests
+test results_ref_and_log_are_atomic_durable_and_request_bound ... ok
+test independent_connections_record_one_result_and_one_landing_for_duplicate_keys ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests/postgres.rs (target/debug/deps/postgres-46d3f55926297a39)
+
+running 8 tests
+test postgres_binary_immutable_keys_tombstones_and_reopen ... ignored, requires KASU_TEST_POSTGRES
+test postgres_connect_query_and_drop_from_a_current_thread_runtime ... ignored, requires KASU_TEST_POSTGRES
+test postgres_independent_connections_have_one_mixed_cas_winner ... ignored, requires KASU_TEST_POSTGRES
+test postgres_land_replay_and_cancellation_are_transactional_across_connections ... ignored, requires KASU_TEST_POSTGRES
+test postgres_sql_failure_rolls_back_refs_logs_and_counter_then_allows_retry ... ignored, requires KASU_TEST_POSTGRES
+test postgres_tls_verifies_the_configured_ca_and_refuses_untrusted_certificates ... ignored, requires KASU_TEST_POSTGRES_TLS and KASU_TEST_POSTGRES_CA
+test postgres_webhook_pending_body_survives_reopen_and_stale_workers ... ignored, requires KASU_TEST_POSTGRES
+test postgres_plaintext_and_invalid_configuration_fail_without_exposing_the_dsn ... ok
+
+test result: ok. 1 passed; 0 failed; 7 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/publication.rs (target/debug/deps/publication-1ed28e6a4d0cdd15)
+
+running 2 tests
+test late_sql_failure_rolls_back_both_ref_models_and_both_logs ... ok
+test independent_mixed_transactions_have_one_winner_and_matching_logs ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests/s3.rs (target/debug/deps/s3-cda1f9d193af44b4)
+
+running 4 tests
+test s3_corruption_fails_closed_and_cannot_be_replaced_by_put_if_absent ... ignored, requires KASU_TEST_S3_BUCKET/ENDPOINT and AWS credentials
+test s3_parallel_writers_converge_without_replacing_an_existing_frame ... ignored, requires KASU_TEST_S3_BUCKET/ENDPOINT and AWS credentials
+test s3_preserves_first_frame_across_reopen_and_conditional_put ... ignored, requires KASU_TEST_S3_BUCKET/ENDPOINT and AWS credentials
+test s3_configuration_requires_canonical_prefix_and_explicit_plaintext ... ok
+
+test result: ok. 1 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/storage.rs (target/debug/deps/storage-707305bbbdabf885)
+
+running 3 tests
+test atomic_batch_log_and_aba_protection ... ok
+test immutable_and_compressed_objects_survive_reopen ... ok
+test independent_connections_race_one_winner_and_one_log ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests/tree_membership.rs (target/debug/deps/tree_membership-5fd4838fc4596dfd)
+
+running 1 test
+test persisted_membership_skips_shared_subtrees_and_failed_roots_are_not_published ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests/webhook.rs (target/debug/deps/webhook-c028b78630765fe3)
+
+running 2 tests
+test pending_body_and_cursor_survive_reopen_and_stale_workers_cannot_rewind ... ok
+test producers_on_independent_connections_install_one_authoritative_body ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+

@@ -1,4 +1,31 @@
-/target
-/.idea
-/.vscode
+# Rust build output (including the standalone fuzz workspace).
+target/
+**/*.rs.bk
 
+# Locally generated fuzzing output; keep fuzz/seeds and Cargo.lock.
+/fuzz/artifacts/
+/fuzz/corpus/
+/fuzz/coverage/
+
+# Python bytecode and caches used by tools/.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# Local credentials and environment overrides.
+/.aws/
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+
+# Editor and OS metadata.
+.idea/
+.vscode/
+.DS_Store
+._*
+*~
+*.swp
+*.swo

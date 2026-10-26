@@ -1,0 +1,31 @@
+name: External Git LFS evaluation
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'crates/**'
+      - 'Cargo.*'
+      - 'tools/lfs/**'
+      - '.dockerignore'
+      - '.github/workflows/lfs.yml'
+permissions:
+  contents: read
+jobs:
+  external-lfs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build real Kasu and Git LFS client
+        run: docker build -f tools/lfs/Dockerfile -t kasu:lfs-test . > lfs-build.log 2>&1
+      - name: Verify separate payload storage and failure behavior
+        run: |
+          mkdir -p lfs-evidence
+          docker run --rm --network none --mount type=bind,source="$PWD/lfs-evidence",target=/evidence kasu:lfs-test > lfs-run.log 2>&1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: external-lfs-evidence
+          path: |
+            lfs-*.log
+            lfs-evidence/

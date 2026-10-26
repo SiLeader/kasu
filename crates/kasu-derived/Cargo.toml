@@ -1,0 +1,17 @@
+[package]
+name = "kasu-derived"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+kasu-core.workspace = true
+kasu-store.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+proptest.workspace = true
+
+[dependencies.gix-imara-diff]
+workspace = true

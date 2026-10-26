@@ -1,0 +1,1043 @@
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.27
+   Compiling libc v0.2.191
+   Compiling cfg-if v1.0.5
+   Compiling memchr v2.8.3
+   Compiling once_cell v1.21.4
+   Compiling smallvec v1.16.3
+   Compiling bitflags v2.13.2
+   Compiling regex-syntax v0.8.11
+   Compiling thiserror v2.0.21
+   Compiling subtle v2.6.1
+   Compiling itoa v1.0.18
+   Compiling stable_deref_trait v1.2.1
+   Compiling typenum v1.20.1
+   Compiling rand_core v0.10.1
+   Compiling getrandom v0.4.3
+   Compiling foldhash v0.2.0
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.15
+   Compiling fastrand v2.5.0
+   Compiling pin-project-lite v0.2.17
+   Compiling hashbrown v0.17.1
+   Compiling bytes v1.12.1
+   Compiling equivalent v1.0.3
+   Compiling futures-core v0.3.34
+   Compiling tinyvec v1.13.3
+   Compiling log v0.4.34
+   Compiling version_check v0.9.5
+   Compiling autocfg v1.5.1
+   Compiling futures-sink v0.3.34
+   Compiling parking_lot_core v0.9.12
+   Compiling scopeguard v1.2.0
+   Compiling regex-automata v0.4.18
+   Compiling percent-encoding v2.3.2
+   Compiling byteorder v1.5.0
+   Compiling slab v0.4.12
+   Compiling tracing-core v0.1.36
+   Compiling futures-io v0.3.34
+   Compiling futures-task v0.3.34
+   Compiling serde_core v1.0.229
+   Compiling unicode-normalization v0.1.26
+   Compiling http v1.5.0
+   Compiling fnv v1.0.7
+   Compiling generic-array v0.14.7
+   Compiling futures-channel v0.3.34
+   Compiling lock_api v0.4.14
+   Compiling either v1.19.0
+   Compiling indexmap v2.14.2
+   Compiling errno v0.3.14
+   Compiling jobserver v0.1.35
+   Compiling mio v1.2.4
+   Compiling socket2 v0.6.5
+   Compiling cpufeatures v0.2.17
+   Compiling bstr v1.13.1
+   Compiling zeroize v1.9.1
+   Compiling serde v1.0.229
+   Compiling getrandom v0.2.17
+   Compiling tower-service v0.3.3
+   Compiling http-body v1.1.0
+   Compiling syn v3.0.9
+   Compiling syn v2.0.119
+   Compiling signal-hook-registry v1.4.8
+   Compiling httparse v1.10.1
+   Compiling cc v1.9.0
+   Compiling untrusted v0.9.0
+   Compiling parking_lot v0.12.5
+   Compiling atomic-waker v1.1.2
+   Compiling rustls v0.23.46
+   Compiling try-lock v0.2.5
+   Compiling rustls-pki-types v1.15.1
+   Compiling httpdate v1.0.3
+   Compiling form_urlencoded v1.2.2
+   Compiling sync_wrapper v1.0.2
+   Compiling base64 v0.23.1
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling ipnet v2.12.2
+   Compiling tower-layer v0.3.3
+   Compiling writeable v0.6.4
+   Compiling litemap v0.8.3
+   Compiling zmij v1.0.23
+   Compiling rustix v1.1.5
+   Compiling want v0.3.2
+   Compiling synstructure v0.14.0
+   Compiling base64 v0.22.1
+   Compiling http-body-util v0.1.5
+   Compiling icu_normalizer_data v2.3.0
+   Compiling ring v0.17.14
+   Compiling digest v0.10.7
+   Compiling icu_properties_data v2.3.0
+   Compiling tracing-attributes v0.1.31
+   Compiling serde_json v1.0.154
+   Compiling thiserror-impl v2.0.21
+   Compiling tokio-macros v2.7.2
+   Compiling futures-macro v0.3.34
+   Compiling serde_derive v1.0.229
+   Compiling zerovec-derive v0.11.6
+   Compiling displaydoc v0.2.7
+   Compiling utf8_iter v1.0.4
+   Compiling async-trait v0.1.92
+   Compiling zerofrom-derive v0.1.8
+   Compiling yoke-derive v0.8.4
+   Compiling sha1 v0.10.7
+   Compiling webpki-roots v1.0.10
+   Compiling ryu v1.0.23
+   Compiling tracing v0.1.44
+   Compiling tokio v1.54.1
+   Compiling futures-util v0.3.34
+   Compiling hybrid-array v0.4.15
+   Compiling cmov v0.5.4
+   Compiling chacha20 v0.10.2
+   Compiling const-oid v0.10.2
+   Compiling pkg-config v0.3.34
+   Compiling num-traits v0.2.19
+   Compiling zerofrom v0.1.8
+   Compiling core-foundation-sys v0.8.7
+   Compiling tempfile v3.27.0
+   Compiling allocator-api2 v0.2.21
+   Compiling cpufeatures v0.3.1
+   Compiling ctutils v0.4.5
+   Compiling block-buffer v0.12.1
+   Compiling crypto-common v0.2.2
+   Compiling rand v0.10.3
+   Compiling unicode-bidi v0.3.18
+   Compiling unicode-properties v0.1.4
+   Compiling zstd-sys v2.1.2+zstd.1.5.7
+   Compiling blake3 v1.8.7
+   Compiling rustls-webpki v0.103.16
+   Compiling hashbrown v0.16.1
+   Compiling objc2-core-foundation v0.3.2
+   Compiling fallible-iterator v0.2.0
+   Compiling siphasher v1.0.4
+   Compiling digest v0.11.3
+   Compiling stringprep v0.1.5
+   Compiling security-framework-sys v2.17.0
+   Compiling core-foundation v0.10.1
+   Compiling der_derive v0.7.3
+   Compiling arrayvec v0.7.8
+   Compiling vcpkg v0.2.15
+   Compiling objc2-system-configuration v0.3.2
+   Compiling const-oid v0.9.6
+   Compiling phf_shared v0.13.1
+   Compiling flagset v0.4.7
+   Compiling constant_time_eq v0.4.2
+   Compiling md-5 v0.11.0
+   Compiling sha2 v0.11.1
+   Compiling hmac v0.13.0
+   Compiling security-framework v3.7.0
+   Compiling zstd-safe v7.3.0
+   Compiling serde_urlencoded v0.7.1
+   Compiling hex v0.4.3
+   Compiling iana-time-zone v0.1.65
+   Compiling whoami v2.1.3
+   Compiling phf v0.13.1
+   Compiling yoke v0.8.3
+   Compiling libsqlite3-sys v0.36.0
+   Compiling der v0.7.10
+   Compiling spin v0.10.1
+   Compiling quick-xml v0.41.0
+   Compiling tokio-util v0.7.20
+   Compiling postgres-protocol v0.6.12
+   Compiling tokio-rustls v0.26.6
+   Compiling rustls-platform-verifier v0.7.1
+   Compiling hashlink v0.11.1
+   Compiling itertools v0.15.0
+   Compiling chrono v0.4.45
+   Compiling fallible-iterator v0.3.0
+   Compiling fallible-streaming-iterator v0.1.9
+   Compiling humantime v2.4.0
+   Compiling crc-fast v1.10.0
+   Compiling same-file v1.0.6
+   Compiling kasu-core v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-core)
+   Compiling h2 v0.4.20
+   Compiling tower v0.5.3
+   Compiling postgres-types v0.2.14
+   Compiling gix-trace v0.1.21
+   Compiling gix-validate v0.11.4
+   Compiling gix-utils v0.3.6
+   Compiling crc32fast v1.5.3
+   Compiling prodash v31.0.1
+   Compiling heapless v0.8.0
+   Compiling walkdir v2.5.0
+   Compiling hash32 v0.3.1
+   Compiling faster-hex v0.10.1
+   Compiling zstd v0.13.3
+   Compiling anyhow v1.0.104
+   Compiling gix-error v0.3.2
+   Compiling itertools v0.14.0
+   Compiling tokio-postgres v0.7.18
+   Compiling gix-path v0.12.6
+   Compiling zerocopy v0.8.57
+   Compiling sha1-checked v0.10.0
+   Compiling rusqlite v0.38.0
+   Compiling zerocopy-derive v0.8.57
+   Compiling gix-imara-diff v0.2.5
+   Compiling jiff-core v0.1.1
+   Compiling hyper v1.12.0
+   Compiling getrandom v0.3.4
+   Compiling mime v0.3.17
+   Compiling pin-project-internal v1.1.13
+   Compiling zerovec v0.11.8
+   Compiling zerotrie v0.2.5
+   Compiling serde_path_to_error v0.1.20
+   Compiling gix-features v0.49.1
+   Compiling spki v0.7.3
+   Compiling matchit v0.8.4
+   Compiling tokio-stream v0.1.19
+   Compiling opentelemetry v0.31.0
+   Compiling jiff v0.2.38
+   Compiling memmap2 v0.9.12
+   Compiling axum-core v0.5.6
+   Compiling prost-derive v0.14.4
+   Compiling hyper-util v0.1.21
+   Compiling pin-project v1.1.13
+   Compiling x509-cert v0.2.5
+   Compiling heck v0.5.0
+   Compiling gix-fs v0.22.1
+   Compiling futures-executor v0.3.34
+   Compiling lazy_static v1.5.1
+   Compiling gix-hash v0.26.2
+   Compiling matchers v0.2.0
+   Compiling tracing-log v0.2.0
+   Compiling rand_core v0.9.5
+   Compiling thread_local v1.1.10
+   Compiling prost v0.14.4
+   Compiling nu-ansi-term v0.50.3
+   Compiling gix-date v0.16.0
+   Compiling gix-tempfile v24.0.0
+   Compiling hyper-rustls v0.27.10
+   Compiling gix-hashtable v0.16.0
+   Compiling axum v0.8.9
+   Compiling hyper-timeout v0.5.2
+   Compiling sharded-slab v0.1.7
+   Compiling gix-chunk v0.8.0
+   Compiling nonempty v0.12.0
+   Compiling gix-quote v0.8.0
+   Compiling tokio-postgres-rustls v0.14.0
+   Compiling postgres v0.19.14
+   Compiling gix-sec v0.14.2
+   Compiling gix-actor v0.42.0
+   Compiling gix-lock v24.0.0
+   Compiling rustversion v1.0.23
+   Compiling pulldown-cmark v0.13.5
+   Compiling prettyplease v0.2.37
+   Compiling tracing-subscriber v0.3.23
+   Compiling tinystr v0.8.4
+   Compiling potential_utf v0.1.6
+   Compiling gix-commitgraph v0.39.0
+   Compiling foldhash v0.1.5
+   Compiling gix-object v0.64.1
+   Compiling unicase v2.10.0
+   Compiling zlib-rs v0.6.8
+   Compiling icu_locale_core v2.3.0
+   Compiling icu_collections v2.3.0
+   Compiling tonic v0.14.6
+   Compiling gix-command v0.10.1
+   Compiling ppv-lite86 v0.2.21
+   Compiling tracing-opentelemetry v0.32.1
+   Compiling hashbrown v0.15.5
+   Compiling gix-ref v0.67.1
+   Compiling gix-revwalk v0.35.0
+   Compiling gix-packetline v0.22.2
+   Compiling gix-url v0.38.0
+   Compiling clru v0.6.3
+   Compiling fixedbitset v0.5.7
+   Compiling rand_chacha v0.9.0
+   Compiling icu_provider v2.3.1
+   Compiling arc-swap v1.9.3
+   Compiling gix-zlib v0.1.0
+   Compiling tonic-prost v0.14.6
+   Compiling gix-shallow v0.13.0
+   Compiling pulldown-cmark-to-cmark v22.0.3
+   Compiling prost-types v0.14.4
+   Compiling gix-glob v0.27.1
+   Compiling gix-config-value v0.19.1
+   Compiling gix-macros v0.1.6
+   Compiling adler2 v2.0.1
+   Compiling unicode-bom v2.0.3
+   Compiling gix-transport v0.59.2
+   Compiling petgraph v0.8.3
+   Compiling regex v1.13.1
+   Compiling rand v0.9.5
+   Compiling simd-adler32 v0.3.10
+   Compiling icu_properties v2.3.0
+   Compiling icu_normalizer v2.3.0
+   Compiling gix-pack v0.74.2
+   Compiling multimap v0.10.1
+   Compiling gix-discover v0.55.0
+   Compiling gix-revision v0.49.1
+   Compiling gix-traverse v0.61.0
+   Compiling tonic-build v0.14.6
+   Compiling gix-diff v0.67.1
+   Compiling gix-config v0.60.0
+   Compiling gix-protocol v0.65.1
+   Compiling gix-refspec v0.45.1
+   Compiling hmac v0.12.1
+   Compiling miniz_oxide v0.9.1
+   Compiling opentelemetry_sdk v0.31.0
+   Compiling sha2 v0.10.9
+   Compiling idna_adapter v1.2.2
+   Compiling utf8parse v0.2.2
+   Compiling colorchoice v1.0.5
+   Compiling prost-build v0.14.4
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling anstyle v1.0.14
+   Compiling anstyle-query v1.1.5
+   Compiling wait-timeout v0.2.1
+   Compiling clap_lex v1.1.1
+   Compiling bit-vec v0.10.1
+   Compiling strsim v0.11.1
+   Compiling quick-error v1.2.3
+   Compiling clap_derive v4.6.7
+   Compiling flate2 v1.1.10
+   Compiling rand_xorshift v0.5.0
+   Compiling core_detect v1.0.0
+   Compiling anstyle-parse v1.0.0
+   Compiling idna v1.1.0
+   Compiling opentelemetry-proto v0.31.0
+   Compiling unarray v0.1.4
+   Compiling tonic-prost-build v0.14.6
+   Compiling filetime v0.2.29
+   Compiling gix-odb v0.84.0
+   Compiling half v2.7.1
+   Compiling ciborium-io v0.2.2
+   Compiling itertools v0.13.0
+   Compiling bit-set v0.11.1
+   Compiling cast v0.3.0
+   Compiling tinytemplate v1.2.1
+   Compiling rusty-fork v0.3.1
+   Compiling fsevent-sys v4.1.0
+   Compiling notify-types v2.1.0
+   Compiling anstream v1.0.0
+   Compiling oorandom v11.1.5
+   Compiling url v2.5.8
+   Compiling anes v0.1.6
+   Compiling tar v0.4.46
+   Compiling kasu-proto v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-proto)
+   Compiling ciborium-ll v0.2.2
+   Compiling gix v0.87.1
+   Compiling proptest v1.12.0
+   Compiling criterion-plot v0.6.0
+   Compiling notify v8.2.0
+   Compiling clap_builder v4.6.7
+   Compiling tower-http v0.6.11
+   Compiling ciborium v0.2.2
+   Compiling reqwest v0.13.5
+   Compiling reqwest v0.12.28
+   Compiling clap v4.6.7
+   Compiling object_store v0.14.2
+   Compiling opentelemetry-http v0.31.0
+   Compiling opentelemetry-otlp v0.31.1
+   Compiling kasu-telemetry v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-telemetry)
+   Compiling kasu-store v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-store)
+   Compiling criterion v0.7.0
+   Compiling kasu-derived v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-derived)
+   Compiling kasu-object v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-object)
+   Compiling kasu-cache v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-cache)
+   Compiling kasu-cli v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-cli)
+   Compiling kasu-ops v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-ops)
+   Compiling kasu-git v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-git)
+   Compiling kasu-daemon v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-daemon)
+   Compiling kasu-ingest v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-ingest)
+   Compiling kasu-server v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-server)
+   Compiling kasu-sim v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-sim)
+warning: use of deprecated method `std::sync::atomic::Atomic::<usize>::fetch_update`: renamed to `try_update` for consistency
+  --> crates/kasu-server/tests/webhook.rs:49:10
+   |
+49 |         .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |n| n.checked_sub(1))
+   |          ^^^^^^^^^^^^
+   |
+   = note: `#[warn(deprecated)]` on by default
+help: replace the use of the deprecated method
+   |
+49 -         .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |n| n.checked_sub(1))
+49 +         .try_update(Ordering::SeqCst, Ordering::SeqCst, |n| n.checked_sub(1))
+   |
+
+warning: `kasu-server` (test "webhook") generated 1 warning (run `cargo fix --test "webhook" -p kasu-server` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 43s
+     Running unittests src/lib.rs (target/debug/deps/kasu_cache-36bfe17353567bfd)
+
+running 1 test
+test clock_tests::circuit_cooldown_and_half_open_probe_follow_the_runtime_clock ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/kasu_cache-21e697186aeacd68)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/disk_lru.rs (target/debug/deps/disk_lru-7e37772fad95a385)
+
+running 15 tests
+test disk_writer_child ... ignored, subprocess fixture invoked by kill_during_a_physical_mutation_recovers_a_bounded_valid_cache
+test invalid_limits_do_not_create_a_cache ... ok
+test symlinked_managed_directories_and_files_fail_without_touching_targets ... ok
+test initialization_cannot_adopt_unrelated_files_or_authoritative_repository_storage ... ok
+test legacy_markers_migrate_but_orphans_and_interrupted_owned_staging_are_removed ... ok
+test managed_snapshot_retention_ignores_user_files_and_diagnostics_do_not_wait_for_disk_lock ... ok
+test oversized_frames_are_served_uncached_without_evicting_existing_entries ... ok
+test shared_tree_blob_frame_counts_once_and_type_eviction_preserves_other_registration ... ok
+test kill_during_a_physical_mutation_recovers_a_bounded_valid_cache ... ok
+test interrupted_publication_and_eviction_are_reconciled_before_the_next_operation ... ok
+test lru_clock_and_cumulative_counters_handle_the_signed_integer_boundary ... ok
+test byte_and_entry_limits_persist_lru_and_inflight_frames_survive_eviction ... ok
+test first_compressed_frame_is_preserved_and_snapshot_budget_uses_its_actual_size ... ok
+test valid_snapshot_import_pins_every_manifest_key_and_capacity_rejection_has_no_prefix ... ok
+test concurrent_instances_and_snapshots_share_one_budget_without_wrong_frames ... ok
+
+test result: ok. 14 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 3.65s
+
+     Running tests/layers.rs (target/debug/deps/layers-11b536ea8e352660)
+
+running 6 tests
+test stream_and_pending_limits_reject_excess_work_then_release_capacity ... ok
+test hierarchy_credentials_roles_scope_and_cancelled_leaders_are_enforced ... ok
+test thousand_clients_coalesce_across_two_nodes_and_warm_hits_survive_cache_loss ... ok
+test outage_opens_a_circuit_and_concurrent_requests_cannot_amplify_it ... ok
+test distinct_misses_obey_global_concurrency_and_request_spacing ... ok
+test cache_write_failures_stop_refetches_preserve_warm_hits_and_recover ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.56s
+
+     Running tests/process.rs (target/debug/deps/process-c665d8b060d3c47f)
+
+running 1 test
+test cache_executable_serves_only_objects_exposes_metrics_and_uses_its_hop_token ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.70s
+
+     Running tests/snapshot.rs (target/debug/deps/snapshot-4fdcefa3d0969a5b)
+
+running 3 tests
+test lru_budget_and_disk_type_index_do_not_expose_unregistered_data ... ok
+test invalid_snapshot_never_publishes_a_prefix_and_never_extracts_archive_paths ... ok
+test disk_reopen_and_snapshot_preserve_exact_frames_and_repo_scope ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.35s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_cli-74da638b4bb301e8)
+
+running 4 tests
+test remote::tests::frames_reject_truncation_wrong_ids_offsets_and_data_after_completion ... ok
+test working::tests::recovery_preserves_edits_after_install_and_keeps_the_original_backup ... ok
+test working::tests::interrupted_install_rolls_back_and_committed_install_survives_cleanup_crash ... ok
+test working::tests::recovery_does_not_remove_matching_user_files_before_install ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.46s
+
+     Running unittests src/main.rs (target/debug/deps/kasu-c2bb3d61b551ab4e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/e2e.rs (target/debug/deps/e2e-87c01db149bb4212)
+
+running 12 tests
+test metadata_snapshot_and_blob_sizes_do_not_download_file_contents ... ok
+test byte_paths_survive_the_remote_snapshot_and_platform_checkout_rules ... ok
+test notify_watch_observes_real_edits_and_does_not_hold_the_working_copy_lock ... ok
+test untracked_files_existing_destinations_and_symlink_parents_are_preserved ... ok
+test real_cli_blame_flags_change_moved_and_copied_line_origins ... ok
+test excluded_new_subtrees_stay_unrequested_and_specific_includes_override_exclusions ... ok
+test lost_land_reply_retains_the_key_and_blocks_a_new_commit_until_replay ... ok
+test read_scoped_account_checks_out_commits_and_lands_without_hidden_objects ... ok
+test amending_an_addition_to_deletion_and_file_directory_type_changes ... ok
+test real_cli_sparse_checkout_amend_rebase_land_and_metadata_queries ... ok
+test conflicts_replay_without_losing_files_and_gitlinks_can_be_committed ... ok
+test real_cli_uses_the_unix_daemon_and_a_snapshot_can_boot_without_the_cache ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.61s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_core-dbe9305a46ee70de)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/model.rs (target/debug/deps/model-3ee6f06652ac02af)
+
+running 6 tests
+test blob_git_golden ... ok
+test root_changeset_golden ... ok
+test paths_and_structural_validation ... ok
+test changeset_roundtrip ... ok
+test tree_roundtrip ... ok
+test arbitrary_decoding_never_panics ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_daemon-fa02a1068caf79fb)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/kasu_daemon-f1e57580de7a9137)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/process.rs (target/debug/deps/process-054219e27f56e0a4)
+
+running 3 tests
+test socket_lease_preserves_non_socket_files_and_requires_a_private_directory ... ok
+test executable_boots_offline_snapshots_periodically_and_reclaims_only_stale_sockets ... ok
+test bounded_disk_refills_after_eviction_survives_restart_and_retains_only_managed_snapshots ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.78s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_derived-0647cd3cb76c92a7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/derived.rs (target/debug/deps/derived-25720f10250dc222)
+
+running 3 tests
+test file_directory_replacement_and_parent_sharing ... ok
+test iterative_long_history_and_skip_pointers ... ok
+test apply_diff_roundtrip ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 45.25s
+
+     Running tests/lineage.rs (target/debug/deps/lineage-568ec2e5a4e5cd56)
+
+running 11 tests
+test late_dependency_cycles_fail_without_recursion ... ok
+test deleted_source_is_not_renamed_to_two_destinations_and_binary_copies_are_exact ... ok
+test merge_tracks_the_second_parents_rename_and_recreation_starts_new_history ... ok
+test cold_rename_and_opt_in_copies_preserve_original_paths_and_line_numbers ... ok
+test moved_and_copied_fragments_keep_byte_paths_and_survive_edits_and_second_parents ... ok
+test ambiguous_fragment_work_is_bounded_and_large_roots_need_no_search ... ok
+test reordered_unique_blocks_keep_all_original_line_numbers ... ok
+test similarity_matching_is_one_to_one_and_the_pair_budget_is_explicit ... ok
+test reverse_index_matches_independently_materialized_tree ... ok
+test a_thousand_renames_keep_the_root_origin_without_recursive_derivation ... ok
+test fragment_limits_fail_without_publishing_partial_results_and_short_copies_stay_new ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.10s
+
+     Running tests/lines.rs (target/debug/deps/lines-1d001f1152cbdb60)
+
+running 1 test
+test line_patch_reconstructs_bytes_and_matches_are_monotone ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/scheduler.rs (target/debug/deps/scheduler-502f7b1a37bb8c71)
+
+running 2 tests
+test cycles_and_unregistered_types_are_errors ... ok
+test lazy_keys_versions_dependencies_and_concurrent_singleflight ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_git-2c8e49243f35759b)
+
+running 2 tests
+test reachability::tests::long_oid_prefixes_and_leaf_branch_differences ... ok
+test reachability::tests::radix_sets_match_ordered_sets ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+
+     Running tests/pack_input.rs (target/debug/deps/pack_input-5153c5c770d999ef)
+
+running 4 tests
+test delta_chain_depth_is_bounded_before_resolution ... ok
+test non_delta_ofs_forward_ref_and_thin_packs_decode_losslessly ... ok
+test corruption_sizes_counts_bombs_and_invalid_bases_are_rejected ... ok
+test untrusted_pack_bytes_never_panic ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/pack_plan.rs (target/debug/deps/pack_plan-618f3ce31001a453)
+
+running 4 tests
+test zlib_cache_is_bounded_and_reuses_valid_objects ... ok
+test pack_sets_include_intermediate_blobs_and_second_parents_and_respect_client_shallow ... ok
+test cached_pack_sets_match_graph_walk_on_branching_merge_histories ... ok
+test persistent_incremental_index_reads_only_changed_merkle_paths_and_no_warm_payloads ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 38.26s
+
+     Running tests/path_projection.rs (target/debug/deps/path_projection-ec18d65e5c3adf0e)
+
+running 2 tests
+test non_utf8_path_and_file_replacing_directory_have_deterministic_history ... ok
+test projected_dag_skips_outside_changes_preserves_merges_and_deletion_and_is_scoped ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.72s
+
+     Running tests/projection.rs (target/debug/deps/projection-bc058ee649391ba7)
+
+running 4 tests
+test git_refs_are_atomic_scoped_and_keep_tombstone_versions ... ok
+test atomic_native_and_git_publication_rolls_back_both_models ... ok
+test git_parsers_never_panic ... ok
+test native_projection_is_deterministic_and_sorts_directories_like_git ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+
+     Running tests/protocol.rs (target/debug/deps/protocol-0cc51c3015ea630c)
+
+running 5 tests
+test unborn_head_and_tag_peeling_use_separate_protocol_encodings ... ok
+test framing_and_unadvertised_capabilities_are_rejected ... ok
+test blob_filter_negotiation_is_protocol_specific_and_strict ... ok
+test pktline_and_command_parsers_never_panic ... ok
+test pktline_roundtrip ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.56s
+
+     Running tests/receive.rs (target/debug/deps/receive-c7d7c09049016938)
+
+running 2 tests
+test receive_framing_capabilities_and_report_status_are_separate_from_pack ... ok
+test receive_commands_never_panic ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_ingest-11fbd1c3e9822a65)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/kasu_ingest-dc10f64a81ffc242)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/roundtrip.rs (target/debug/deps/roundtrip-cd3b0b6324160d1a)
+
+running 11 tests
+test pinned_gitlab_byte_paths_tags_and_merges_roundtrip ... ignored, requires tools/oss-fixtures/prepare_byte_paths.py output in KASU_OSS_BYTE_PATH_REPO
+test pinned_oss_repository_roundtrips_all_objects_through_pack_and_clone ... ignored, requires pinned libgit2/TestGitRepository checkout in KASU_OSS_REPO
+test pinned_upstream_submodule_fixture_roundtrips_all_reachable_objects ... ignored, requires tools/oss-fixtures/prepare.py output in KASU_OSS_SUBMODULE_REPO
+test native_projected_commits_keep_identity_when_imported_back ... ok
+test noncanonical_trees_keep_raw_variants_without_poisoning_native_projection ... ok
+test rejects_missing_wrong_type_and_unrepresentable_trees_before_publication ... ok
+test empty_repository_has_unborn_head_and_cli_imports_it ... ok
+test publication_revalidates_ref_kind_peeling_and_symbolic_targets ... ok
+test rejects_shallow_and_sha256_repositories_explicitly ... ok
+test native_edits_after_import_reuse_unchanged_merkle_subtrees_and_blobs ... ok
+test packed_repository_roundtrips_every_object_and_ref_through_strict_pack ... ok
+
+test result: ok. 8 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 1.49s
+
+     Running benches/throughput.rs (target/debug/deps/throughput-0630e580901afd61)
+Testing changeset_create/100
+Success
+Testing changeset_create/1000
+Success
+Testing changeset_create/10000
+Success
+
+Testing path_history/cold/100
+Success
+Testing path_history/warm/100
+Success
+Testing path_history/cold/1000
+Success
+Testing path_history/warm/1000
+Success
+
+Testing pack_encode/cold/4096
+Success
+Testing pack_encode/warm/4096
+Success
+Testing pack_encode/cold/262144
+Success
+Testing pack_encode/warm/262144
+Success
+
+blob_bytes,commits,objects,raw_bytes,pack_bytes,index_pack_strict,fsck_strict
+4096,101,109,38099,28605,true,true
+262144,101,109,554195,545088,true,true
+
+     Running unittests examples/pack_bandwidth.rs (target/debug/examples/pack_bandwidth-cc664bde94396415)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_object-c365c4b634c301b6)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_ops-ab175d5c73994f51)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/first_parent.rs (target/debug/deps/first_parent-52cbdb3e060b7027)
+
+running 3 tests
+test skip_codec_rejects_incoherent_depths_and_links ... ok
+test v1_records_survive_reopen_and_v2_backfill_without_changing_changesets ... ok
+test eager_skip_index_has_fixed_reads_and_bytes_and_queries_skip_long_histories ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.06s
+
+     Running tests/merge.rs (target/debug/deps/merge-ed627a772fd5fe15)
+
+running 6 tests
+test text_merge_preserves_bytes_and_reports_ranges_without_markers ... ok
+test text_merge_identity_and_side_symmetry ... ok
+test text_clean_results_match_git_merge_file ... ok
+test opaque_entries_and_binary_files_require_explicit_resolution ... ok
+test tree_merge_combines_content_modes_and_directories_and_classifies_conflicts ... ok
+test line_edits_match_git_across_insert_delete_replace_boundaries ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.56s
+
+     Running tests/operations.rs (target/debug/deps/operations-5a79c3f0292ce23a)
+
+running 4 tests
+test all_merge_bases_in_criss_cross_history ... ok
+test merge_base_stops_at_a_recent_fork_in_a_long_persisted_history ... ok
+test ancestry_matches_transitive_closure ... ok
+test pruned_merge_bases_match_all_five_node_dags_and_tip_pairs ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.49s
+
+     Running tests/rewrite.rs (target/debug/deps/rewrite-77c8fee2e2c68358)
+
+running 3 tests
+test merge_rebase_preserve_parents_metadata_and_conflicts ... ok
+test three_best_bases_are_reduced_without_exposing_virtual_parents ... ok
+test criss_cross_uses_all_bases_and_reports_conflicting_base_resolution ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.48s
+
+     Running benches/divergent_history.rs (target/debug/deps/divergent_history-305e6df55ced5e3b)
+     Running benches/history.rs (target/debug/deps/history-80d061ef4907939d)
+     Running unittests src/lib.rs (target/debug/deps/kasu_proto-1b1d82211196ef36)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_server-61eba58203b06d30)
+
+running 18 tests
+test git_ssh::tests::command_words_preserve_quoted_bytes_and_never_interpret_shell_expressions ... ok
+test admission::tests::buckets_refill_and_eviction_cannot_reset_quota_or_active_identity ... ok
+test git_ssh::tests::incremental_pkt_line_reader_handles_fragmentation_delimiters_and_done ... ok
+test git_http::tests::directory_url_rejects_invalid_components_and_decodes_byte_paths ... ok
+test observed_refs::tests::metrics_distinguish_conflict_replay_cancellation_and_storage_error ... ok
+test admission::tests::socket_extensions_are_used_and_mapped_addresses_share_an_identity ... ok
+test auth::tests::projection_only_configuration_closes_anonymous_and_native_access ... ok
+test admission::tests::streaming_body_holds_lease_until_completion_or_drop ... ok
+test admission::tests::metrics_has_a_separate_bounded_pool ... ok
+test admission::tests::cancelled_blocking_handler_keeps_capacity_and_metrics_stays_available ... ok
+test auth::tests::account_and_hop_credentials_cannot_overlap_in_either_builder_order ... ok
+test accounts::tests::account_credentials_are_unambiguous_in_each_builder_order ... ok
+test admission::tests::bounded_queue_timeout_and_cancellation_release_permits ... ok
+test git_ssh::pack_stream::tests::pack_boundaries_do_not_consume_following_messages_or_require_eof ... ok
+test admission::tests::config_is_bounded_strict_and_validated ... ok
+test auth::tests::file_configuration_is_strict_relative_and_supports_byte_paths ... ok
+test accounts::tests::bounded_file_config_is_strict_relative_and_defaults_to_read_only ... ok
+test accounts::read_config_tests::read_directory_configuration_is_explicit_bounded_and_normalized ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running unittests src/ssh_main.rs (target/debug/deps/kasu_git_ssh-42fa2332b6f2c26c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/kasu_server-38f67a0f7d43b093)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/accounts.rs (target/debug/deps/accounts-bbd51ad1fa442355)
+
+running 5 tests
+test concurrent_http_writers_keep_independent_account_policies ... ok
+test native_accounts_apply_intersection_final_tree_and_per_principal_land_replay ... ok
+test directory_read_views_filter_metadata_objects_and_writer_blob_references ... ok
+test actual_servers_preserve_account_land_receipts_across_reorder_rotation_and_restart ... ok
+test git_http_push_uses_account_paths_and_atomic_ref_policy ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.65s
+
+     Running tests/automation.rs (target/debug/deps/automation-f1557750c523e49c)
+
+running 6 tests
+test ancestor_guard_is_rechecked_after_cas_loss_and_bound_to_receipts ... ok
+test redirects_and_unguarded_requests_fail_without_publication ... ok
+test lost_land_reply_resumes_the_same_key_even_after_branch_replacement ... ok
+test conflicts_mainline_and_root_reverts_are_explicit ... ok
+test metadata_only_bisect_finds_second_parent_regression_and_guarded_revert_preserves_later_edits ... ok
+test check_gates_immutable_revisions_and_detects_ref_aba_during_testing ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.26s
+
+     Running tests/git_http.rs (target/debug/deps/git_http-208038ee4a2ee172)
+
+running 10 tests
+test pinned_go_git_full_and_shallow_checkout ... ignored, requires tools/git-compat binary in KASU_GO_GIT_CLIENT
+test scoped_projection_pat_allows_git_but_denies_full_repository_and_native_services ... ok
+test unreferenced_wants_require_explicit_publication_and_auth_precedes_parsing ... ok
+test git_versions_ls_remote_full_clone_and_depth_one ... ok
+test empty_repository_and_basic_auth_and_incremental_fetch ... ok
+test shallow_deepen_unshallow_and_v2_time_and_exclusion ... ok
+test partial_clone_omits_blobs_and_promisor_fetch_hydrates_history_and_sparse_checkout ... ok
+test path_projection_clones_fetches_tags_and_isolates_source_objects ... ok
+test partial_clone_incremental_fetch_keeps_promises_across_common_commits ... ok
+test repeated_multi_ref_fetch_preserves_divergent_and_merged_histories ... ok
+
+test result: ok. 9 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 16.16s
+
+     Running tests/git_ssh.rs (target/debug/deps/git_ssh-878828664ae54310)
+
+running 3 tests
+test git_over_real_openssh_supports_all_protocols_read_push_and_projection ... ignored, requires root, OpenSSH sshd and /run/sshd; tools/ssh/Dockerfile
+test idle_stdio_sessions_exit_at_the_configured_deadline ... ok
+test git_over_forced_command_stdio_supports_all_protocols_read_push_and_projection ... ok
+
+test result: ok. 2 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 5.94s
+
+     Running tests/metadata.rs (target/debug/deps/metadata-7ddd1d6412b2cf07)
+
+running 6 tests
+test membership_filters_orphans_from_other_repositories_and_cursors_are_bound ... ok
+test lazy_history_materializes_only_the_requested_path ... ok
+test grpc_over_tcp_and_http_json_preserve_bytes_and_enforce_access ... ok
+test server_binary_serves_grpc_and_http_from_persistent_store ... ok
+test rename_move_and_copy_fragment_blame_match_git_over_native_grpc_and_json ... ok
+test path_log_blame_diff_and_all_merge_bases_match_git ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.58s
+
+     Running tests/objects.rs (target/debug/deps/objects-024b8649e4c6b1a2)
+
+running 5 tests
+test grpc_sparse_requests_transfer_exact_stored_frames_in_bounded_chunks ... ok
+test cancelling_a_backpressured_stream_does_not_read_the_next_object ... ok
+test rewrite_conflict_trees_are_available_without_a_successful_changeset ... ok
+test authorization_precedes_validation_and_batches_do_not_leak_foreign_objects ... ok
+test empty_or_missing_stored_frame_is_an_explicit_stream_error ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.41s
+
+     Running tests/oss_metadata.rs (target/debug/deps/oss_metadata-0c072fe4f3be8d63)
+
+running 1 test
+test pinned_oss_metadata_matches_git_for_all_commits_paths_and_tip_pairs ... ignored, requires the fixed TestGitRepository graph in KASU_OSS_REPO; see docs/git-import.md
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/projection_accounts.rs (target/debug/deps/projection_accounts-62871dfe376b528e)
+
+running 1 test
+test actual_binary_loads_projection_only_configuration_and_invalid_config_fails_closed ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+     Running tests/push.rs (target/debug/deps/push-48b256416f75ee96)
+
+running 8 tests
+test pinned_go_git_full_and_shallow_clone_commit_push ... ignored, requires the pinned Go client in KASU_GO_GIT_PUSH_CLIENT
+test atomic_capability_depends_on_the_backend_and_unadvertised_requests_are_rejected ... ok
+test malformed_connectivity_stale_refs_and_auth_never_publish_a_ref ... ok
+test atomic_push_still_applies_final_tree_acl_to_every_ref ... ok
+test atomic_push_detects_branch_and_tag_aba_between_validation_and_commit ... ok
+test atomic_push_creates_updates_and_deletes_branches_and_tags_together ... ok
+test final_tree_acl_blocks_second_parent_changes_and_native_publication ... ok
+test git_push_initial_incremental_tags_force_delete_and_partial_rejection ... ok
+
+test result: ok. 7 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 2.01s
+
+     Running tests/runtime.rs (target/debug/deps/runtime-f76af2e0cb57dc48)
+
+running 6 tests
+test trusted_socket_ip_budget_spans_http_grpc_and_ignores_forwarding_headers ... ok
+test bearer_basic_and_both_transports_share_one_token_budget ... ok
+test metrics_require_repository_access_and_unknown_paths_have_bounded_labels ... ok
+test actual_binary_loads_limits_and_rejects_invalid_configuration_before_listening ... ok
+test object_stream_backpressure_holds_admission_until_client_drops_stream ... ok
+test git_pack_backpressure_holds_admission_until_client_drops_response ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.92s
+
+     Running tests/shared_storage.rs (target/debug/deps/shared_storage-cdadde8696897149)
+
+running 1 test
+test two_server_processes_share_ingest_git_atomic_push_native_cas_and_land_replay ... ignored, requires PostgreSQL/S3 env and KASU_TEST_INGEST_BIN built with production
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/webhook.rs (target/debug/deps/webhook-95dddf77597aaedb)
+
+running 6 tests
+test signature_matches_rfc4231_test_case_one ... ok
+test oversized_body_is_not_acknowledged_and_worker_shuts_down ... ok
+test failures_and_restart_replay_identical_signed_payload_before_advancing ... ok
+test timeout_after_receipt_replays_the_body_and_redirects_are_not_followed ... ok
+test final_paths_cover_forward_force_rewind_delete_and_tag_streams ... ok
+test native_update_and_real_git_push_feed_the_durable_outbox ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.81s
+
+     Running tests/write.rs (target/debug/deps/write-f12b698a63602ce9)
+
+running 5 tests
+test write_policy_json_patterns_and_byte_path_boundaries_are_enforced ... ok
+test http_rejects_foreign_objects_malformed_uploads_and_unfinished_streams ... ok
+test ref_policy_force_deletion_and_aba_are_enforced ... ok
+test land_grpc_and_http_replay_the_durable_result_after_ref_moves ... ok
+test grpc_upload_create_merge_rebase_and_ref_are_readable_by_git ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_sim-ebc9a4242716e5dc)
+
+running 2 tests
+test cache::tests::seeded_cache_faults_repeat_with_real_layers_and_virtual_deadlines ... ok
+test tests::seeded_schedule_is_repeatable_and_preserves_every_accepted_write ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.50s
+
+     Running unittests src/main.rs (target/debug/deps/kasu_sim-ce8a9053830d14db)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/land_runtime.rs (target/debug/deps/land_runtime-a2859deb51a2cd01)
+
+running 4 tests
+test exhausted_budget_can_resubmit_the_same_key ... ok
+test transient_failure_and_lost_reply_recover_without_duplicate_landing ... ok
+test policy_is_rechecked_between_preparation_and_commit ... ok
+test cancellation_deadline_and_dropped_future_prevent_a_late_commit ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.38s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_store-c6218745cd3e36e9)
+
+running 2 tests
+test postgres::ordering_tests::committed_feed_cannot_overtake_an_uncommitted_lower_sequence ... ignored, requires KASU_TEST_POSTGRES
+test postgres::reconnect_tests::a_closed_connection_recovers_on_a_subsequent_call_without_replaying_a_query ... ignored, requires KASU_TEST_POSTGRES
+
+test result: ok. 0 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/land.rs (target/debug/deps/land-cbb602007c38edc8)
+
+running 2 tests
+test results_ref_and_log_are_atomic_durable_and_request_bound ... ok
+test independent_connections_record_one_result_and_one_landing_for_duplicate_keys ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests/postgres.rs (target/debug/deps/postgres-eae31d9e5777295a)
+
+running 8 tests
+test postgres_binary_immutable_keys_tombstones_and_reopen ... ignored, requires KASU_TEST_POSTGRES
+test postgres_connect_query_and_drop_from_a_current_thread_runtime ... ignored, requires KASU_TEST_POSTGRES
+test postgres_independent_connections_have_one_mixed_cas_winner ... ignored, requires KASU_TEST_POSTGRES
+test postgres_land_replay_and_cancellation_are_transactional_across_connections ... ignored, requires KASU_TEST_POSTGRES
+test postgres_sql_failure_rolls_back_refs_logs_and_counter_then_allows_retry ... ignored, requires KASU_TEST_POSTGRES
+test postgres_tls_verifies_the_configured_ca_and_refuses_untrusted_certificates ... ignored, requires KASU_TEST_POSTGRES_TLS and KASU_TEST_POSTGRES_CA
+test postgres_webhook_pending_body_survives_reopen_and_stale_workers ... ignored, requires KASU_TEST_POSTGRES
+test postgres_plaintext_and_invalid_configuration_fail_without_exposing_the_dsn ... ok
+
+test result: ok. 1 passed; 0 failed; 7 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/publication.rs (target/debug/deps/publication-027c9b2af43a6edf)
+
+running 2 tests
+test late_sql_failure_rolls_back_both_ref_models_and_both_logs ... ok
+test independent_mixed_transactions_have_one_winner_and_matching_logs ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/s3.rs (target/debug/deps/s3-16502c94dfc63a19)
+
+running 4 tests
+test s3_corruption_fails_closed_and_cannot_be_replaced_by_put_if_absent ... ignored, requires KASU_TEST_S3_BUCKET/ENDPOINT and AWS credentials
+test s3_parallel_writers_converge_without_replacing_an_existing_frame ... ignored, requires KASU_TEST_S3_BUCKET/ENDPOINT and AWS credentials
+test s3_preserves_first_frame_across_reopen_and_conditional_put ... ignored, requires KASU_TEST_S3_BUCKET/ENDPOINT and AWS credentials
+test s3_configuration_requires_canonical_prefix_and_explicit_plaintext ... ok
+
+test result: ok. 1 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/storage.rs (target/debug/deps/storage-f6b7e0bad8a5141a)
+
+running 3 tests
+test atomic_batch_log_and_aba_protection ... ok
+test immutable_and_compressed_objects_survive_reopen ... ok
+test independent_connections_race_one_winner_and_one_log ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/tree_membership.rs (target/debug/deps/tree_membership-b987469e5e840e1d)
+
+running 1 test
+test persisted_membership_skips_shared_subtrees_and_failed_roots_are_not_published ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+     Running tests/webhook.rs (target/debug/deps/webhook-c6a16026fb8f0ba3)
+
+running 2 tests
+test pending_body_and_cursor_survive_reopen_and_stale_workers_cannot_rewind ... ok
+test producers_on_independent_connections_install_one_authoritative_body ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running unittests src/lib.rs (target/debug/deps/kasu_telemetry-195c1ae2cc248561)
+
+running 6 tests
+test tests::malformed_and_oversized_contexts_start_new_roots ... ok
+test tests::remote_parent_child_injection_sampling_and_event_exclusion ... ok
+test tests::grpc_span_survives_headers_and_closes_as_cancelled_on_body_drop ... ok
+test tests::blocking_worker_retains_span_and_current_context_after_caller_drops_it ... ok
+test tests::configuration_is_opt_in_validated_and_errors_are_sanitized ... ok
+test tests::full_export_queue_drops_spans_without_waiting_for_exporter ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests examples/inspect_otlp.rs (target/debug/examples/inspect_otlp-88abae0276e156d5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

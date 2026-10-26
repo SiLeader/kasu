@@ -1,0 +1,41 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    env:
+      RUSTC_WRAPPER: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: sudo apt-get update && sudo apt-get install -y protobuf-compiler python3
+      - run: python3 -m unittest discover -s tools/automation -v
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+      - run: cargo test --workspace --all-targets --all-features --locked
+      - run: cargo build --workspace --bins --locked
+      - run: cargo build -p kasu-telemetry --example inspect_otlp --locked
+      - run: python3 tools/telemetry/verify.py --out "$RUNNER_TEMP/kasu-telemetry"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: telemetry-acceptance
+          path: ${{ runner.temp }}/kasu-telemetry
+      - uses: EmbarkStudios/cargo-deny-action@v2
+  native-cli-macos:
+    runs-on: macos-latest
+    env:
+      RUSTC_WRAPPER: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: brew install protobuf
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test -p kasu-cli -p kasu-cache -p kasu-daemon --locked

@@ -1,0 +1,49 @@
+name: GitOps kind acceptance
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '13 18 * * *'
+permissions:
+  contents: read
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: [writeback, path-projection]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.3'
+          cache: false
+      - name: Install pinned kind and kubectl
+        shell: bash
+        run: |
+          go install sigs.k8s.io/kind@v0.33.0
+          mkdir -p "$RUNNER_TEMP/gitops-bin"
+          curl --fail --location --retry 2 https://dl.k8s.io/release/v1.37.0/bin/linux/amd64/kubectl -o "$RUNNER_TEMP/gitops-bin/kubectl"
+          curl --fail --location --retry 2 https://dl.k8s.io/release/v1.37.0/bin/linux/amd64/kubectl.sha256 -o "$RUNNER_TEMP/gitops-bin/kubectl.sha256"
+          cd "$RUNNER_TEMP/gitops-bin"
+          echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+          chmod +x kubectl
+          echo "$RUNNER_TEMP/gitops-bin" >> "$GITHUB_PATH"
+      - name: Initial sync and signed webhook refresh through native kasu storage
+        if: matrix.scenario == 'writeback'
+        run: python3 tools/gitops/run.py --workdir "$RUNNER_TEMP/kasu-gitops" --keep --webhooks
+      - name: Image Updater and Flux Image Automation commit and push
+        if: matrix.scenario == 'writeback'
+        run: python3 tools/gitops/writeback.py --workdir "$RUNNER_TEMP/kasu-gitops"
+      - name: Path projection initial sync, outside-only update, and projected update
+        if: matrix.scenario == 'path-projection'
+        run: python3 tools/gitops/projection.py --workdir "$RUNNER_TEMP/kasu-gitops" --cluster kasu-gitops-e2e --keep
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gitops-evidence-${{ matrix.scenario }}
+          path: ${{ runner.temp }}/kasu-gitops/evidence
+      - name: Remove the test cluster
+        if: always()
+        run: kind delete cluster --name kasu-gitops-e2e

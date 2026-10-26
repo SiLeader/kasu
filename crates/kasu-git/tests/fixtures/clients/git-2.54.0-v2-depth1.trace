@@ -1,0 +1,93 @@
+# git version 2.54.0 (Apple Git-157)
+# file transport / fixed TestGitRepository fixture; timestamp/PID removed
+ upload-pack> version 2
+ upload-pack> agent=git/2.54.0-Darwin
+ upload-pack> ls-refs=unborn
+ upload-pack> fetch=shallow wait-for-done
+ upload-pack> server-option
+ upload-pack> object-format=sha1
+ upload-pack> 0000
+       clone< version 2
+       clone< agent=git/2.54.0-Darwin
+       clone< ls-refs=unborn
+       clone< fetch=shallow wait-for-done
+       clone< server-option
+       clone< object-format=sha1
+       clone< 0000
+       clone> command=ls-refs
+       clone> agent=git/2.54.0-Darwin
+ upload-pack< command=ls-refs
+       clone> object-format=sha1
+ upload-pack< agent=git/2.54.0-Darwin
+       clone> 0001
+ upload-pack< object-format=sha1
+       clone> peel
+ upload-pack< 0001
+       clone> symrefs
+ upload-pack< peel
+       clone> unborn
+ upload-pack< symrefs
+       clone> ref-prefix refs/heads/
+ upload-pack< unborn
+       clone> ref-prefix refs/tags/
+ upload-pack< ref-prefix refs/heads/
+       clone> ref-prefix HEAD
+ upload-pack< ref-prefix refs/tags/
+       clone> 0000
+ upload-pack< ref-prefix HEAD
+ upload-pack< 0000
+ upload-pack> 49322bb17d3acc9146f98c97d078513228bbf3c0 HEAD symref-target:refs/heads/master
+ upload-pack> 0966a434eb1a025db6b71485ab63a3bfbea520b6 refs/heads/first-merge
+ upload-pack> 49322bb17d3acc9146f98c97d078513228bbf3c0 refs/heads/master
+ upload-pack> 42e4e7c5e507e113ebbb7801b16b52cf867b7ce1 refs/heads/no-parent
+ upload-pack> d96c4e80345534eccee5ac7b07fc7603b56124cb refs/tags/annotated_tag peeled:c070ad8c08840c8116da865b2d65593a6bb9cd2a
+ upload-pack> 55a1a760df4b86a02094a904dfa511deb5655905 refs/tags/blob
+ upload-pack> 8f50ba15d49353813cc6e20298002c0d17b0a9ee refs/tags/commit_tree
+ upload-pack> 6e0c7bdb9b4ed93212491ee778ca1c65047cab4e refs/tags/nearly-dangling
+ upload-pack> 0000
+       clone< 49322bb17d3acc9146f98c97d078513228bbf3c0 HEAD symref-target:refs/heads/master
+       clone< 0966a434eb1a025db6b71485ab63a3bfbea520b6 refs/heads/first-merge
+       clone< 49322bb17d3acc9146f98c97d078513228bbf3c0 refs/heads/master
+       clone< 42e4e7c5e507e113ebbb7801b16b52cf867b7ce1 refs/heads/no-parent
+       clone< d96c4e80345534eccee5ac7b07fc7603b56124cb refs/tags/annotated_tag peeled:c070ad8c08840c8116da865b2d65593a6bb9cd2a
+       clone< 55a1a760df4b86a02094a904dfa511deb5655905 refs/tags/blob
+       clone< 8f50ba15d49353813cc6e20298002c0d17b0a9ee refs/tags/commit_tree
+       clone< 6e0c7bdb9b4ed93212491ee778ca1c65047cab4e refs/tags/nearly-dangling
+       clone< 0000
+       clone> command=fetch
+       clone> agent=git/2.54.0-Darwin
+       clone> object-format=sha1
+       clone> 0001
+       clone> thin-pack
+       clone> no-progress
+       clone> include-tag
+       clone> ofs-delta
+       clone> deepen 1
+       clone> want 49322bb17d3acc9146f98c97d078513228bbf3c0
+       clone> want 49322bb17d3acc9146f98c97d078513228bbf3c0
+       clone> done
+       clone> 0000
+ upload-pack< command=fetch
+ upload-pack< agent=git/2.54.0-Darwin
+ upload-pack< object-format=sha1
+ upload-pack< 0001
+ upload-pack< thin-pack
+ upload-pack< no-progress
+ upload-pack< include-tag
+ upload-pack< ofs-delta
+ upload-pack< deepen 1
+ upload-pack< want 49322bb17d3acc9146f98c97d078513228bbf3c0
+ upload-pack< want 49322bb17d3acc9146f98c97d078513228bbf3c0
+ upload-pack< done
+ upload-pack< 0000
+ upload-pack> shallow-info
+       clone< shallow-info
+ upload-pack> shallow 49322bb17d3acc9146f98c97d078513228bbf3c0
+ upload-pack> 0001
+       clone< shallow 49322bb17d3acc9146f98c97d078513228bbf3c0
+ upload-pack> packfile
+       clone< 0001
+       clone< packfile
+    sideband< PACK ...
+ upload-pack> 0000
+    sideband< 0000

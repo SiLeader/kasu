@@ -1,0 +1,42 @@
+{
+  "allChecksPassed": true,
+  "backend": "TiKV optimistic TxnKV prototype",
+  "exactlyOnePublication": true,
+  "namespace": "run-18e11ca945c05b48",
+  "operations": 256,
+  "outcome": "Replay",
+  "phase": "recover",
+  "recoveryReplies": [
+    {
+      "attempts": 1,
+      "elapsedMS": 3000.671,
+      "outcome": "Retry"
+    },
+    {
+      "attempts": 1,
+      "elapsedMS": 3001.03,
+      "outcome": "Retry"
+    },
+    {
+      "attempts": 1,
+      "elapsedMS": 3000.69,
+      "outcome": "Retry"
+    },
+    {
+      "attempts": 1,
+      "elapsedMS": 3001.132,
+      "outcome": "Retry"
+    },
+    {
+      "attempts": 1,
+      "elapsedMS": 3000.556,
+      "outcome": "Retry"
+    },
+    {
+      "attempts": 1,
+      "elapsedMS": 1555.081,
+      "outcome": "Applied"
+    }
+  ],
+  "schema": 1
+}

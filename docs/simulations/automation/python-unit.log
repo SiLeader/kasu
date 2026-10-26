@@ -1,0 +1,12 @@
+test_all_culprits_in_branched_merge_dags (test_bot.BotTests.test_all_culprits_in_branched_merge_dags) ... ok
+test_ids_reject_scalars_and_invalid_byte_arrays (test_bot.BotTests.test_ids_reject_scalars_and_invalid_byte_arrays) ... ok
+test_infrastructure_failure_is_not_a_bad_verdict_and_graph_limit_is_enforced (test_bot.BotTests.test_infrastructure_failure_is_not_a_bad_verdict_and_graph_limit_is_enforced) ... ok
+test_journal_binding_and_exclusive_lock (test_bot.BotTests.test_journal_binding_and_exclusive_lock) ... ok
+test_oversized_checkpoint_preserves_the_previous_durable_journal (test_bot.BotTests.test_oversized_checkpoint_preserves_the_previous_durable_journal) ... ok
+test_skip_is_ambiguous_and_budget_resume_reuses_results (test_bot.BotTests.test_skip_is_ambiguous_and_budget_resume_reuses_results) ... ok
+test_tester_timeout_kills_process_and_never_caches_a_failure (test_bot.BotTests.test_tester_timeout_kills_process_and_never_caches_a_failure) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.696s
+
+OK

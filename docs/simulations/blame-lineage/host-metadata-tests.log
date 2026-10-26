@@ -1,0 +1,18 @@
+   Compiling kasu-derived v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-derived)
+   Compiling kasu-ops v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-ops)
+   Compiling kasu-git v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-git)
+   Compiling kasu-ingest v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-ingest)
+   Compiling kasu-server v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 9.52s
+     Running tests/metadata.rs (target/debug/deps/metadata-012b67e44f23bd66)
+
+running 6 tests
+test membership_filters_orphans_from_other_repositories_and_cursors_are_bound ... ok
+test grpc_over_tcp_and_http_json_preserve_bytes_and_enforce_access ... ok
+test lazy_history_materializes_only_the_requested_path ... ok
+test rename_move_and_copy_fragment_blame_match_git_over_native_grpc_and_json ... ok
+test server_binary_serves_grpc_and_http_from_persistent_store ... ok
+test path_log_blame_diff_and_all_merge_bases_match_git ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.83s
+

@@ -1,0 +1,56 @@
+{
+  "captured_date": "2026-10-24",
+  "source_sha256": {
+    "crates/kasu-server/src/accounts.rs": "a16651d6ac8011dbd4ae495735daa5f83b8568e8b0e62b6462aa0981b9d8da9e",
+    "crates/kasu-server/src/auth.rs": "b24af6a56c04b25297eb6b4edc00c5bd47a18b33bd91a2bb91d9ec84f26cef09",
+    "crates/kasu-server/src/backend.rs": "310a135553b25e4565993c99a02c23128a5e367205f51e74848459e523fc0ab7",
+    "crates/kasu-server/src/admission.rs": "78f0efbdeb2ddc48b8a9ad46e84f4d5a9f63e445f7f44e2f697f5378fdf6211a",
+    "crates/kasu-server/src/configuration.rs": "f084e502a6a15ef24409629353dabaaa9a97d95ffe3ef6202ebe5e5bd0076c57",
+    "crates/kasu-server/src/write.rs": "a612954f93fceb09d6dad3f356831e74d2b81844e25e3fc439ee5810c78445e0",
+    "crates/kasu-server/src/write_transport.rs": "665ca6727eb88837b9f4ec9224fa81926c23768ae3a0d511d4fd650adfeccc0c",
+    "crates/kasu-server/src/land.rs": "c8e8554408221130bb68658d7a8d3a31be702ecbebdec16a46b067883d54fa8d",
+    "crates/kasu-server/src/receive.rs": "41bf6fcd71b4cfe83402327fe79af02d84548299b001baf8939c3728a651661e",
+    "crates/kasu-server/src/git_http.rs": "458fa414d2f010d08e02241addfe6f9d8cad3cfeaf7642f2b3a1acf79df0e626",
+    "crates/kasu-server/src/git_ssh.rs": "204038de3041386c8a14b6635f08d9d46aa6422a66d8a088be45ce1367246469",
+    "crates/kasu-server/tests/accounts.rs": "a2817dbac634d68243c6e690d4a79fa317cf793cf89f18af9eb441e98bd1ed8a",
+    "crates/kasu-server/tests/git_ssh.rs": "ccf6dabcae9ce95b5122b82a01f48740e9992fcbd640b23baca837715f67c9b1",
+    "tools/ssh/Dockerfile": "c04918b8c54578def252d44e8b09009e7e3250619e946c6b58e0dfddd6a5a480",
+    ".github/workflows/ssh.yml": "00faac3edce527d0449f21286c892f82eae9e0aada5003b7f62eeef3de7a6914"
+  },
+  "macos": {
+    "arch": "arm64",
+    "git": "2.54.0 (Apple Git-157)",
+    "account_integration_tests_passed": 4,
+    "server_regression": "17 unit + 9 Git HTTP + 1 projection + 7 push + 6 runtime + 5 native Writer tests; 2 ignored remain separate scenarios"
+  },
+  "linux": {
+    "arch": "arm64",
+    "rust": "1.90.0",
+    "git": "2.39.5",
+    "openssh": "9.2p1",
+    "unit_tests_passed": 17,
+    "account_integration_tests_passed": 4,
+    "real_openssh_repository_account_push": true
+  },
+  "verified": [
+    "Repository-wide read-only and scoped-writer PATs",
+    "Intersection of global and account path/ref/create/delete/force policies",
+    "gRPC upload/create/UpdateRef/Land and HTTP Writer endpoint authorization",
+    "Git HTTP allowed push, forbidden path and read-only push denial, atomic branch/tag rollback",
+    "Real SSH forced public key mapped to repository account; allowed path and denied path/ref/delete",
+    "Final tree rather than changeset-only ACL, non-UTF8 path",
+    "64 concurrent HTTP requests across two writer policies",
+    "Separate durable Land keys per account, request fingerprint mismatch rejection",
+    "Two actual server processes with reordered accounts; PAT rotation and hard restart; original receipt replay",
+    "Exactly one ref-log actor per successful account Land"
+  ],
+  "not_verified": [
+    "Native directory read ACL",
+    "OIDC",
+    "Live revocation of in-flight requests",
+    "Persistent rejected-request audit log",
+    "Cross-node admission quotas",
+    "Security audit",
+    "GitHub workflow execution"
+  ]
+}

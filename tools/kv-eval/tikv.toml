@@ -1,0 +1,30 @@
+# Small, explicit resource budget for a disposable single-host evaluation.
+memory-usage-limit = "1GB"
+[storage]
+reserve-space = "0MB"
+scheduler-worker-pool-size = 2
+[storage.block-cache]
+capacity = "128MB"
+[server]
+grpc-concurrency = 2
+grpc-memory-pool-quota = "128MB"
+[readpool.unified]
+min-thread-count = 1
+max-thread-count = 2
+[raftstore]
+store-pool-size = 1
+apply-pool-size = 1
+[rocksdb.defaultcf]
+write-buffer-size = "16MB"
+max-write-buffer-number = 2
+[rocksdb.writecf]
+write-buffer-size = "16MB"
+max-write-buffer-number = 2
+[rocksdb.lockcf]
+write-buffer-size = "16MB"
+max-write-buffer-number = 2
+[log]
+level = "warn"
+[raft-engine]
+memory-limit = "64MB"
+recovery-threads = 1

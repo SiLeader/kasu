@@ -1,0 +1,20 @@
+{
+  "source": "https://github.com/libgit2/libgit2.git",
+  "commit": "338e6fb681369ff0537719095e22ce9dc602dbf0",
+  "resource": "tests/resources/submodules.git",
+  "scope": "all objects reachable from the original refs; three dangling blobs omitted",
+  "objects": {
+    "09176a980273d801a3e37cc45c84af1366501ed9": "commit",
+    "092bfb9bdf74dd8cfd22e812151281ee9aa6f01a": "blob",
+    "0f8fb758578188a8fdf04e29bac3ace81b4f3c9c": "tree",
+    "78308c9251cf4eee8b25a76c7d2790c73d797357": "blob",
+    "97896810b3210244a62a82458b8e0819ecfc6850": "commit",
+    "b60fd986699ba4e9e68bea07cf8e793f323ef888": "tree"
+  },
+  "refs": "97896810b3210244a62a82458b8e0819ecfc6850 refs/heads/master\n",
+  "source_metadata_files": 11,
+  "git": "git version 2.54.0 (Apple Git-157)",
+  "strict_fsck": true,
+  "non_utf8_paths": false,
+  "gitlink_target_fetched": false
+}

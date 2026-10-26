@@ -1,0 +1,36 @@
+# Repository metadata and local agent configuration.
+**/.git
+**/.gitignore
+**/.agents
+**/.codex
+.github
+
+# Build output and caches at any depth.
+**/target
+**/*.rs.bk
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/.venv
+
+# Credentials and local environment overrides.
+**/.aws
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.sample
+!**/.env.template
+
+# Editor and OS metadata.
+**/.idea
+**/.vscode
+**/.DS_Store
+**/._*
+**/*~
+**/*.swp
+**/*.swo
+
+# Current Dockerfiles use Cargo.toml, Cargo.lock, crates/ and tools/.
+# Keep all tools available, including tools/git-compat used by tools/ssh.
+docs
+fuzz

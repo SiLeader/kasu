@@ -1,0 +1,114 @@
+{
+  "success": true,
+  "captured_at": "2026-10-26T09:15:13.497564+09:00",
+  "source": "https://gitlab.com/gitlab-org/gitlab-test.git",
+  "refs": [
+    "99e4853698007ed7e68826730ef5313d24841991 refs/heads/invalid-utf8-diff-paths",
+    "f4e6814c3e4e7a0de82a9e7cd20c626cc963a2f8 refs/tags/v1.0.0"
+  ],
+  "scope": "complete history and all objects reachable from the fixed branch and v1.0.0 tag; other upstream refs excluded",
+  "commits": 50,
+  "objects": 183,
+  "counts": {
+    "commit": 50,
+    "tree": 76,
+    "blob": 56,
+    "tag": 1
+  },
+  "merges": 14,
+  "non_utf8_path_hex": "68656c6c6f80776f726c64",
+  "path_snapshots": [
+    {
+      "commit": "d0888d297eadcd7a345427915c309413b1231e65",
+      "blob": "3742e48c1108ced3bf45ac633b34b65ac3f2af04"
+    },
+    {
+      "commit": "19950f03c765f7ac8723a73a0599764095f52fc0",
+      "blob": "ea20973903d3800ac659d503596f9105f0a7423f"
+    },
+    {
+      "commit": "99e4853698007ed7e68826730ef5313d24841991",
+      "blob": null
+    }
+  ],
+  "gitlinks_at_head": {
+    "gitlab-grack": "645f6c4c82fd3f5e06f67134450a570b795e55a6",
+    "gitlab-shell": "79bceae69cb5750d6567b223597999bfa91cb3b9",
+    "six": "409f37c4f05865e4fb208c771485f211a22c4c2d"
+  },
+  "linux_image_manifest": "sha256:dcdbfb60c3053d3193bd06a96b459d9e66cb3811975b2daf24ef73f81fc8089f",
+  "verified": [
+    "public network fetch and cached raw-object preparation produce identical manifests",
+    "fixed branch and annotated tag, complete parent history with no shallow boundary",
+    "all 183 original raw object bytes and Git OIDs match after Kasu import",
+    "native byte-path Set, content update and Delete preserve the exact bytes",
+    "all 50 native parent lists match Git; 14 merge commits",
+    "all 3 native gitlinks at HEAD preserve target OIDs without importing target commits",
+    "strict source fsck, exported index-pack, exported and bare-clone fsck",
+    "all refs, peeled tags, symbolic HEAD and clone object graph match",
+    "macOS 11 roundtrip tests and pinned Rust 1.90 Linux 10 roundtrip tests",
+    "Linux run uses no network and read-only source mounts"
+  ],
+  "not_verified": [
+    "every other ref in the upstream GitLab test corpus",
+    "worktree checkout of non-UTF8 filenames on APFS",
+    "submodule contents and Git LFS payloads",
+    "large production workload",
+    "GitHub workflow execution"
+  ],
+  "source_sha256": {
+    ".github/workflows/oss-roundtrip.yml": "d2f70cbfd6207adfe3930f4c38f3f5ae8ce7b85909a6f3e45f3172a9980ff9c7",
+    "Cargo.lock": "1206daefe8ee25fb4796e2f566d18e103c9454e0a7708096030e948a678747a8",
+    "crates/kasu-core/Cargo.toml": "9885b23147cd6a7541df2ce180473a8aacf3f5fde66b46c8b8866c50f262e246",
+    "crates/kasu-core/src/codec.rs": "4bab68f90a776493c3fc75f4161dba3cdc0d26ef4490551b2a65d51ecf1ad994",
+    "crates/kasu-core/src/git.rs": "4151432098885228742afb0f5de743ad736d89b7bb4ff3a8ee5e4f5d3a164ba2",
+    "crates/kasu-core/src/lib.rs": "1fd95e3340cbe908c01b8ac58157c6190bc673b6a10cba865673f3eda8584b3d",
+    "crates/kasu-core/src/model.rs": "d5360696ed8e87c25b3c4623e65aa48ba0808e49de3415284cab0722d30dde88",
+    "crates/kasu-derived/Cargo.toml": "c1914d674bcb368680f4785f7367fade331ccdcd2d7ae48d1b928366378ea602",
+    "crates/kasu-derived/src/copies.rs": "6627c2f8220279826b0158145deade5756cf9b77555da9be1fe2ab623799af9f",
+    "crates/kasu-derived/src/fragments.rs": "a93f494f532b268d33422e6722905cdbf2d7b986004f919fc78a74fcf67e2f97",
+    "crates/kasu-derived/src/history.rs": "4ffc1d8044e7fa93c5c7b62fa176863f0642ad7b3d62da5382b7b88076a2bad5",
+    "crates/kasu-derived/src/lib.rs": "69e70d8edf12a7bea83909dda5d25cc5d9fc0275471c2d9b8c73d538e7d1ceec",
+    "crates/kasu-derived/src/lines.rs": "0dba3e5ed6b7f9594e672669656764b9bce8f15c15d1b39d1b20799144ca61a2",
+    "crates/kasu-derived/src/scheduler.rs": "491555d28ba16ce47c49a5e714ccfc417554fa71cde1ea8a2e04ed64b0798442",
+    "crates/kasu-derived/src/tree.rs": "35384f70ff21bd30a626c9f0fcae9656c69b801808127babed412537b224259a",
+    "crates/kasu-derived/src/types.rs": "60dd778d78b5f8400e55cdbc92dfaba6a5d83a45ed82401a72a1dc4c14dfc31d",
+    "crates/kasu-git/Cargo.toml": "e50ec409d64d8a4e50488ebec0c56b6f01565da2a0cc55b62321122bb636c532",
+    "crates/kasu-git/src/derived.rs": "812fa80dc0987ed9fcccedca775ff859b62bc7b4bf43911a4eaad819afe15443",
+    "crates/kasu-git/src/index.rs": "edfa790342be1cc2a093d03146ea902b2b4b3f2d4d6a232759030475b6004b96",
+    "crates/kasu-git/src/lib.rs": "2d184432d2ed9c01977dfbd3f10c82d880ca43160677c8179c352ab91d8839ad",
+    "crates/kasu-git/src/object.rs": "05fe1063f3d3c0d28b7605d8c1e549f5fc71efef604183cfd586183f3b95c1d8",
+    "crates/kasu-git/src/pack.rs": "368a5a9845b5dbf95d1b74ba272c1265c65ddd3e7008cc190693aab1cbec7f72",
+    "crates/kasu-git/src/pack_cache.rs": "3871d77d66680a252ced49157cefd89433314e29dcbad533a0f44d8b125fe41a",
+    "crates/kasu-git/src/pack_input.rs": "8c753f23da74183936532f653c825662c5f5ddb41f15fc3539b5e0e6a55ae267",
+    "crates/kasu-git/src/path.rs": "532ae81d83dbfbb7c8f9284ad75295a3a725e090516f865aef7dfc57e472173e",
+    "crates/kasu-git/src/pktline.rs": "c974c53fbce57011d2d2193984d086e01541ca0f8604998e6ff4a86c32601d35",
+    "crates/kasu-git/src/reachability.rs": "8ea92db023327f7776765bcbb25f93d218cd0ee984812a91b3a23ffd43bd0da1",
+    "crates/kasu-git/src/receive.rs": "20a24f09d80b19285d8147614f5fca909cda1b4068ee94fdfa3c99c6c9dd971f",
+    "crates/kasu-git/src/refs.rs": "12c5cec2a37f94147d42e4ac54a78d48982b784fe50d73f1394625ffa90f22a4",
+    "crates/kasu-git/src/upload.rs": "f83b35a9671fd0f98c4be50bd4bd7fb3544d0c1e2ec0ce04406e98044a41ebbf",
+    "crates/kasu-ingest/Cargo.toml": "4fdddb89e0fb079d954dee22279bfa1ddeb3843c8a28e6807fa1b5bbacea36ed",
+    "crates/kasu-ingest/src/lib.rs": "bb7f140feff215b773d75483b6a9ba0ad44690fc55d85aaf0887a10f154456c4",
+    "crates/kasu-ingest/src/main.rs": "143787039b670309f63e249a077654f08dbde68053828f3030fd6d5972ad4593",
+    "crates/kasu-ingest/tests/fixtures/upstream-byte-path-objects.txt": "63bc889d8c1138367dfbe1e09e4ac1436c47c6aafc2da8d0eabb3818152c571d",
+    "crates/kasu-ingest/tests/fixtures/upstream-byte-path-refs.txt": "c9ee318dc775c6b4de03d5a0436840ceed4ad4647b715e88a4f3c7d9f76ac750",
+    "crates/kasu-ingest/tests/fixtures/upstream-submodule-refs.txt": "765ac714ad87ab60c5e3f7db175209912d019ca1d34bfcc103767ea35c9f2cfe",
+    "crates/kasu-ingest/tests/roundtrip.rs": "9da58c1e4c16900c7ef6be57d5177f3af999b2f038c97540e68b725276803271",
+    "crates/kasu-store/Cargo.toml": "c494186e1b9f2de5a8972cf811d1c94443a0b6dab3ff1c4fe54ad17a4c23de6e",
+    "crates/kasu-store/src/blocking.rs": "02de04799176a46c242ccd335795a7fc7bfcdf236114c1805205ac5005efa071",
+    "crates/kasu-store/src/configured.rs": "51da1ca3539d5e5c3b4f55459d01b3e81ce61767f95191a6aab68b189a287055",
+    "crates/kasu-store/src/fs.rs": "e3447746a21910d6e13706d1be0743713b7893cc8a47f740aca0fcbdf8180c52",
+    "crates/kasu-store/src/lib.rs": "569213e82cb687ba15ab3a6547b1454182d55ccf063ad1ce653b020ad89631cd",
+    "crates/kasu-store/src/postgres.rs": "6a83fd9b700bb31e591911be3e8af5da76e910101cd2eb721704fccc0ef5fbe1",
+    "crates/kasu-store/src/postgres/webhook.rs": "2bdf7864fc261f087a2600c84c048c49a91412a6aceb8c30a2491ee949b12298",
+    "crates/kasu-store/src/s3.rs": "cd1856a7183ef30ab57ca70c8b89af06d80a856c0dd60359c4eee8f6efc292f2",
+    "crates/kasu-store/src/sqlite.rs": "06f4699e43c5bcb5fd44b1a3dfcc267221cf2ac7ecf68608b75a79e971db192d",
+    "crates/kasu-store/src/sqlite/webhook.rs": "8407f311c481a31b5cbb4a758c0fea4cfd71c8d4487ca6795ffb83441c6401fb",
+    "crates/kasu-store/src/tree_membership.rs": "55469ca7907512ccb0903845ae65bc4385ab45296d263e665112fed6dc900048",
+    "crates/kasu-store/src/webhook.rs": "51238e65bcf7c9a8090d30a19797c110141dca19dfbcf4f8bd352cab1e5d1393",
+    "tools/oss-fixtures/Dockerfile": "743ea881805a2b47563831d15c310af0b67a46ac653e00c68f7af3d8e0cd91a6",
+    "tools/oss-fixtures/prepare_byte_paths.py": "f3bd770a8dc0d6cbd234dc186c704b816aab9a7bebd132e217859d7bf8099d78",
+    "tools/oss-fixtures/record_byte_paths.py": "e1ff488a786e49526ce792b0678cd85fecd421a5355bebc4ff1430a980d9be1c",
+    "tools/oss-fixtures/run.sh": "2418c54a0f89f96eb0ef216776ac027b07e4b7f198c2b43a1d2b27fda71e1627"
+  }
+}

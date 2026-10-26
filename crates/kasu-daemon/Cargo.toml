@@ -1,0 +1,20 @@
+[package]
+name = "kasu-daemon"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+[dependencies]
+kasu-telemetry.workspace = true
+kasu-core.workspace = true
+kasu-cache.workspace = true
+kasu-object.workspace = true
+tonic.workspace = true
+tokio.workspace = true
+tokio-stream.workspace = true
+tracing.workspace = true
+clap = { version = "=4.6.7", features = ["derive", "env"] }
+rustix = { version = "1", features = ["fs", "process"] }
+[dev-dependencies]
+kasu-proto.workspace = true
+kasu-store.workspace = true
+tempfile.workspace = true

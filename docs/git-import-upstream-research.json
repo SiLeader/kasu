@@ -1,0 +1,330 @@
+{
+  "source": "libgit2/libgit2 v1.9.0",
+  "candidates": [
+    {
+      "name": "nasty",
+      "counts": {
+        "commit": 45,
+        "tree": 50,
+        "blob": 5
+      },
+      "strict_fsck_status": 1,
+      "fsck_output": "git: warning: confstr() failed with code 5: couldn't get path of DARWIN_USER_TEMP_DIR; using /tmp instead\nerror in tree 04fab819d8388295cbe3496310e4e53ef8f4a115: hasDotgit: contains '.git'\nerror in tree 0418f28a75dc0c4951c01842e0d794843a88178a: hasDotgit: contains '.git'\nerror in tree 051229bf9d30ec923052ff42db8069ccdc17159d: fullPathname: contains full pathnames\nerror in tree 07f9d4d85b75187e4db5b9cbcad3e6218582bd57: gitmodulesSymlink: .gitmodules is a symbolic link\nerror in tree 0b8206dd72a3b3b932fb562f92d29199b9398390: hasDotgit: contains '.git'\nerror in tree 10cb44a89d1a9e8bf74de3f11a2a61ee833f13b1: hasDotgit: contains '.git'\nerror in tree 119f6cd3535de0e2a15654947a7b1a5affbf1406: hasDotgit: contains '.git'\nerror in tree 13e5f8be09e8b7db074fb39b96e08215cc4a36f1: fullPathname: contains full pathnames\nerror in tree 13e5f8be09e8b7db074fb39b96e08215cc4a36f1: hasDotgit: contains '.git'\nerror in tree 16a701796bc3670e5c2fdaeccb7f1280c60b373f: fullPathname: contains full pathnames\nerror in tree 27db66b046536a0e4f64c4f8c3a490641c3fa5e5: hasDotdot: contains '..'\nerror in tree 2b4b774d8c5441b22786531f34ffc77800cda8cf: hasDotgit: contains '.git'\nerror in tree 2d23d51590ec2f53fe4b5bb3e5ca62e35e4ef85a: hasDotgit: contains '.git'\nerror in tree 380b9e58872ccf1d858be4b0fc612514a080bc40: hasDotgit: contains '.git'\nerror in tree 5d1ee4f24f66dcd62a30248588d33804656b2073: hasDotgit: contains '.git'\nerror in tree 68e8bce48725490c376d57ebc60f0170605951a5: fullPathname: contains full pathnames\nerror in tree 6b7d8a5a48a3c753b75a8fe5196f9c8704ac64ad: hasDotgit: contains '.git'\nerror in tree 6c1f5f6fec515d33036b44c596bfae28fc460cba: hasDotgit: contains '.git'\nerror in tree 7d4e382485ace068fb83b768ba1a1c674afbdc1d: fullPathname: contains full pathnames\nerror in tree 7f924ca37670afa06c7a481a2487b728b2c0185a: hasDotgit: contains '.git'\nerror in tree 8024458e7ee49c456fd8c45d3591e9936bf613b3: hasDotgit: contains '.git'\nerror in tree 81e2b84864f16ebd285b34a2b1e87ebb41f4c230: hasDotgit: contains '.git'\nerror in tree 886c0f5f71057d846f71f05a05fdffad332bc070: hasDotgit: contains '.git'\nerror in tree 8ce7a3ef59c3d602a0296321eb964218f3d52fae: hasDotgit: contains '.git'\nerror in tree 963fdf003bf7261b9155c5748dc0945349b69e68: hasDotdot: contains '..'\nerror in tree 97c14994866466aeb73e769a6f34e07c7f4b53f7: hasDotgit: contains '.git'\nerror in tree 9e683cdaf9ea2727c891b4cf8f7f11e9e28a67ca: fullPathname: contains full pathnames\nerror in tree af45aa1eb7edf804ed10f70efb96fd178527c17c: fullPathname: contains full pathnames\nerror in tree b11df9aee97a65817e8904a74f5e6a1c62c7a275: hasDotgit: contains '.git'\nerror in tree b83795b1e0eb54f22f7056119db132500d0cdc05: fullPathname: contains full pathnames\nerror in tree b83795b1e0eb54f22f7056119db132500d0cdc05: hasDotgit: contains '.git'\nerror in tree bb29ec85546d29b0bcc314242660d7772b0a3803: hasDotgit: contains '.git'\nerror in tree c489e70ed6d9f6331770eae21a77d15afd11cd99: fullPathname: contains full pathnames\nerror in tree c672414d4d08111145ef8202f21c95fa7e688aee: hasDotgit: contains '.git'\nerror in tree dc37c5f1521fb76fe1c1ac7b13187f9396a59247: hasDotgit: contains '.git'\nerror in tree e4edb361e51932b5ccedbc7ee41b4d3a4289aece: hasDotgit: contains '.git'\nerror in tree e73a04f71f11ab9d7dde72ff793882757a03f16e: hasDotgit: contains '.git'\nerror in tree eb82bf596b66f90e25f881ce9b92cb55bab4fdf5: hasDotgit: contains '.git'\nerror in tree ed4bc023f61dc345ff0084b922b229d24de206e7: hasDotgit: contains '.git'\nerror in tree ef6ed8a2b15f95795aed82a974b995cace02dbfe: hasDot: contains '.'\nerror in tree f2c059dab35f6534b3f16d90b2f1de308615320c: hasDotgit: contains '.git'\nerror in tree fd7a37d92197267e55e1fc0cc4f283a815bd79b8: hasDot: contains '.'\n",
+      "non_utf8": [],
+      "gitlinks": [],
+      "merges": [],
+      "refs": "0228b21d477f67b9f7720565da9e760b84c8b85b refs/heads/dot_backslash_dotcapitalgit_path\ne2377bdbc93b30a34ed5deefedded89b947ff8f4 refs/heads/dot_dotcapitalgit_path\n4aa347c8bb0456230f43f34833c97b9f52c40f62 refs/heads/dot_dotgit_path\n8bcbb6e0c0f9554efd5401e1ec14a4b2595eb3bf refs/heads/dot_dotgit_tree\n4414ac920acabc3eb00e3cf9375eeb0cb6859c15 refs/heads/dot_git_colon\nccbbfdb796f9b03298f5c7225e8f830784e1a3b1 refs/heads/dot_git_colon_stuff\n26b665c162f67acae67779445f3c7b9782b0a6d7 refs/heads/dot_git_dot\nbf7ab4723fcc57ecc7fceccf591d6c4773491569 refs/heads/dot_path\ndebdc4a004fda6141a17d9c297617be70d40248f refs/heads/dot_path_two\n697dc3d723a018538eb819d5db2035c15109af73 refs/heads/dot_tree\n099ed86cb8501ae483b1855c351fe1a506ac9631 refs/heads/dotcapitalgit_backslash_path\ne87caf56c91ab8d14e4ee8eb56308533503d1885 refs/heads/dotcapitalgit_path\n39fb3af508440cf970b92767f6d081c811574d2a refs/heads/dotcapitalgit_tree\nd2eb26d4938550487de59a017a7bfee8ca46b5f4 refs/heads/dotdot_dotcapitalgit_path\n1212c12915820e1ad523b6305c0dcdefea8b7e97 refs/heads/dotdot_dotgit_path\n1e3c845808fa5883aa4bcf2f882172edb72a7a32 refs/heads/dotdot_dotgit_tree\n91602c85bb50dd834205edd30435b77d5bb9ccf0 refs/heads/dotdot_path\n8f1dcd43aa0164eb6ec319c3ec8879ca5cf62c1e refs/heads/dotdot_tree\nb8edf3ad62dbcbc983857a5bfee7b0181ee1a513 refs/heads/dotgit_alternate_data_stream\n099ed86cb8501ae483b1855c351fe1a506ac9631 refs/heads/dotgit_backslash_path\n46fe10fa23259b089ab050788b06df979cd7d054 refs/heads/dotgit_hfs_ignorable_1\n9ab85e507899c19dca57778c9b6e5f1ec799b911 refs/heads/dotgit_hfs_ignorable_10\n15f7d9f9514eeb65b9588c49b10b1da145a729a2 refs/heads/dotgit_hfs_ignorable_11\nc3a70f8a376f17adccfb52b48e2831bfef2a2172 refs/heads/dotgit_hfs_ignorable_12\nc2a2ddd339574e5cbfd9228be840eb1bf496de4e refs/heads/dotgit_hfs_ignorable_13\n712ceb8eb3e57072447715bc4057c57aa50f629a refs/heads/dotgit_hfs_ignorable_14\n3b24e5c751ee9c7c89df32a0d959748aa3d0112c refs/heads/dotgit_hfs_ignorable_15\nc8f98a1762ec016c30f0d73512df399dedefc3fd refs/heads/dotgit_hfs_ignorable_16\n35ae236308929a536fb4e852278a9b98c42babb3 refs/heads/dotgit_hfs_ignorable_2\n96156716851c0afb4702b0d2c4ac8c496a730e29 refs/heads/dotgit_hfs_ignorable_3\n7a0538bc4e20aecb36ef221f2077eb30ebe0bcb2 refs/heads/dotgit_hfs_ignorable_4\n1635c47d80914f0abfa43dd4234a948db5bdb107 refs/heads/dotgit_hfs_ignorable_5\n9e24726d64589ba02430da8cebb5712dad35593d refs/heads/dotgit_hfs_ignorable_6\nce22b3cd9a01efafc370879c1938e0c32fb6f195 refs/heads/dotgit_hfs_ignorable_7\na576a98d3279989226992610372035b76a01a3e9 refs/heads/dotgit_hfs_ignorable_8\n442894787eddb1e84a952f17a027590e2c6c02cd refs/heads/dotgit_hfs_ignorable_9\n5341a7b545d71198b076b8ba3374a75c9a290640 refs/heads/dotgit_path\n6594bdbad86bbc8d3ed0806a23827203fbab56c6 refs/heads/dotgit_tree\n94f37c29173c8fa45a232b17e745c82132b2fafd refs/heads/git_tilde1\n899ff28744bed5bece69c78ba752c7dc3e954629 refs/heads/git_tilde2\nfa9cfdbeaaf3a91ff4b84d74412cd59d9b16a615 refs/heads/git_tilde3\ne30b60b120761f44ebd0f0a7b0e9445ce8e11d68 refs/heads/gitmodules-symlink\ne399c4fc4c07cb7947d2f3d966bc374df6ccc691 refs/heads/master\n4d83272d0d372e1232ddc4ff3260d76fdfa2015a refs/heads/symlink1\n9d5898503adc01d763e279ac8fcefbe865b19031 refs/heads/symlink2\ncf6fcf8cdf7e8d4cda3b11b0ba02d0d5125fbbd7 refs/heads/symlink3\n",
+      "upstream_resource": "tests/resources/nasty/.gitted"
+    },
+    {
+      "name": "binaryunicode",
+      "counts": {
+        "commit": 3,
+        "tree": 3,
+        "blob": 5
+      },
+      "strict_fsck_status": 0,
+      "fsck_output": "git: warning: confstr() failed with code 5: couldn't get path of DARWIN_USER_TEMP_DIR; using /tmp instead\n",
+      "non_utf8": [],
+      "gitlinks": [],
+      "merges": [],
+      "refs": "39e046d1416a208265b754124d0d197b4c9c0c47 refs/heads/branch1\n9e7d8bcd4d24dd57e3f1179aaf7afe648ff50e80 refs/heads/branch2\nd2a291469f4c11f387600d189313b927ddfe891c refs/heads/master\n",
+      "upstream_resource": "tests/resources/binaryunicode/.gitted"
+    },
+    {
+      "name": "submodules",
+      "counts": {
+        "commit": 2,
+        "tree": 2,
+        "blob": 2
+      },
+      "strict_fsck_status": 0,
+      "fsck_output": "git: warning: confstr() failed with code 5: couldn't get path of DARWIN_USER_TEMP_DIR; using /tmp instead\n",
+      "non_utf8": [],
+      "gitlinks": [
+        {
+          "tree": "b60fd986699ba4e9e68bea07cf8e793f323ef888",
+          "name_hex": "746573747265706f",
+          "target": "a65fedf39aefe402d3bb6e24df4d4f5fe4547750"
+        }
+      ],
+      "merges": [],
+      "refs": "97896810b3210244a62a82458b8e0819ecfc6850 refs/heads/master\n",
+      "upstream_resource": "tests/resources/submodules.git"
+    },
+    {
+      "name": "testrepo",
+      "counts": {
+        "commit": 15,
+        "tag": 5,
+        "blob": 15,
+        "tree": 20
+      },
+      "strict_fsck_status": 1,
+      "fsck_output": "git: warning: confstr() failed with code 5: couldn't get path of DARWIN_USER_TEMP_DIR; using /tmp instead\nwarning: refs/heads/chomped: refMissingNewline: misses LF at the end\nwarning: refs/heads/trailing: trailingRefContent: has trailing garbage: ' \n'\nerror in commit 258f0e2a959a364e40ed6603d5d44fbb24765b10: missingNameBeforeEmail: invalid author/committer line - missing space before email\nwarning in tag 4a23e2e65ad4e31c4c9db7dc746650bfad082679: missingTaggerEntry: invalid format - expected 'tagger' line\n",
+      "non_utf8": [],
+      "gitlinks": [],
+      "merges": [
+        "a4a7dce85cf63874e984719f4fdd239f5145052f",
+        "be3563ae3f795b2b4353bcce3a527ad0a4f7f644"
+      ],
+      "refs": "521d87c1ec3aef9824daf6d96cc0ae3710766d91 refs/blobs/annotated_tag_to_blob\na4a7dce85cf63874e984719f4fdd239f5145052f refs/heads/br2\na4a7dce85cf63874e984719f4fdd239f5145052f refs/heads/cannot-fetch\ne90810b8df3e80c413d903f631643c716887138d refs/heads/chomped\n258f0e2a959a364e40ed6603d5d44fbb24765b10 refs/heads/haacked\na65fedf39aefe402d3bb6e24df4d4f5fe4547750 refs/heads/master\na65fedf39aefe402d3bb6e24df4d4f5fe4547750 refs/heads/not-good\n41bc8c69075bbdb46c5c6f0566cc8cc5b46e8bd9 refs/heads/packed\n4a202b346bb0fb0db7eff3cffeb3c70babbd2045 refs/heads/packed-test\n763d71aadf09a7951596c9746c024e7eece7c7af refs/heads/subtrees\ne90810b8df3e80c413d903f631643c716887138d refs/heads/test\n9fd738e8f7967c078dceed8190330fc8648ee56a refs/heads/track-local\ne90810b8df3e80c413d903f631643c716887138d refs/heads/trailing\n8496071c1b46c854b31185ea97743be6a8774479 refs/heads/with-empty-log\nd07b0f9a8c89f1d9e74dc4fce6421dec5ef8a659 refs/notes/fanout\nbe3563ae3f795b2b4353bcce3a527ad0a4f7f644 refs/remotes/test/master\n521d87c1ec3aef9824daf6d96cc0ae3710766d91 refs/tags/annotated_tag_to_blob\n7b4384978d2493e851f9cca7858815fac9b10980 refs/tags/e90810b\n849a5e34a26815e821f865b8479f5815a47af0fe refs/tags/hard_tag\n1385f264afb75a56a5bec74243be9b367ba4ca08 refs/tags/point_to_blob\n4a23e2e65ad4e31c4c9db7dc746650bfad082679 refs/tags/taggerless\nb25fa35b38051e4ae45d4222e795f9df2e43f1d1 refs/tags/test\n849a5e34a26815e821f865b8479f5815a47af0fe refs/tags/wrapped_tag\n",
+      "upstream_resource": "tests/resources/testrepo.git"
+    }
+  ],
+  "investigated_date": "2026-10-26",
+  "upstream": "https://github.com/libgit2/libgit2",
+  "release": "v1.9.0",
+  "commit": "338e6fb681369ff0537719095e22ce9dc602dbf0",
+  "scope": "Git object-graph inspection only; git config/hooks/alternates and worktree links were not imported",
+  "conclusion": "submodules.git is a valid additional gitlink source; none of these four candidates contains non-UTF8 tree names; M2 additional OSS acceptance is not yet complete",
+  "kasu_import_checked_at_initial_inspection": false,
+  "counts_scope": "objects reachable from refs",
+  "followup": {
+    "gitlink_kasu_roundtrip_verified": true,
+    "evidence": "git-import-upstream-submodule/summary.json",
+    "non_utf8_oss_selection": "pending"
+  },
+  "non_utf8_follow_up": {
+    "date": "2026-10-26",
+    "result": "Selected and verified the fixed GitLab invalid-utf8-diff-paths branch and v1.0.0 tag; see the separate roundtrip evidence",
+    "investigations": [
+      {
+        "source": "https://github.com/libgit2/libgit2.git",
+        "commit": "338e6fb681369ff0537719095e22ce9dc602dbf0",
+        "scope": "zlib-decompressed regular loose object files matching tests/resources/**/objects/[0-9a-f]{2}/[0-9a-f]{38}; tree entry names inspected as bytes",
+        "loose_objects_scanned": 2308,
+        "non_utf8_tree_names_found": 0,
+        "limitations": "Packed fixture objects and external archives are outside this scan"
+      },
+      {
+        "source": "https://github.com/GitoxideLabs/gitoxide.git",
+        "commit": "9f805e24a0faf54379a0a5bfd4cbc0b4a46a365e",
+        "scope": "242 fixture shell scripts read, searching UTF/Latin/non-ASCII and hexadecimal/octal byte escapes",
+        "fixture_scripts_read": 242,
+        "result": "No qualifying tracked-path repository archive identified from these scripts",
+        "limitations": "Not a byte scan of every embedded Git object or every archive; does not establish absence"
+      },
+      {
+        "source": "https://github.com/eclipse-jgit/jgit.git",
+        "commit": "b853dda82fca99295636a4ac20b674bf68a8ef35",
+        "scope": "Seven .pack files under org.eclipse.jgit.test/tst-rsrc; index-pack into a temporary bare ODB, then inspect every tree entry name as bytes",
+        "pack_files": 7,
+        "objects": {
+          "tree": 42,
+          "tag": 11,
+          "commit": 28,
+          "blob": 21
+        },
+        "non_utf8_tree_names_found": 0,
+        "limitations": "No refs reconstructed and no Kasu import attempted"
+      },
+      {
+        "source": "https://github.com/go-git/go-git-fixtures.git",
+        "commit": "3e8115530aa3ddbd378d5355920a85cd5b176a94",
+        "scope": "SHA-1 data/*.pack blobs available after blob:limit=2m fetch; each loaded in a clean bare repository with index-pack, then every tree entry name checked for UTF-8 validity",
+        "candidate_packs": 24,
+        "loaded_packs": 22,
+        "tree_objects_scanned_including_duplicates": 3704,
+        "non_utf8_tree_names_found": 0,
+        "limitations": "Larger pack not fetched; one unresolved-delta pack omitted; no refs reconstructed or Kasu import attempted",
+        "pack_results": [
+          {
+            "path": "data/pack-06ede69e9eba9f1af36eeee184402dc3ad705cd7.pack",
+            "blob": "099ddb9da9257ce50165e1d13c4af9d8e194f1f8",
+            "bytes": 52624,
+            "objects": 195,
+            "trees": 67,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-0d3d824fb5c930e7e7e1f0f399f2976847d31fd3.pack",
+            "blob": "3fc836b5b396e119b70f584930249e2832bd6aba",
+            "bytes": 178490,
+            "objects": 950,
+            "trees": 342,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-0d9b6cfc261785837939aaede5986d7a7c212518.pack",
+            "blob": "d0b8619798bfce89602d9a823a116355d1389533",
+            "bytes": 96725,
+            "objects": 48,
+            "trees": 14,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-135fe3d1ad828afe68706f1d481aedbcfa7a86d2.pack",
+            "blob": "08bacdc0f2966e1321dbfa1f62868eab2851caec",
+            "bytes": 87767,
+            "objects": 68,
+            "trees": 29,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-1ea0b3971fd64fdcdf3282bfb58e8cf10095e4e6.pack",
+            "blob": "7f415139548abcf0f18e986ae00948e745879899",
+            "bytes": 14874,
+            "objects": 70,
+            "trees": 16,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-21b33a26eb7ffbd35261149fe5d886b9debab7cb.pack",
+            "blob": "f452e2c94d55ecf14273b8eaa57a2a3a26df2a27",
+            "bytes": 22108,
+            "objects": 104,
+            "trees": 37,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-29f304662fd64f102d94722cf5bd8802d9a9472c.pack",
+            "blob": "5642e13f4ad9f382e660fe1a171313e4f0365aab",
+            "bytes": 184,
+            "objects": 2,
+            "trees": 1,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-3559b3b47e695b33b0913237a4df3357e739831c.pack",
+            "status": "not downloaded under 2MiB filter"
+          },
+          {
+            "path": "data/pack-3638209d310e10ea8d90c362d568be65dd5e03a6.pack",
+            "blob": "5a3b35954693d91a480c310bfcb58d17356df5b4",
+            "bytes": 3717,
+            "objects": 47,
+            "trees": 16,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-36ef7a2296bfd526020340d27c5e1faa805d8d38.pack",
+            "blob": "4bd0f9f37fa6a27a8bedfec302299d34a5abec32",
+            "bytes": 41298,
+            "objects": 263,
+            "trees": 125,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-4ec6344877f494690fc800aceaf2ca0e86786acb.pack",
+            "blob": "818f3f68bd05699037eb5934571adc92bfb394ba",
+            "bytes": 467088,
+            "objects": 478,
+            "trees": 168,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-61f0ee9c75af1f9678e6f76ff39fbe372b6f1c45.pack",
+            "blob": "5b67c152cef93cd491fed34c10f2190759883d9c",
+            "bytes": 84615,
+            "objects": 28,
+            "trees": 11,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-63bbc2e1bde392e2205b30fa3584ddb14ef8bd41.pack",
+            "blob": "5357c0d3a6f220b470da61c51306436f9e1deb23",
+            "bytes": 85474,
+            "objects": 31,
+            "trees": 12,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-769137af7784db501bca677fbd56fef8b52515b7.pack",
+            "blob": "ce3467b17ffeef7817837ed35b58b2a12ad3397b",
+            "bytes": 3053,
+            "objects": 30,
+            "trees": 11,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-7861f2632868833a35fe5e4ab94f99638ec5129b.pack",
+            "blob": "81e8aff03c76496c96f93932132095be9ccabf6e",
+            "bytes": 1836686,
+            "objects": 2743,
+            "trees": 1063,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-90fedc00729b64ea0d0406db861be081cda25bbf.pack",
+            "blob": "8587ebdb157942c8efa92cd4d0445ad5b270a434",
+            "bytes": 6680,
+            "objects": 6,
+            "trees": 2,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-9733763ae7ee6efcf452d373d6fff77424fb1dcc.pack",
+            "blob": "4a57a61551e6b42c324b98cda3f69ee93f8e5b03",
+            "bytes": 42029,
+            "objects": 142,
+            "trees": 59,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-a3fed42da1e8189a077c0e6846c040dcf73fc9dd.pack",
+            "blob": "0458cc0a559cd8ad7572d3b88d7d358a53c2fe4a",
+            "bytes": 84794,
+            "objects": 31,
+            "trees": 12,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-b68617dd8637fe6409d9842825a843a1d9a6e484.pack",
+            "blob": "e916a0558ff67a5601269610c693366058712aa5",
+            "bytes": 674,
+            "objects": 7,
+            "trees": 1,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-bb8ee94710d3fa39379a630f76812c187217b312.pack",
+            "blob": "862536c41a9ca734457a119aae33aa645cc630bc",
+            "bytes": 3136,
+            "objects": 27,
+            "trees": 10,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-bc4b855a55cae7703c023d4e36e3a7c9f5d84491.pack",
+            "blob": "4bf8e6f4b9c14a3cf3ea39d7d571be03aa2e65ba",
+            "bytes": 467,
+            "objects": 6,
+            "trees": 2,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-c544593473465e6315ad4182d04d366c4592b829.pack",
+            "blob": "5aacf11d1cb6f143969bf046d3b1c1ae93809577",
+            "bytes": 85585,
+            "objects": 31,
+            "trees": 12,
+            "non_utf8": []
+          },
+          {
+            "path": "data/pack-ee4fef0ef8be5053ebae4ce75acf062ddf3031fb.pack",
+            "status": "index-pack failed",
+            "stderr": "fatal: pack has 2 unresolved deltas\n"
+          },
+          {
+            "path": "data/pack-f2e0a8889a746f7600e07d2246a2e29a72f696be.pack",
+            "blob": "111bfd05c7a0451f6091223ee4f5ddf7ac50d1b3",
+            "bytes": 1542854,
+            "objects": 3956,
+            "trees": 1694,
+            "non_utf8": []
+          }
+        ]
+      }
+    ],
+    "selected": {
+      "source": "https://gitlab.com/gitlab-org/gitlab-test.git",
+      "branch_commit": "99e4853698007ed7e68826730ef5313d24841991",
+      "tag_oid": "f4e6814c3e4e7a0de82a9e7cd20c626cc963a2f8",
+      "scope": "all 183 objects reachable from the fixed branch and tag, with all 50 commits and their complete parents",
+      "non_utf8_path_hex": "68656c6c6f80776f726c64",
+      "kasu_roundtrip_verified": true,
+      "evidence": "git-import-byte-paths/summary.json"
+    }
+  }
+}

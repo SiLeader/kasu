@@ -1,0 +1,48 @@
+# git push --force df347924fabfd37a1ce2f221fe30309dece3e9db:refs/heads/main
+packet:          git< # service=git-receive-pack
+packet:          git< 0000
+packet:          git< 1affb6bfb2ed21803aa426f14688cca8fdc77ba9 refs/heads/main\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet:          git< b2d24c5d348e32e15c3359f12223e1f6efca83a1 refs/heads/other
+packet:          git< 0000
+packet:          git> +df347924fabfd37a1ce2f221fe30309dece3e9db:refs/heads/main
+packet:          git> 0000
+packet:          git< +df347924fabfd37a1ce2f221fe30309dece3e9db:refs/heads/main
+packet:          git< 0000
+packet:          git< 1affb6bfb2ed21803aa426f14688cca8fdc77ba9 refs/heads/main\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet:          git< b2d24c5d348e32e15c3359f12223e1f6efca83a1 refs/heads/other
+packet:          git< 0000
+packet:          git> 1affb6bfb2ed21803aa426f14688cca8fdc77ba9 df347924fabfd37a1ce2f221fe30309dece3e9db refs/heads/main\0 report-status side-band-64k object-format=sha1 agent=git/2.54.0-Darwin
+packet:          git> 0000
+packet:          git< 00ad1affb6bfb2ed21803aa426f14688cca8fdc77ba9 df347924fabfd37a1ce2f221fe30309dece3e9db refs/heads/main\0 report-status side-band-64k object-format=sha1 agent=git/2.54.0-Darwin0000
+packet:          git< PACK ...
+packet:          git> 0000
+packet:     sideband< \1000eunpack ok0046ng refs/heads/main final tree changes a path that is not writable0000
+packet:     sideband< 0000
+packet:          git< unpack ok
+packet:          git< ng refs/heads/main final tree changes a path that is not writable
+packet:          git< 0000
+packet:          git> 0000
+# git push main
+packet:          git< # service=git-receive-pack
+packet:          git< 0000
+packet:          git< 1affb6bfb2ed21803aa426f14688cca8fdc77ba9 refs/heads/main\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet:          git< b2d24c5d348e32e15c3359f12223e1f6efca83a1 refs/heads/other
+packet:          git< 0000
+packet:          git> refs/heads/main:refs/heads/main
+packet:          git> 0000
+packet:          git< refs/heads/main:refs/heads/main
+packet:          git< 0000
+packet:          git< 1affb6bfb2ed21803aa426f14688cca8fdc77ba9 refs/heads/main\0report-status side-band-64k delete-refs ofs-delta object-format=sha1 agent=kasu/0.1.0 atomic
+packet:          git< b2d24c5d348e32e15c3359f12223e1f6efca83a1 refs/heads/other
+packet:          git< 0000
+packet:          git> 1affb6bfb2ed21803aa426f14688cca8fdc77ba9 b705ff4a0da1f2b79e14689bd35ed256ef10d8d3 refs/heads/main\0 report-status side-band-64k object-format=sha1 agent=git/2.54.0-Darwin
+packet:          git> 0000
+packet:          git< 00ad1affb6bfb2ed21803aa426f14688cca8fdc77ba9 b705ff4a0da1f2b79e14689bd35ed256ef10d8d3 refs/heads/main\0 report-status side-band-64k object-format=sha1 agent=git/2.54.0-Darwin0000
+packet:          git< PACK ...
+packet:          git> 0000
+packet:     sideband< \1000eunpack ok0017ok refs/heads/main0000
+packet:     sideband< 0000
+packet:          git< unpack ok
+packet:          git< ok refs/heads/main
+packet:          git< 0000
+packet:          git> 0000

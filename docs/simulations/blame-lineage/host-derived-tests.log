@@ -1,0 +1,55 @@
+   Compiling kasu-derived v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-derived)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.05s
+     Running unittests src/lib.rs (target/debug/deps/kasu_derived-67b9a1223fbba974)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/derived.rs (target/debug/deps/derived-817af5f333f277b5)
+
+running 3 tests
+test file_directory_replacement_and_parent_sharing ... ok
+test iterative_long_history_and_skip_pointers ... ok
+test apply_diff_roundtrip ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 49.27s
+
+     Running tests/lineage.rs (target/debug/deps/lineage-e34feaa310c2b7f8)
+
+running 11 tests
+test late_dependency_cycles_fail_without_recursion ... ok
+test deleted_source_is_not_renamed_to_two_destinations_and_binary_copies_are_exact ... ok
+test cold_rename_and_opt_in_copies_preserve_original_paths_and_line_numbers ... ok
+test merge_tracks_the_second_parents_rename_and_recreation_starts_new_history ... ok
+test moved_and_copied_fragments_keep_byte_paths_and_survive_edits_and_second_parents ... ok
+test ambiguous_fragment_work_is_bounded_and_large_roots_need_no_search ... ok
+test reordered_unique_blocks_keep_all_original_line_numbers ... ok
+test similarity_matching_is_one_to_one_and_the_pair_budget_is_explicit ... ok
+test reverse_index_matches_independently_materialized_tree ... ok
+test a_thousand_renames_keep_the_root_origin_without_recursive_derivation ... ok
+test fragment_limits_fail_without_publishing_partial_results_and_short_copies_stay_new ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 21.73s
+
+     Running tests/lines.rs (target/debug/deps/lines-8d62f4025c7d7001)
+
+running 1 test
+test line_patch_reconstructs_bytes_and_matches_are_monotone ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+     Running tests/scheduler.rs (target/debug/deps/scheduler-ab78964e33323701)
+
+running 2 tests
+test cycles_and_unregistered_types_are_errors ... ok
+test lazy_keys_versions_dependencies_and_concurrent_singleflight ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests kasu_derived
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

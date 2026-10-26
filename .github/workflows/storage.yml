@@ -1,0 +1,22 @@
+name: Shared production storage
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '47 18 * * *'
+permissions:
+  contents: read
+jobs:
+  postgres-s3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RUSTC_WRAPPER: ""
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fixed-toolchain real PostgreSQL and S3 tests
+        run: python3 tools/storage/run.py --linux --workdir "${{ runner.temp }}/kasu-storage"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: storage-evidence
+          path: ${{ runner.temp }}/kasu-storage

@@ -1,0 +1,59 @@
+{
+  "success": true,
+  "captured_date": "2026-10-24",
+  "source_sha256": {
+    "crates/kasu-server/src/read_scope.rs": "0e40cdc5940078abc61bfcb64385c96121572ff1d3adc916dec195b7da320dce",
+    "crates/kasu-server/src/backend.rs": "606d3bba0532c051484a17fa6ab67559d3eb4018058553c1dd63648f9ac479d4",
+    "crates/kasu-server/src/accounts.rs": "f224664216a89d56b235644f412ab3509c2fa29c3f39ae9823ff8c1deb2b6247",
+    "crates/kasu-server/src/auth.rs": "f7a6e4a4d1870cb68260bf30cd12a4cc4ce0beb48948bd8d5fd69964661e36f8",
+    "crates/kasu-server/src/objects.rs": "d3b756952aacf6ced92ee3b7143b87ae96ba488c47b4d6fab61a90a9b289e73a",
+    "crates/kasu-server/src/transport.rs": "bc092980394936647c2534950613d4fd8260e7bda21de4996e32a4fe03b67c1a",
+    "crates/kasu-server/src/write.rs": "6a444e94b6ae7831c13c8a4ff0de9897cc83964bb60c56e617abd9902d4653c4",
+    "crates/kasu-server/src/land.rs": "80f6a001ce617b478c7c03d63ba33dc219fff9ebe141327592875eeb97467472",
+    "crates/kasu-server/tests/accounts.rs": "f0f735452b857880f49da1ab7fe76955b68e24d5c1ef8af937d2a8956b5fa554",
+    "crates/kasu-cli/tests/e2e.rs": "002109273e80a606ee62f950770178b564e28f5f1d618503cde42fe0b68438e8",
+    "crates/kasu-proto/proto/kasu.proto": "a59a26f1ef4b04901b474c23df8e406783e50c0800d825ec17e0866ce7cc8107",
+    "crates/kasu-proto/build.rs": "40a1e32da4fe8174badfee0d5f73775ca7d0c345ca6e69e1212a9220b107cce7",
+    "tools/ssh/Dockerfile": "726f88597e193402836ee796b989a0238ea04cdb99ee11d8031a19d2f00d513c",
+    ".github/workflows/ssh.yml": "1b0fcee86b5aa983f3a29d9e003fd89ca3079949aa27f325779e055c4b6012f7",
+    "tools/read-acl/record.py": "f7d730baeefcb1e471644ce9d897c7830c7f4cada0ebbfb4547a1182fcb57b34"
+  },
+  "test_counts": {
+    "macos_server": 62,
+    "macos_cli": 12,
+    "linux_server": 5,
+    "linux_cli": 12,
+    "linux_ssh": 1
+  },
+  "platforms": [
+    "macOS arm64 Git 2.54.0",
+    "Linux arm64 Rust 1.90.0 Git 2.39.5 OpenSSH 9.2p1"
+  ],
+  "verified": [
+    "canonical filtered roots",
+    "outside-only updates preserve filtered root ID",
+    "metadata changes filtered, source IDs retained, explicit read_filtered flag",
+    "HTTP and gRPC path denial and non-UTF8 path allowance",
+    "root and private subtree ID denial despite full-repo membership",
+    "scope-only blob metadata and whole-batch authorization before streaming",
+    "hop protection retained for full-reader PAT; direct scoped account Objects access",
+    "private blob reference copying and empty existence-probe upload denied",
+    "allowed upload and draft; outside-readable-scope draft denied",
+    "hidden rewrite conflict denied without exposing entries",
+    "full Git denied and allowed projection advertisement accepted",
+    "permission narrowing selects a separate grant namespace",
+    "two real server processes, filtered root/grants and Land receipt after PAT rotation/restart",
+    "real CLI checkout without sparse flags, commit/Land and hidden content preservation",
+    "CLI never requests the hidden blob; private show returns authorization error",
+    "existing Metadata/Objects/Writer/runtime/Git and CLI regression",
+    "real OpenSSH and go-git regression"
+  ],
+  "not_verified": [
+    "security audit",
+    "scope delegation to shared cache/daemon",
+    "persistent read-grant cache GC and capacity",
+    "production deployment",
+    "GitHub workflow execution",
+    "real FUSE mount with scoped account"
+  ]
+}

@@ -1,0 +1,32 @@
+   Compiling kasu-cache v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-cache)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.38s
+     Running tests/disk_lru.rs (target/debug/deps/disk_lru-fd24f25eb26d9a14)
+
+running 15 tests
+test disk_writer_child ... ignored, subprocess fixture invoked by kill_during_a_physical_mutation_recovers_a_bounded_valid_cache
+test invalid_limits_do_not_create_a_cache ... ok
+test symlinked_managed_directories_and_files_fail_without_touching_targets ... ok
+test initialization_cannot_adopt_unrelated_files_or_authoritative_repository_storage ... ok
+test oversized_frames_are_served_uncached_without_evicting_existing_entries ... ok
+test managed_snapshot_retention_ignores_user_files_and_diagnostics_do_not_wait_for_disk_lock ... ok
+test legacy_markers_migrate_but_orphans_and_interrupted_owned_staging_are_removed ... ok
+test lru_clock_and_cumulative_counters_handle_the_signed_integer_boundary ... ok
+test interrupted_publication_and_eviction_are_reconciled_before_the_next_operation ... ok
+test kill_during_a_physical_mutation_recovers_a_bounded_valid_cache ... ok
+test shared_tree_blob_frame_counts_once_and_type_eviction_preserves_other_registration ... ok
+test byte_and_entry_limits_persist_lru_and_inflight_frames_survive_eviction ... ok
+test first_compressed_frame_is_preserved_and_snapshot_budget_uses_its_actual_size ... ok
+test valid_snapshot_import_pins_every_manifest_key_and_capacity_rejection_has_no_prefix ... ok
+test concurrent_instances_and_snapshots_share_one_budget_without_wrong_frames ... ok
+
+test result: ok. 14 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 3.57s
+
+     Running tests/snapshot.rs (target/debug/deps/snapshot-af3530d870be3f40)
+
+running 3 tests
+test lru_budget_and_disk_type_index_do_not_expose_unregistered_data ... ok
+test invalid_snapshot_never_publishes_a_prefix_and_never_extracts_archive_paths ... ok
+test disk_reopen_and_snapshot_preserve_exact_frames_and_repo_scope ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.39s
+

@@ -1,0 +1,136 @@
+Running unittests src/lib.rs
+running 1 test
+test clock_tests::circuit_cooldown_and_half_open_probe_follow_the_runtime_clock ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+Running unittests src/main.rs
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+Running tests/disk_lru.rs
+running 15 tests
+test disk_writer_child ... ignored, subprocess fixture invoked by kill_during_a_physical_mutation_recovers_a_bounded_valid_cache
+test invalid_limits_do_not_create_a_cache ... ok
+test symlinked_managed_directories_and_files_fail_without_touching_targets ... ok
+test initialization_cannot_adopt_unrelated_files_or_authoritative_repository_storage ... ok
+test oversized_frames_are_served_uncached_without_evicting_existing_entries ... ok
+test managed_snapshot_retention_ignores_user_files_and_diagnostics_do_not_wait_for_disk_lock ... ok
+test legacy_markers_migrate_but_orphans_and_interrupted_owned_staging_are_removed ... ok
+test lru_clock_and_cumulative_counters_handle_the_signed_integer_boundary ... ok
+test interrupted_publication_and_eviction_are_reconciled_before_the_next_operation ... ok
+test shared_tree_blob_frame_counts_once_and_type_eviction_preserves_other_registration ... ok
+test kill_during_a_physical_mutation_recovers_a_bounded_valid_cache ... ok
+test byte_and_entry_limits_persist_lru_and_inflight_frames_survive_eviction ... ok
+test first_compressed_frame_is_preserved_and_snapshot_budget_uses_its_actual_size ... ok
+test valid_snapshot_import_pins_every_manifest_key_and_capacity_rejection_has_no_prefix ... ok
+test concurrent_instances_and_snapshots_share_one_budget_without_wrong_frames ... ok
+
+test result: ok. 14 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 4.14s
+Running tests/layers.rs
+running 6 tests
+test stream_and_pending_limits_reject_excess_work_then_release_capacity ... ok
+test hierarchy_credentials_roles_scope_and_cancelled_leaders_are_enforced ... ok
+test thousand_clients_coalesce_across_two_nodes_and_warm_hits_survive_cache_loss ... ok
+test outage_opens_a_circuit_and_concurrent_requests_cannot_amplify_it ... ok
+test distinct_misses_obey_global_concurrency_and_request_spacing ... ok
+test cache_write_failures_stop_refetches_preserve_warm_hits_and_recover ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.63s
+Running tests/process.rs
+running 1 test
+test cache_executable_serves_only_objects_exposes_metrics_and_uses_its_hop_token ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.51s
+Running tests/snapshot.rs
+running 3 tests
+test lru_budget_and_disk_type_index_do_not_expose_unregistered_data ... ok
+test invalid_snapshot_never_publishes_a_prefix_and_never_extracts_archive_paths ... ok
+test disk_reopen_and_snapshot_preserve_exact_frames_and_repo_scope ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+Running unittests src/lib.rs
+running 4 tests
+test remote::tests::frames_reject_truncation_wrong_ids_offsets_and_data_after_completion ... ok
+test working::tests::recovery_preserves_edits_after_install_and_keeps_the_original_backup ... ok
+test working::tests::recovery_does_not_remove_matching_user_files_before_install ... ok
+test working::tests::interrupted_install_rolls_back_and_committed_install_survives_cleanup_crash ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+Running unittests src/main.rs
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+Running tests/e2e.rs
+running 12 tests
+test metadata_snapshot_and_blob_sizes_do_not_download_file_contents ... ok
+test byte_paths_survive_the_remote_snapshot_and_platform_checkout_rules ... ok
+test notify_watch_observes_real_edits_and_does_not_hold_the_working_copy_lock ... ok
+test untracked_files_existing_destinations_and_symlink_parents_are_preserved ... ok
+test real_cli_blame_flags_change_moved_and_copied_line_origins ... ok
+test excluded_new_subtrees_stay_unrequested_and_specific_includes_override_exclusions ... ok
+test read_scoped_account_checks_out_commits_and_lands_without_hidden_objects ... ok
+test lost_land_reply_retains_the_key_and_blocks_a_new_commit_until_replay ... ok
+test amending_an_addition_to_deletion_and_file_directory_type_changes ... ok
+test real_cli_sparse_checkout_amend_rebase_land_and_metadata_queries ... ok
+test real_cli_uses_the_unix_daemon_and_a_snapshot_can_boot_without_the_cache ... ok
+test conflicts_replay_without_losing_files_and_gitlinks_can_be_committed ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.97s
+Running unittests src/lib.rs
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+Running unittests src/main.rs
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+Running tests/process.rs
+running 3 tests
+test socket_lease_preserves_non_socket_files_and_requires_a_private_directory ... ok
+test executable_boots_offline_snapshots_periodically_and_reclaims_only_stale_sockets ... ok
+test bounded_disk_refills_after_eviction_survives_restart_and_retains_only_managed_snapshots ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.73s
+Running unittests src/lib.rs
+running 2 tests
+test cache::tests::seeded_cache_faults_repeat_with_real_layers_and_virtual_deadlines ... ok
+test tests::seeded_schedule_is_repeatable_and_preserves_every_accepted_write ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.95s
+Running unittests src/main.rs
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+Running tests/land_runtime.rs
+running 4 tests
+test policy_is_rechecked_between_preparation_and_commit ... ok
+test exhausted_budget_can_resubmit_the_same_key ... ok
+test transient_failure_and_lost_reply_recover_without_duplicate_landing ... ok
+test cancellation_deadline_and_dropped_future_prevent_a_late_commit ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.46s
+
+   Doc-tests kasu_cache
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests kasu_cli
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests kasu_daemon
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests kasu_sim
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

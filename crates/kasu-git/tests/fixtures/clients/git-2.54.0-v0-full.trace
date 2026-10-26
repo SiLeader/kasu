@@ -1,0 +1,47 @@
+# git version 2.54.0 (Apple Git-157)
+# file transport / fixed TestGitRepository fixture; timestamp/PID removed
+ upload-pack> 49322bb17d3acc9146f98c97d078513228bbf3c0 HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.54.0-Darwin
+ upload-pack> 0966a434eb1a025db6b71485ab63a3bfbea520b6 refs/heads/first-merge
+ upload-pack> 49322bb17d3acc9146f98c97d078513228bbf3c0 refs/heads/master
+ upload-pack> 42e4e7c5e507e113ebbb7801b16b52cf867b7ce1 refs/heads/no-parent
+ upload-pack> d96c4e80345534eccee5ac7b07fc7603b56124cb refs/tags/annotated_tag
+ upload-pack> c070ad8c08840c8116da865b2d65593a6bb9cd2a refs/tags/annotated_tag^{}
+ upload-pack> 55a1a760df4b86a02094a904dfa511deb5655905 refs/tags/blob
+ upload-pack> 8f50ba15d49353813cc6e20298002c0d17b0a9ee refs/tags/commit_tree
+ upload-pack> 6e0c7bdb9b4ed93212491ee778ca1c65047cab4e refs/tags/nearly-dangling
+ upload-pack> 0000
+       clone< 49322bb17d3acc9146f98c97d078513228bbf3c0 HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.54.0-Darwin
+       clone< 0966a434eb1a025db6b71485ab63a3bfbea520b6 refs/heads/first-merge
+       clone< 49322bb17d3acc9146f98c97d078513228bbf3c0 refs/heads/master
+       clone< 42e4e7c5e507e113ebbb7801b16b52cf867b7ce1 refs/heads/no-parent
+       clone< d96c4e80345534eccee5ac7b07fc7603b56124cb refs/tags/annotated_tag
+       clone< c070ad8c08840c8116da865b2d65593a6bb9cd2a refs/tags/annotated_tag^{}
+       clone< 55a1a760df4b86a02094a904dfa511deb5655905 refs/tags/blob
+       clone< 8f50ba15d49353813cc6e20298002c0d17b0a9ee refs/tags/commit_tree
+       clone< 6e0c7bdb9b4ed93212491ee778ca1c65047cab4e refs/tags/nearly-dangling
+       clone< 0000
+       clone> want 49322bb17d3acc9146f98c97d078513228bbf3c0 multi_ack_detailed side-band-64k thin-pack no-progress ofs-delta deepen-since deepen-not agent=git/2.54.0-Darwin
+       clone> want 0966a434eb1a025db6b71485ab63a3bfbea520b6
+       clone> want 49322bb17d3acc9146f98c97d078513228bbf3c0
+       clone> want 42e4e7c5e507e113ebbb7801b16b52cf867b7ce1
+       clone> want d96c4e80345534eccee5ac7b07fc7603b56124cb
+       clone> want 55a1a760df4b86a02094a904dfa511deb5655905
+       clone> want 8f50ba15d49353813cc6e20298002c0d17b0a9ee
+       clone> want 6e0c7bdb9b4ed93212491ee778ca1c65047cab4e
+       clone> 0000
+       clone> done
+ upload-pack< want 49322bb17d3acc9146f98c97d078513228bbf3c0 multi_ack_detailed side-band-64k thin-pack no-progress ofs-delta deepen-since deepen-not agent=git/2.54.0-Darwin
+ upload-pack< want 0966a434eb1a025db6b71485ab63a3bfbea520b6
+ upload-pack< want 49322bb17d3acc9146f98c97d078513228bbf3c0
+ upload-pack< want 42e4e7c5e507e113ebbb7801b16b52cf867b7ce1
+ upload-pack< want d96c4e80345534eccee5ac7b07fc7603b56124cb
+ upload-pack< want 55a1a760df4b86a02094a904dfa511deb5655905
+ upload-pack< want 8f50ba15d49353813cc6e20298002c0d17b0a9ee
+ upload-pack< want 6e0c7bdb9b4ed93212491ee778ca1c65047cab4e
+ upload-pack< 0000
+ upload-pack< done
+ upload-pack> NAK
+       clone< NAK
+    sideband< PACK ...
+ upload-pack> 0000
+    sideband< 0000

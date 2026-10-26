@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "captured_date": "2026-10-23",
+  "projection_version": 1,
+  "golden_oid": "d54ec756fb3f94f89b2d7941ceedb1bac958129e",
+  "clients": [
+    {
+      "version": "2.54.0 (Apple Git-157)",
+      "platform": "darwin/arm64"
+    },
+    {
+      "version": "2.39.5",
+      "platform": "linux/arm64",
+      "rust": "1.90.0"
+    }
+  ],
+  "protocols": [
+    0,
+    1,
+    2
+  ],
+  "clone_modes": [
+    "full",
+    "depth1",
+    "blob:none"
+  ],
+  "per_client_clone_cases": 10,
+  "fixture": {
+    "source_initial_commits": 4,
+    "projected_initial_commits": 2,
+    "source_final_commits": 6,
+    "projected_final_commits": 3,
+    "unit_dag_source_commits": 10,
+    "unit_dag_projected_commits": 6
+  },
+  "verified": [
+    "nine full/shallow/partial clones, plus non-UTF-8 path clone",
+    "literal and hex path URLs advertise identical refs",
+    "outside-only update does not change projected OID; inside update does",
+    "annotated and nested tag targets rewritten; tree tag projected; blob tag omitted",
+    "recognized source tag signature suffix removed (synthetic signed-format fixture)",
+    "source commit, outside blob and other projection commit wants denied",
+    "receive-pack advertisement/push denied",
+    "merge DAG, ancestor parent pruning, deletion/recreation, directory/file replacement",
+    "fresh Engine uses cached result; full projection encoding unchanged",
+    "projected merge-history pack passes index-pack --strict and fsck --strict"
+  ],
+  "limits": [
+    "read-only; default operator credentials retain whole-repository permission; scoped accounts are documented separately",
+    "source author/message/ref metadata retained",
+    "large-repository performance and multi-projection capacity unmeasured",
+    "ArgoCD/Flux kind E2E against projection URL not run",
+    "SSH/LFS and native directory-account access remain pending"
+  ],
+  "test_environment": {
+    "git_auto_maintenance": false,
+    "git_gc_auto": 0,
+    "reason": "prevent background repository maintenance during immediate object/pack assertions"
+  },
+  "linux_log": "projection-auth-linux.log",
+  "source_sha256": {
+    "crates/kasu-git/src/derived.rs": "812fa80dc0987ed9fcccedca775ff859b62bc7b4bf43911a4eaad819afe15443",
+    "crates/kasu-git/src/index.rs": "edfa790342be1cc2a093d03146ea902b2b4b3f2d4d6a232759030475b6004b96",
+    "crates/kasu-git/src/lib.rs": "69358ce52d1bd10ed8f3907e29faa9698000976bc3a468069e3f29b8b5d88a71",
+    "crates/kasu-git/src/object.rs": "05fe1063f3d3c0d28b7605d8c1e549f5fc71efef604183cfd586183f3b95c1d8",
+    "crates/kasu-git/src/pack.rs": "368a5a9845b5dbf95d1b74ba272c1265c65ddd3e7008cc190693aab1cbec7f72",
+    "crates/kasu-git/src/pack_cache.rs": "3871d77d66680a252ced49157cefd89433314e29dcbad533a0f44d8b125fe41a",
+    "crates/kasu-git/src/pack_input.rs": "8c753f23da74183936532f653c825662c5f5ddb41f15fc3539b5e0e6a55ae267",
+    "crates/kasu-git/src/path.rs": "532ae81d83dbfbb7c8f9284ad75295a3a725e090516f865aef7dfc57e472173e",
+    "crates/kasu-git/src/pktline.rs": "c974c53fbce57011d2d2193984d086e01541ca0f8604998e6ff4a86c32601d35",
+    "crates/kasu-git/src/receive.rs": "20a24f09d80b19285d8147614f5fca909cda1b4068ee94fdfa3c99c6c9dd971f",
+    "crates/kasu-git/src/refs.rs": "29739bc44012a290cf4d9062c1dc942eb4da79b66a1a8557a78920f59b601e80",
+    "crates/kasu-git/src/upload.rs": "4f766aec51e5e3f0bf0135fffa33a05f4ffa17a0e9c21f0cb866abd9ae3ce8e5",
+    "crates/kasu-server/src/auth.rs": "41882077f159ca0e4d1570792096d3594972181c0071d5be41de2abf9b957d82",
+    "crates/kasu-server/src/backend.rs": "fe50a34c035a6a5ddae49982474d041ae2bc9c2d8379240695087e1937046daa",
+    "crates/kasu-server/src/git_http.rs": "56bd77b047bf721d22abe176feb92e05752e9ac6841cfc78cc800163cde6f384",
+    "crates/kasu-server/src/land.rs": "802e5051e733ce966407ea1762bd85cb0041eb42c0afcd738b6ecfea1e76e867",
+    "crates/kasu-server/src/lib.rs": "08b3853052023481e978a9a0359542abfe3324c258fce60ca6739ed093d115e4",
+    "crates/kasu-server/src/main.rs": "0691c6d7438f78667ac4dcabbd6ebe9be48ebbf242dca67f4fdbf5282c7685ed",
+    "crates/kasu-server/src/objects.rs": "80b1c3ef32fa1ff8944e18db42cd42548d084ee844655a0847f87d474ca05374",
+    "crates/kasu-server/src/receive.rs": "1ef7f5479d946e9cd884f86a407f5eb66d56c29f44b1adb869f04a8bad1e080a",
+    "crates/kasu-server/src/transport.rs": "964807b96bd683b98b16680ea56cbf88a3a397bad80c8bb931f830f3555b22cb",
+    "crates/kasu-server/src/webhook.rs": "e6a041103a7e6d8367d6389bb8ae0e99fc6bc0fb00661ec8bbb5be2b225fd58a",
+    "crates/kasu-server/src/write.rs": "1c207817933ec03f80d164bbb412eddaaa6859235ba17fce3dea2aa717598dcb",
+    "crates/kasu-server/src/write_transport.rs": "7c927c5d46258b95544f7f301b7a4e70c60bc70ac1adf48ff004ddd857ae2c23",
+    "crates/kasu-server/tests/git_http.rs": "5714690232bb67a93347ee4a01ced0bf96c847ea97c84820d81c6eff327aaf93",
+    "crates/kasu-server/tests/projection_accounts.rs": "0e049e8395dca9a91a18b164ba9f6278637c4303e8299679063b6c7a938e91dd",
+    "tools/git-compat/Dockerfile": "37c0a93ad899ae8d14a2e005056a754afc568e811f341566b56ff2ee55f9417a",
+    "Cargo.lock": "3370f24126871bfe374431fdc7ed37db1cffdc48b5d2c6f66ddb3d3617e27307",
+    "crates/kasu-git/tests/protocol.rs": "22eb1fb27f240c8943f416336aa499c666c7d41856a033a5a11443a95fbd7653",
+    "crates/kasu-git/tests/receive.rs": "67f638dded8a6e1220f2f5508dea5e25657aac68182718360b7416b5d980b10b",
+    "crates/kasu-git/tests/pack_input.rs": "b576f872cca59028ce9fe2367087fc0c36d020d6f675291039ca9b5fe9e0041c",
+    "crates/kasu-git/tests/path_projection.rs": "9ae94795a683cb5179cfa228fdaf6c74384c5f727f7df24a46ad9a644708e969",
+    "crates/kasu-git/tests/projection.rs": "c958745ded85fdf0c598e2f09f61b39bc839e88cee48dcdc158adb3a658600e2",
+    "crates/kasu-git/tests/pack_plan.rs": "5e1ade2c28eaed2d93fa014bc4a65a0ef987084aa15317befb6bbf9f28fa8d07"
+  },
+  "fixture_sha256": {
+    "git-2.39.5-http-v0-path-depth1.trace": "e6d9b2fa0c4be5834618edb9cad2366baf71846a88c3f6a3470d2909d671cc0c",
+    "git-2.39.5-http-v0-path-full.trace": "d7c019efd9e9d71ebb90eaf526b7ebb2f24a5a999a8a5e58e24a935817b56115",
+    "git-2.39.5-http-v0-path-partial.trace": "2a17dda772fcae6a8bfe2bc0dc5e3029041142aa4aa3046a1aa02635b8d62623",
+    "git-2.39.5-http-v1-path-depth1.trace": "31206b33e8c77d60cba8db8140c9fe53f5a6a3bf74ece1d9148db982defb5361",
+    "git-2.39.5-http-v1-path-full.trace": "85d65c6db31b6edebd40c5d3e1af25b664ff2d6f59a0cd2be1a96fc700356e8f",
+    "git-2.39.5-http-v1-path-partial.trace": "856439e627514c3d9727b7d7d3bebfcfdd74a92a9193a67e7143d857682d97b3",
+    "git-2.39.5-http-v2-path-depth1.trace": "39c1ad5971500ca61740a59669dc638e5c2b971cdca3a413c1d1e0368c6cb307",
+    "git-2.39.5-http-v2-path-full.trace": "8a05e57b1286c222df8337b6835a54d8a68ebecf8af9744654d749e62979a204",
+    "git-2.39.5-http-v2-path-partial.trace": "a691438727efc0e17322c68b6f2a36c153df6408473d4ac1cef0958fcab26142",
+    "git-2.54.0-http-v0-path-depth1.trace": "759a6da05bfc337e13b2907471839dd00a520ced1b70c98fdcd1dc089a0e1e5d",
+    "git-2.54.0-http-v0-path-full.trace": "09c6be8de42d286c0b23140502fa4e49a54498846d859329179190b07907ec2f",
+    "git-2.54.0-http-v0-path-partial.trace": "ac9b378bec1205642fea7f5edd2d32d98b1f4840662909d837f1c5848a7e5c8f",
+    "git-2.54.0-http-v1-path-depth1.trace": "4f7ed11adc1ed67e798ec3d0ebcdf4edc0a49402d5b6c402ebcc14a08923fdd7",
+    "git-2.54.0-http-v1-path-full.trace": "bd6bff7c20cb436b112459687a26d82fdde4ff55b8ccb3283eeb9f18c9fc4e67",
+    "git-2.54.0-http-v1-path-partial.trace": "c825b86544f62bf5807e6bc6e177c47a198a2e20eabf4902f02748eaca5d1117",
+    "git-2.54.0-http-v2-path-depth1.trace": "7312177bd59ed36234204445daccd33e1f99bacd0a12e232d0d4cd96bc4172d2",
+    "git-2.54.0-http-v2-path-full.trace": "2b53538a2b88281069eec806eb52048d8a1520ad40630e5d7024ea21a0c5de38",
+    "git-2.54.0-http-v2-path-partial.trace": "65044cda633e71bf07053045ded0a567987ca3e3b9989609f7d0425c62fd266e"
+  }
+}

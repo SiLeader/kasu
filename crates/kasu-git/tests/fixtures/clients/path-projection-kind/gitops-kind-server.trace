@@ -1,0 +1,240 @@
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=# service=git-upload-pack\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 HEAD\u{0}multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="client" packet=want e744c005c78892226ba7e42bcde4560f493eccd0 multi_ack_detailed side-band-64k ofs-delta agent=go-git/5.x shallow no-progress\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="client" packet=deepen 1\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="client" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="client" packet=done\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=NAK\n
+kasu_server::git_http: Git pack payload omitted from trace protocol=V0 objects=7
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=version 2\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=agent=kasu/0.1.0\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=ls-refs=unborn\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=fetch=shallow filter\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=object-format=sha1\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=command=ls-refs\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=agent=git/2.54.0-Darwin
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=object-format=sha1
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Delimiter
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=peel\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=symrefs\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=unborn\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ref-prefix refs/heads/\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ref-prefix refs/tags/\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ref-prefix HEAD\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 HEAD symref-target:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=command=fetch
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=agent=git/2.54.0-Darwin
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=object-format=sha1
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Delimiter
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=thin-pack
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=no-progress
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ofs-delta
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=want e744c005c78892226ba7e42bcde4560f493eccd0\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=want e744c005c78892226ba7e42bcde4560f493eccd0\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=done\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=packfile\n
+kasu_server::git_http: Git pack payload omitted from trace protocol=V2 objects=7
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=# service=git-upload-pack\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 HEAD\u{0}multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=# service=git-upload-pack\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 HEAD\u{0}multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=# service=git-upload-pack\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 HEAD\u{0}multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=# service=git-upload-pack\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 HEAD\u{0}multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=# service=git-upload-pack\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 HEAD\u{0}multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=version 2\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=agent=kasu/0.1.0\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=ls-refs=unborn\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=fetch=shallow filter\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=object-format=sha1\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=command=ls-refs\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=agent=git/2.53.0-Linux
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=object-format=sha1
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Delimiter
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=peel\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=symrefs\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=unborn\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ref-prefix refs/heads/\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ref-prefix refs/tags/\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ref-prefix HEAD\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 HEAD symref-target:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=command=fetch
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=agent=git/2.53.0-Linux
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=object-format=sha1
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Delimiter
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=thin-pack
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=no-progress
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ofs-delta
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=want e744c005c78892226ba7e42bcde4560f493eccd0\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=done\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=packfile\n
+kasu_server::git_http: Git pack payload omitted from trace protocol=V2 objects=7
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=# service=git-upload-pack\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 HEAD\u{0}multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=# service=git-upload-pack\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 HEAD\u{0}multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=# service=git-upload-pack\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 HEAD\u{0}multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=# service=git-upload-pack\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 HEAD\u{0}multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=version 2\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=agent=kasu/0.1.0\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=ls-refs=unborn\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=fetch=shallow filter\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=object-format=sha1\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=command=ls-refs\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=agent=git/2.54.0-Darwin
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=object-format=sha1
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Delimiter
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=peel\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=symrefs\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=unborn\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ref-prefix refs/heads/\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ref-prefix refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ref-prefix refs/tags/\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ref-prefix HEAD\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 HEAD symref-target:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=e744c005c78892226ba7e42bcde4560f493eccd0 refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=# service=git-upload-pack\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac HEAD\u{0}multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=# service=git-upload-pack\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac HEAD\u{0}multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=# service=git-upload-pack\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac HEAD\u{0}multi_ack_detailed side-band-64k no-progress shallow deepen-since deepen-not deepen-relative include-tag ofs-delta filter allow-reachable-sha1-in-want object-format=sha1 agent=kasu/0.1.0 symref=HEAD:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="client" packet=want 1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac multi_ack_detailed side-band-64k ofs-delta agent=go-git/5.x shallow no-progress\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="client" packet=deepen 1\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="client" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="client" packet=done\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=shallow 1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac\n
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V0 direction="server" packet=NAK\n
+kasu_server::git_http: Git pack payload omitted from trace protocol=V0 objects=7
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=version 2\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=agent=kasu/0.1.0\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=ls-refs=unborn\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=fetch=shallow filter\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=object-format=sha1\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=command=ls-refs\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=agent=git/2.53.0-Linux
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=object-format=sha1
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Delimiter
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=peel\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=symrefs\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=unborn\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ref-prefix refs/heads/\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ref-prefix refs/tags/\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ref-prefix HEAD\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac HEAD symref-target:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=command=fetch
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=agent=git/2.53.0-Linux
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=object-format=sha1
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Delimiter
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=thin-pack
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=no-progress
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ofs-delta
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=want 1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=have e744c005c78892226ba7e42bcde4560f493eccd0\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=acknowledgments\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=ACK e744c005c78892226ba7e42bcde4560f493eccd0\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=ready\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=Delimiter
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=packfile\n
+kasu_server::git_http: Git pack payload omitted from trace protocol=V2 objects=6
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=version 2\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=agent=kasu/0.1.0\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=ls-refs=unborn\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=fetch=shallow filter\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=object-format=sha1\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=command=ls-refs\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=agent=git/2.54.0-Darwin
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=object-format=sha1
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Delimiter
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=peel\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=symrefs\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=unborn\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ref-prefix refs/heads/\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ref-prefix refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ref-prefix refs/tags/\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ref-prefix HEAD\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac HEAD symref-target:refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac refs/heads/main\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=command=fetch
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=agent=git/2.54.0-Darwin
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=object-format=sha1
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Delimiter
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=thin-pack
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=no-progress
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=include-tag
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=ofs-delta
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=want 1f2f1220a5105eb49b04a407b8a9475fcbb8e2ac\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=have e744c005c78892226ba7e42bcde4560f493eccd0\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="client" packet=Flush
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=acknowledgments\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=ACK e744c005c78892226ba7e42bcde4560f493eccd0\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=ready\n
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=Delimiter
+kasu_server::git_http: Git pkt-line protocol=V2 direction="server" packet=packfile\n
+kasu_server::git_http: Git pack payload omitted from trace protocol=V2 objects=6

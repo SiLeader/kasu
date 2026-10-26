@@ -1,0 +1,29 @@
+name: Distributed KV evaluation
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: "Linux runner with Docker memory >= 10 GiB (12 GB+ recommended)"
+        required: true
+        default: ubuntu-latest
+        type: string
+permissions:
+  contents: read
+jobs:
+  tikv:
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.3'
+          cache-dependency-path: tools/kv-eval/go.sum
+      - name: Three-replica contracts, measurement and fault recovery
+        run: python3 tools/kv-eval/run.py --workdir "${{ runner.temp }}/kasu-kv-evaluation"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: distributed-kv-evidence
+          path: ${{ runner.temp }}/kasu-kv-evaluation
+          retention-days: 7

@@ -1,0 +1,19 @@
+
+running 1 test
+test clock_tests::circuit_cooldown_and_half_open_probe_follow_the_runtime_clock ... FAILED
+
+failures:
+
+---- clock_tests::circuit_cooldown_and_half_open_probe_follow_the_runtime_clock stdout ----
+
+thread 'clock_tests::circuit_cooldown_and_half_open_probe_follow_the_runtime_clock' (16474841) panicked at crates/kasu-cache/src/lib.rs:664:9:
+assertion failed: breaker.admit(limits.failure_threshold).is_ok()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    clock_tests::circuit_cooldown_and_half_open_probe_follow_the_runtime_clock
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p kasu-cache --lib`

@@ -1,0 +1,14 @@
+   Compiling kasu-telemetry v0.1.0 (/Users/cerussite127/projects/cerussite/kasu/crates/kasu-telemetry)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.33s
+     Running unittests src/lib.rs (target/debug/deps/kasu_telemetry-0c5ed0a5ed11216a)
+
+running 6 tests
+test tests::malformed_and_oversized_contexts_start_new_roots ... ok
+test tests::remote_parent_child_injection_sampling_and_event_exclusion ... ok
+test tests::grpc_span_survives_headers_and_closes_as_cancelled_on_body_drop ... ok
+test tests::configuration_is_opt_in_validated_and_errors_are_sanitized ... ok
+test tests::blocking_worker_retains_span_and_current_context_after_caller_drops_it ... ok
+test tests::full_export_queue_drops_spans_without_waiting_for_exporter ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

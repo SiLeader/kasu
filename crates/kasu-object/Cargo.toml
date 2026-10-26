@@ -1,0 +1,17 @@
+[package]
+name = "kasu-object"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+[dependencies]
+tracing.workspace = true
+kasu-telemetry.workspace = true
+kasu-core.workspace = true
+kasu-store.workspace = true
+kasu-proto.workspace = true
+tonic = { workspace = true, features = ["tls-ring", "tls-webpki-roots"] }
+tokio.workspace = true
+hyper-util = { version = "0.1", features = ["tokio"] }
+tower = { version = "0.5", features = ["util"] }
+subtle = "2.6.1"
+

@@ -1,0 +1,13 @@
+{
+  "allChecksPassed": true,
+  "backend": "TiKV optimistic TxnKV prototype",
+  "fault": {
+    "elapsedMS": 6.375,
+    "exactlyOnePublication": true,
+    "outcome": "Replay"
+  },
+  "namespace": "run-18e11ca945c05b48",
+  "operations": 256,
+  "phase": "one-node-down",
+  "schema": 1
+}

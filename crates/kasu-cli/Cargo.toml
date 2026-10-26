@@ -1,0 +1,39 @@
+[package]
+name = "kasu-cli"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "kasu"
+path = "src/main.rs"
+
+[dependencies]
+tracing.workspace = true
+kasu-telemetry.workspace = true
+kasu-core.workspace = true
+kasu-store.workspace = true
+kasu-proto.workspace = true
+kasu-object.workspace = true
+tonic = { workspace = true, features = ["tls-ring", "tls-webpki-roots"] }
+tokio.workspace = true
+tokio-stream.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+hex.workspace = true
+clap = { version = "=4.6.7", features = ["derive", "env"] }
+notify = "=8.2.0"
+rustix = { version = "1", features = ["fs"] }
+gix-imara-diff = { workspace = true, features = ["unified_diff"] }
+
+[dev-dependencies]
+kasu-server.workspace = true
+kasu-derived.workspace = true
+kasu-ops.workspace = true
+kasu-cache.workspace = true
+kasu-daemon = { version = "0.1.0", path = "../kasu-daemon" }
+
+
+[target.'cfg(target_os = "linux")'.dependencies]
+fuser = { version = "=0.18.0", default-features = false }

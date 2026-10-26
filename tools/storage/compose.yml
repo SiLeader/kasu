@@ -1,0 +1,22 @@
+name: kasu-storage-tests
+services:
+  postgres:
+    image: postgres@sha256:4ef4dbc939d61acea57712655ddb4b4ab27419c913f94cca0cd57cb3ea3c2280
+    environment:
+      POSTGRES_USER: kasu
+      POSTGRES_PASSWORD: kasu-local-test
+      POSTGRES_DB: kasu
+    ports:
+      - "127.0.0.1:${KASU_TEST_PG_PORT:-55432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kasu -d kasu"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+  s3:
+    image: chrislusf/seaweedfs@sha256:fc9f76fa993ad69966ffeb2f65d0318fcae39c6f8e20cf68ef7b3a5cb97769e5
+    command: ["server", "-s3", "-ip=127.0.0.1", "-ip.bind=0.0.0.0", "-master.volumeSizeLimitMB=128", "-master.telemetry=false", "-volume.max=16", "-s3.config=/config/s3.json"]
+    ports:
+      - "127.0.0.1:${KASU_TEST_S3_PORT:-58333}:8333"
+    volumes:
+      - ./s3.json:/config/s3.json:ro

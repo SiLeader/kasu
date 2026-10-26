@@ -1,0 +1,86 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 668B done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 1.0s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#3 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e done
+#3 CACHED
+
+#4 [internal] load metadata for docker.io/library/rust@sha256:3914072ca0c3b8aad871db9169a651ccfce30cf58303e5d6f2db16d1d8a7e58f
+#4 DONE 1.0s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 209B done
+#5 DONE 0.0s
+
+#6 [stage-0 1/8] FROM docker.io/library/rust@sha256:3914072ca0c3b8aad871db9169a651ccfce30cf58303e5d6f2db16d1d8a7e58f
+#6 resolve docker.io/library/rust@sha256:3914072ca0c3b8aad871db9169a651ccfce30cf58303e5d6f2db16d1d8a7e58f done
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 42.14kB 0.0s done
+#7 DONE 0.0s
+
+#8 [stage-0 4/8] COPY Cargo.toml Cargo.lock ./
+#8 CACHED
+
+#9 [stage-0 2/8] RUN apt-get update && apt-get install -y --no-install-recommends protobuf-compiler python3 && rm -rf /var/lib/apt/lists/*
+#9 CACHED
+
+#10 [stage-0 3/8] WORKDIR /app
+#10 CACHED
+
+#11 [stage-0 5/8] COPY crates ./crates
+#11 CACHED
+
+#12 [stage-0 6/8] COPY tools/automation ./tools/automation
+#12 DONE 0.0s
+
+#13 [stage-0 7/8] RUN python3 --version && rustc --version && python3 -m unittest discover -s tools/automation -v
+#13 0.049 Python 3.11.2
+#13 0.070 rustc 1.90.0 (1159e78c4 2025-09-14)
+#13 0.096 test_all_culprits_in_branched_merge_dags (test_bot.BotTests.test_all_culprits_in_branched_merge_dags) ... ok
+#13 1.050 test_ids_reject_scalars_and_invalid_byte_arrays (test_bot.BotTests.test_ids_reject_scalars_and_invalid_byte_arrays) ... ok
+#13 1.050 test_infrastructure_failure_is_not_a_bad_verdict_and_graph_limit_is_enforced (test_bot.BotTests.test_infrastructure_failure_is_not_a_bad_verdict_and_graph_limit_is_enforced) ... ok
+#13 1.059 test_journal_binding_and_exclusive_lock (test_bot.BotTests.test_journal_binding_and_exclusive_lock) ... ok
+#13 1.060 test_oversized_checkpoint_preserves_the_previous_durable_journal (test_bot.BotTests.test_oversized_checkpoint_preserves_the_previous_durable_journal) ... ok
+#13 1.077 test_skip_is_ambiguous_and_budget_resume_reuses_results (test_bot.BotTests.test_skip_is_ambiguous_and_budget_resume_reuses_results) ... ok
+#13 1.084 test_tester_timeout_kills_process_and_never_caches_a_failure (test_bot.BotTests.test_tester_timeout_kills_process_and_never_caches_a_failure) ... ok
+#13 1.292 
+#13 1.292 ----------------------------------------------------------------------
+#13 1.292 Ran 7 tests in 1.196s
+#13 1.292 
+#13 1.292 OK
+#13 DONE 1.3s
+
+#14 [stage-0 8/8] RUN --mount=type=cache,target=/usr/local/cargo/registry     --mount=type=cache,target=/app/target     RUSTC_WRAPPER= cargo test -p kasu-server --test automation --locked
+#14 0.179     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.09s
+#14 0.183      Running tests/automation.rs (target/debug/deps/automation-d1dc3479707b52e1)
+#14 0.184 
+#14 0.184 running 6 tests
+#14 0.237 test ancestor_guard_is_rechecked_after_cas_loss_and_bound_to_receipts ... ok
+#14 0.265 test redirects_and_unguarded_requests_fail_without_publication ... ok
+#14 0.310 test lost_land_reply_resumes_the_same_key_even_after_branch_replacement ... ok
+#14 0.377 test conflicts_mainline_and_root_reverts_are_explicit ... ok
+#14 0.457 test metadata_only_bisect_finds_second_parent_regression_and_guarded_revert_preserves_later_edits ... ok
+#14 0.506 test check_gates_immutable_revisions_and_detects_ref_aba_during_testing ... ok
+#14 0.506 
+#14 0.506 test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+#14 0.506 
+#14 DONE 0.5s
+
+#15 exporting to image
+#15 exporting layers 0.0s done
+#15 exporting manifest sha256:923fbe47fd25012cf80ac072baaa67c37cd85fb825a959dcb9a099aedb36e3cf done
+#15 exporting config sha256:91c557bf147f8368e1427b8e3b5e805a43c88ad0ee77780186689b170e1d1c69 done
+#15 exporting attestation manifest sha256:57a9f84868f6ab1ae097f902204d7e5bb0a17193eaa47e993b29eb85a8cfbd30 done
+#15 exporting manifest list sha256:e1c313ec9bbd6798941503e3a40712acb093b14542eded7848b422a286963b82 done
+#15 naming to docker.io/library/kasu:automation-test
+#15 naming to docker.io/library/kasu:automation-test done
+#15 unpacking to docker.io/library/kasu:automation-test 0.0s done
+#15 DONE 0.1s

@@ -1,0 +1,373 @@
+[
+  {
+    "argv": [
+      "git",
+      "lfs",
+      "install",
+      "--skip-repo"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "--version"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "lfs",
+      "version"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "init",
+      "-b",
+      "main",
+      "<work>/source"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "lfs",
+      "track",
+      "*.bin"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "add",
+      "."
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "commit",
+      "-m",
+      "initial LFS pointer"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "show",
+      "HEAD:asset.bin"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "/out/kasu-ingest",
+      "<work>/source",
+      "<work>/store",
+      "repo"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "remote",
+      "add",
+      "origin",
+      "<kasu>/repo.git"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "clone",
+      "<kasu>/repo.git",
+      "<work>/missing"
+    ],
+    "exit": 128
+  },
+  {
+    "argv": [
+      "git",
+      "fsck",
+      "--strict"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "show",
+      "HEAD:asset.bin"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "lfs",
+      "push",
+      "--all",
+      "origin"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "clone",
+      "<kasu>/repo.git",
+      "<work>/full"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "show",
+      "HEAD:asset.bin"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "lfs",
+      "fsck"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "fsck",
+      "--strict"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "clone",
+      "--depth=1",
+      "<kasu>/repo.git",
+      "<work>/depth1"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "show",
+      "HEAD:asset.bin"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "lfs",
+      "fsck"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "fsck",
+      "--strict"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "clone",
+      "--filter=blob:none",
+      "<kasu>/repo.git",
+      "<work>/partial"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "show",
+      "HEAD:asset.bin"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "lfs",
+      "fsck"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "fsck",
+      "--strict"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "add",
+      "asset.bin"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "commit",
+      "-m",
+      "LFS writeback"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "show",
+      "HEAD:asset.bin"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "push",
+      "origin",
+      "main"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "pull",
+      "--ff-only"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "lfs",
+      "fsck"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "fsck",
+      "--strict"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "checkout",
+      "-b",
+      "missing-lfs"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "add",
+      "asset.bin"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "commit",
+      "-m",
+      "pointer without LFS upload"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "push",
+      "--no-verify",
+      "origin",
+      "missing-lfs"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "clone",
+      "--branch",
+      "missing-lfs",
+      "<kasu>/repo.git",
+      "<work>/pointer-only"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "fsck",
+      "--strict"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "clone",
+      "<kasu>/repo.git",
+      "<work>/skip"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "fsck",
+      "--strict"
+    ],
+    "exit": 0
+  },
+  {
+    "argv": [
+      "git",
+      "-c",
+      "lfs.transfer.maxretries=0",
+      "lfs",
+      "pull"
+    ],
+    "exit": 2
+  }
+]

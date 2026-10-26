@@ -1,0 +1,49 @@
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+
+[licenses]
+version = 2
+confidence-threshold = 0.8
+allow = ["MIT", "Apache-2.0", "BSD-3-Clause", "Unicode-3.0", "Zlib", "CC0-1.0"]
+
+[licenses.private]
+ignore = true
+
+[[licenses.exceptions]]
+name = "ring"
+allow = ["ISC"]
+
+[[licenses.exceptions]]
+name = "inotify"
+allow = ["ISC"]
+
+[[licenses.exceptions]]
+name = "inotify-sys"
+allow = ["ISC"]
+
+[[licenses.exceptions]]
+name = "rustls-webpki"
+allow = ["ISC"]
+
+[[licenses.exceptions]]
+name = "untrusted"
+allow = ["ISC"]
+
+[[licenses.exceptions]]
+name = "webpki-roots"
+allow = ["CDLA-Permissive-2.0"]
+
+[[licenses.exceptions]]
+name = "webpki-root-certs"
+allow = ["CDLA-Permissive-2.0"]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

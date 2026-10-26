@@ -1,0 +1,29 @@
+Running tests/accounts.rs
+running 5 tests
+test concurrent_http_writers_keep_independent_account_policies ... ok
+test native_accounts_apply_intersection_final_tree_and_per_principal_land_replay ... ok
+test directory_read_views_filter_metadata_objects_and_writer_blob_references ... ok
+test actual_servers_preserve_account_land_receipts_across_reorder_rotation_and_restart ... ok
+test git_http_push_uses_account_paths_and_atomic_ref_policy ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.79s
+Running tests/metadata.rs
+running 6 tests
+test membership_filters_orphans_from_other_repositories_and_cursors_are_bound ... ok
+test lazy_history_materializes_only_the_requested_path ... ok
+test grpc_over_tcp_and_http_json_preserve_bytes_and_enforce_access ... ok
+test rename_move_and_copy_fragment_blame_match_git_over_native_grpc_and_json ... ok
+test server_binary_serves_grpc_and_http_from_persistent_store ... ok
+test path_log_blame_diff_and_all_merge_bases_match_git ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.76s
+Running tests/write.rs
+running 5 tests
+test write_policy_json_patterns_and_byte_path_boundaries_are_enforced ... ok
+test http_rejects_foreign_objects_malformed_uploads_and_unfinished_streams ... ok
+test ref_policy_force_deletion_and_aba_are_enforced ... ok
+test land_grpc_and_http_replay_the_durable_result_after_ref_moves ... ok
+test grpc_upload_create_merge_rebase_and_ref_are_readable_by_git ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.56s
+

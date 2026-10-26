@@ -1,0 +1,80 @@
+[
+  {
+    "method": "batch",
+    "operation": "download",
+    "oid": "4919ef7afab9dda5afbcf9ba72e3a5fc7fd08e3e0cbc57e35cdc92900950f473",
+    "size": 2097152
+  },
+  {
+    "method": "batch",
+    "operation": "download",
+    "oid": "4919ef7afab9dda5afbcf9ba72e3a5fc7fd08e3e0cbc57e35cdc92900950f473",
+    "size": 2097152
+  },
+  {
+    "method": "batch",
+    "operation": "upload",
+    "oid": "4919ef7afab9dda5afbcf9ba72e3a5fc7fd08e3e0cbc57e35cdc92900950f473",
+    "size": 2097152
+  },
+  {
+    "method": "upload",
+    "oid": "4919ef7afab9dda5afbcf9ba72e3a5fc7fd08e3e0cbc57e35cdc92900950f473",
+    "bytes": 2097152
+  },
+  {
+    "method": "batch",
+    "operation": "download",
+    "oid": "4919ef7afab9dda5afbcf9ba72e3a5fc7fd08e3e0cbc57e35cdc92900950f473",
+    "size": 2097152
+  },
+  {
+    "method": "download",
+    "oid": "4919ef7afab9dda5afbcf9ba72e3a5fc7fd08e3e0cbc57e35cdc92900950f473",
+    "bytes": 2097152
+  },
+  {
+    "method": "batch",
+    "operation": "download",
+    "oid": "4919ef7afab9dda5afbcf9ba72e3a5fc7fd08e3e0cbc57e35cdc92900950f473",
+    "size": 2097152
+  },
+  {
+    "method": "download",
+    "oid": "4919ef7afab9dda5afbcf9ba72e3a5fc7fd08e3e0cbc57e35cdc92900950f473",
+    "bytes": 2097152
+  },
+  {
+    "method": "batch",
+    "operation": "download",
+    "oid": "4919ef7afab9dda5afbcf9ba72e3a5fc7fd08e3e0cbc57e35cdc92900950f473",
+    "size": 2097152
+  },
+  {
+    "method": "download",
+    "oid": "4919ef7afab9dda5afbcf9ba72e3a5fc7fd08e3e0cbc57e35cdc92900950f473",
+    "bytes": 2097152
+  },
+  {
+    "method": "batch",
+    "operation": "upload",
+    "oid": "1120519a07811f407280d8af2cbc71263b07041c98904d8c053e3d45a35324e9",
+    "size": 2097167
+  },
+  {
+    "method": "upload",
+    "oid": "1120519a07811f407280d8af2cbc71263b07041c98904d8c053e3d45a35324e9",
+    "bytes": 2097167
+  },
+  {
+    "method": "batch",
+    "operation": "download",
+    "oid": "1120519a07811f407280d8af2cbc71263b07041c98904d8c053e3d45a35324e9",
+    "size": 2097167
+  },
+  {
+    "method": "download",
+    "oid": "1120519a07811f407280d8af2cbc71263b07041c98904d8c053e3d45a35324e9",
+    "bytes": 2097167
+  }
+]
