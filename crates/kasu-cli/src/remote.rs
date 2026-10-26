@@ -1,6 +1,9 @@
 use crate::{Result, SparseProfile, invalid, validate_work_path};
 use kasu_core::{Canonical, ChangesetId, Entry, ObjectId, Tree, TreeEntry, TreeId};
-use kasu_proto::v1::{self as p, metadata_client::MetadataClient, writer_client::WriterClient};
+use kasu_proto::v1::{
+    self as p, admin_client::AdminClient, metadata_client::MetadataClient,
+    writer_client::WriterClient,
+};
 use kasu_store::{BlobStore, FsBlobStore};
 use std::collections::BTreeMap;
 use tonic::{
@@ -17,6 +20,60 @@ pub struct Remote {
     pub repo: Vec<u8>,
     authorization: Option<MetadataValue<Ascii>>,
 }
+fn endpoint(url: &str) -> Result<tonic::transport::Endpoint> {
+    let endpoint = tonic::transport::Endpoint::from_shared(url.to_owned())?;
+    if !matches!(endpoint.uri().scheme_str(), Some("http" | "https"))
+        || endpoint
+            .uri()
+            .authority()
+            .is_none_or(|a| a.as_str().contains('@'))
+    {
+        return Err(invalid(
+            "endpoint must be an HTTP(S) URL without credentials",
+        ));
+    }
+    let endpoint = if endpoint.uri().scheme_str() == Some("https") {
+        endpoint.tls_config(tonic::transport::ClientTlsConfig::new().with_webpki_roots())?
+    } else {
+        endpoint
+    };
+    Ok(endpoint
+        .connect_timeout(std::time::Duration::from_secs(10))
+        .timeout(std::time::Duration::from_secs(30)))
+}
+/// Repository administration on one server (kasu.v1.Admin).
+pub struct Admin {
+    pub client: AdminClient<Channel>,
+    authorization: Option<MetadataValue<Ascii>>,
+}
+impl Admin {
+    pub async fn connect(server: &str, token: Option<&str>) -> Result<Self> {
+        Ok(Self {
+            client: AdminClient::new(endpoint(server)?.connect().await?),
+            authorization: token.map(kasu_object::bearer).transpose()?,
+        })
+    }
+    pub fn request<T>(&self, value: T) -> Request<T> {
+        let mut request = Request::new(value);
+        if let Some(value) = &self.authorization {
+            request
+                .metadata_mut()
+                .insert("authorization", value.clone());
+        }
+        kasu_telemetry::inject(request.metadata_mut());
+        request
+    }
+    /// The registered default branch, for servers that expose it to the caller.
+    pub async fn default_branch(&mut self, repo: &str) -> Result<Vec<u8>> {
+        let q = self.request(p::GetRepositoryRequest { name: repo.into() });
+        Ok(self
+            .client
+            .get_repository(q)
+            .await?
+            .into_inner()
+            .default_branch)
+    }
+}
 impl Remote {
     pub async fn connect(
         server: &str,
@@ -24,27 +81,6 @@ impl Remote {
         repo: Vec<u8>,
         token: Option<&str>,
     ) -> Result<Self> {
-        let endpoint = |url: &str| -> Result<tonic::transport::Endpoint> {
-            let endpoint = tonic::transport::Endpoint::from_shared(url.to_owned())?;
-            if !matches!(endpoint.uri().scheme_str(), Some("http" | "https"))
-                || endpoint
-                    .uri()
-                    .authority()
-                    .is_none_or(|a| a.as_str().contains('@'))
-            {
-                return Err(invalid(
-                    "endpoint must be an HTTP(S) URL without credentials",
-                ));
-            }
-            let endpoint = if endpoint.uri().scheme_str() == Some("https") {
-                endpoint.tls_config(tonic::transport::ClientTlsConfig::new().with_webpki_roots())?
-            } else {
-                endpoint
-            };
-            Ok(endpoint
-                .connect_timeout(std::time::Duration::from_secs(10))
-                .timeout(std::time::Duration::from_secs(30)))
-        };
         let channel = endpoint(server)?.connect().await?;
         let object_channel = if objects == server {
             channel.clone()

@@ -29,13 +29,23 @@ pub struct Key {
     pub kind: Kind,
     pub id: ObjectId,
 }
+/// Frames are shared by ID across repositories; a frame is served for a
+/// repository only after the upstream confirmed that repository has it.
 pub trait Store: Send + Sync {
-    fn bind(&self, repo: &[u8]) -> Result<(), Status>;
     fn hot(&self, _key: Key) -> Result<Option<Frame>, Status> {
         Ok(None)
     }
     fn get(&self, key: Key) -> Result<Option<Frame>, Status>;
     fn put(&self, key: Key, bytes: Frame) -> Result<(), Status>;
+    /// Whether the upstream confirmed that `repo` (a normalized name) has `key`.
+    fn member(&self, repo: &[u8], key: Key) -> Result<bool, Status>;
+    fn add_member(&self, repo: &[u8], key: Key) -> Result<(), Status>;
+    /// Record the upstream identity of `repo`. A different identity means the
+    /// name now belongs to another repository, so its memberships are dropped.
+    fn identify(&self, repo: &[u8], identity: &str) -> Result<(), Status>;
+    fn identity(&self, _repo: &[u8]) -> Result<Option<String>, Status> {
+        Ok(None)
+    }
     fn usage(&self) -> (usize, usize) {
         (0, 0)
     }
@@ -44,10 +54,12 @@ pub trait Store: Send + Sync {
     }
 }
 struct Memory {
-    repo: Option<Vec<u8>>,
     entries: hashlink::LinkedHashMap<Key, Frame>,
     bytes: usize,
+    members: hashlink::LinkedHashMap<(Vec<u8>, Key), ()>,
+    identities: HashMap<Vec<u8>, String>,
 }
+const MAX_MEMORY_MEMBERS: usize = 1 << 20;
 pub struct MemoryStore {
     inner: Mutex<Memory>,
     limit: usize,
@@ -56,27 +68,51 @@ impl MemoryStore {
     pub fn new(limit: usize) -> Self {
         Self {
             inner: Mutex::new(Memory {
-                repo: None,
                 entries: Default::default(),
                 bytes: 0,
+                members: Default::default(),
+                identities: HashMap::new(),
             }),
             limit,
         }
     }
 }
-impl Store for MemoryStore {
-    fn bind(&self, repo: &[u8]) -> Result<(), Status> {
-        let mut state = self
-            .inner
+impl MemoryStore {
+    fn lock(&self) -> Result<std::sync::MutexGuard<'_, Memory>, Status> {
+        self.inner
             .lock()
-            .map_err(|_| Status::internal("memory cache lock failed"))?;
-        if state.repo.as_deref().is_some_and(|old| old != repo) {
-            return Err(Status::permission_denied(
-                "memory store belongs to another repository",
-            ));
+            .map_err(|_| Status::internal("memory cache lock failed"))
+    }
+}
+impl Store for MemoryStore {
+    fn member(&self, repo: &[u8], key: Key) -> Result<bool, Status> {
+        Ok(self
+            .lock()?
+            .members
+            .to_back(&(repo.to_vec(), key))
+            .is_some())
+    }
+    fn add_member(&self, repo: &[u8], key: Key) -> Result<(), Status> {
+        let mut state = self.lock()?;
+        state.members.insert((repo.to_vec(), key), ());
+        while state.members.len() > MAX_MEMORY_MEMBERS {
+            state.members.pop_front();
         }
-        state.repo = Some(repo.to_vec());
         Ok(())
+    }
+    fn identify(&self, repo: &[u8], identity: &str) -> Result<(), Status> {
+        let mut state = self.lock()?;
+        if state
+            .identities
+            .insert(repo.to_vec(), identity.to_owned())
+            .is_some_and(|old| old != identity)
+        {
+            state.members.retain(|(name, _), _| name != repo);
+        }
+        Ok(())
+    }
+    fn identity(&self, repo: &[u8]) -> Result<Option<String>, Status> {
+        Ok(self.lock()?.identities.get(repo).cloned())
     }
     fn hot(&self, key: Key) -> Result<Option<Frame>, Status> {
         let mut state = self
@@ -236,21 +272,24 @@ struct Flight {
 }
 pub struct Layer {
     role: Role,
-    repo: Vec<u8>,
+    /// Normalized names this layer serves; empty serves every repository.
+    repositories: Vec<Vec<u8>>,
     token: tonic::metadata::MetadataValue<tonic::metadata::Ascii>,
     upstream: Client,
     store: Arc<dyn Store>,
     limits: Limits,
     requests: Arc<Semaphore>,
     work: Arc<Semaphore>,
-    flights: Mutex<HashMap<Key, Arc<Flight>>>,
+    flights: Mutex<HashMap<FlightKey, Arc<Flight>>>,
     rate: tokio::sync::Mutex<tokio::time::Instant>,
     breaker: Mutex<Breaker>,
     counters: Counters,
 }
+/// Fills are coalesced per repository: each needs its own confirmation.
+type FlightKey = (Vec<u8>, Key);
 struct FlightGuard {
     layer: Arc<Layer>,
-    key: Key,
+    key: FlightKey,
     flight: Arc<Flight>,
     done: bool,
 }
@@ -289,7 +328,7 @@ impl Drop for Active<'_> {
 impl Layer {
     pub fn new(
         role: Role,
-        repo: Vec<u8>,
+        repositories: Vec<Vec<u8>>,
         token: &str,
         upstream_token: &str,
         upstream: Client,
@@ -297,7 +336,13 @@ impl Layer {
         limits: Limits,
     ) -> Result<Arc<Self>, Status> {
         limits.validate()?;
-        store.bind(&repo)?;
+        if repositories.len() > 4096 {
+            return Err(Status::invalid_argument("too many layer repositories"));
+        }
+        let repositories = repositories
+            .iter()
+            .map(|r| normalize(r).ok_or_else(|| Status::invalid_argument("invalid repository")))
+            .collect::<Result<Vec<_>, _>>()?;
         let expected = match role {
             Role::Cache => Role::Server,
             Role::Daemon => Role::Cache,
@@ -308,16 +353,16 @@ impl Layer {
                 "upstream role or hop credential mismatch",
             ));
         }
-        if role == Role::Server || token == upstream_token || repo.is_empty() || repo.len() > 4096 {
+        if role == Role::Server || token == upstream_token {
             return Err(Status::invalid_argument(
-                "invalid layer role, repo, or identical hop credentials",
+                "invalid layer role or identical hop credentials",
             ));
         }
         let token = kasu_object::bearer(token)?;
         kasu_object::bearer(upstream_token)?;
         Ok(Arc::new(Self {
             role,
-            repo,
+            repositories,
             token,
             upstream,
             store,
@@ -390,18 +435,25 @@ impl Layer {
         }
         text
     }
-    pub async fn get(self: &Arc<Self>, key: Key) -> Result<Frame, Status> {
+    pub fn serves(&self, repo: &[u8]) -> bool {
+        self.repositories.is_empty() || self.repositories.iter().any(|r| r == repo)
+    }
+    /// `repo` is a normalized repository name.
+    pub async fn get(self: &Arc<Self>, repo: &[u8], key: Key) -> Result<Frame, Status> {
         self.counters.requests.fetch_add(1, Ordering::Relaxed);
-        if let Some(bytes) = self.store.hot(key)? {
+        if self.store.member(repo, key)?
+            && let Some(bytes) = self.store.hot(key)?
+        {
             self.counters.hits.fetch_add(1, Ordering::Relaxed);
             return Ok(bytes);
         }
+        let flight_key = (repo.to_vec(), key);
         let (flight, spawn) = {
             let mut flights = self
                 .flights
                 .lock()
                 .map_err(|_| Status::internal("flight lock failed"))?;
-            if let Some(flight) = flights.get(&key) {
+            if let Some(flight) = flights.get(&flight_key) {
                 self.counters.coalesced.fetch_add(1, Ordering::Relaxed);
                 (flight.clone(), false)
             } else {
@@ -411,7 +463,7 @@ impl Layer {
                 }
                 let (tx, _) = watch::channel(None);
                 let flight = Arc::new(Flight { tx });
-                flights.insert(key, flight.clone());
+                flights.insert(flight_key.clone(), flight.clone());
                 (flight, true)
             }
         };
@@ -420,13 +472,14 @@ impl Layer {
             let layer = self.clone();
             let guard = FlightGuard {
                 layer: layer.clone(),
-                key,
+                key: flight_key.clone(),
                 flight,
                 done: false,
             };
+            let repo = repo.to_vec();
             tokio::spawn(
                 async move {
-                    let result = layer.fill(key).await;
+                    let result = layer.fill(&repo, key).await;
                     if result.is_err() {
                         layer.counters.errors.fetch_add(1, Ordering::Relaxed);
                     }
@@ -462,7 +515,7 @@ impl Layer {
         }
         Ok(value.bytes)
     }
-    async fn fill(&self, key: Key) -> FlightResult {
+    async fn fill(&self, repo: &[u8], key: Key) -> FlightResult {
         let _permit =
             tokio::time::timeout(self.limits.queue_timeout, self.work.clone().acquire_owned())
                 .await
@@ -472,9 +525,16 @@ impl Layer {
                 })?
                 .map_err(|_| Status::unavailable("object layer stopping"))?;
         let store = self.store.clone();
-        let cached = kasu_telemetry::blocking(move || store.get(key))
-            .await
-            .map_err(|_| Status::internal("object cache read worker failed"))??;
+        let member = repo.to_vec();
+        let cached = kasu_telemetry::blocking(move || {
+            if store.member(&member, key)? {
+                store.get(key)
+            } else {
+                Ok(None)
+            }
+        })
+        .await
+        .map_err(|_| Status::internal("object cache read worker failed"))??;
         if let Some(bytes) = cached {
             return Ok(Value { bytes, hit: true });
         }
@@ -504,7 +564,7 @@ impl Layer {
         let _active = Active(&self.counters.active);
         let result = tokio::time::timeout(
             self.limits.upstream_timeout,
-            self.upstream.fetch(&self.repo, key.id, key.kind),
+            self.upstream.fetch_scoped(repo, key.id, key.kind),
         )
         .await
         .unwrap_or_else(|_| Err(Status::deadline_exceeded("object upstream timed out")));
@@ -512,12 +572,20 @@ impl Layer {
         // layer. Otherwise a full or unavailable disk would repeatedly fetch
         // the same cold objects despite every client request failing.
         let result = async {
-            let bytes = Arc::new(result?);
+            let (bytes, identity) = result?;
+            let bytes = Arc::new(bytes);
             let store = self.store.clone();
             let value = bytes.clone();
-            kasu_telemetry::blocking(move || store.put(key, value))
-                .await
-                .map_err(|_| Status::internal("object cache write worker failed"))??;
+            let member = repo.to_vec();
+            kasu_telemetry::blocking(move || {
+                if let Some(identity) = identity {
+                    store.identify(&member, &identity)?;
+                }
+                store.put(key, value)?;
+                store.add_member(&member, key)
+            })
+            .await
+            .map_err(|_| Status::internal("object cache write worker failed"))??;
             Ok(Value { bytes, hit: false })
         }
         .await;
@@ -527,6 +595,12 @@ impl Layer {
             .finish(&result, &self.limits);
         result
     }
+}
+/// The lowercase form used for membership; None for invalid names.
+pub fn normalize(repo: &[u8]) -> Option<Vec<u8>> {
+    kasu_core::RepoName::from_bytes(repo)
+        .ok()
+        .map(|name| name.normalized().into_bytes())
 }
 #[derive(Clone)]
 pub struct Service {
@@ -553,9 +627,10 @@ impl Service {
             return Err(Status::unauthenticated("object layer token required"));
         }
         let input = q.into_inner();
-        if input.repo != self.layer.repo {
-            return Err(Status::permission_denied("repository is not authorized"));
-        }
+        // Other repositories look exactly like ones that do not exist.
+        let repo = normalize(&input.repo)
+            .filter(|repo| self.layer.serves(repo))
+            .ok_or_else(|| Status::not_found("repository not found"))?;
         if input.ids.len() > BATCH_LIMIT {
             return Err(Status::resource_exhausted("object batch exceeds limit"));
         }
@@ -581,6 +656,7 @@ impl Service {
                 self.layer.counters.rejected.fetch_add(1, Ordering::Relaxed);
                 Status::resource_exhausted("object stream concurrency limit")
             })?;
+        let identity = self.layer.store.identity(&repo)?;
         let (tx, rx) = tokio::sync::mpsc::channel(2);
         let layer = self.layer.clone();
         tokio::spawn(
@@ -588,7 +664,7 @@ impl Service {
                 let _permit = permit;
                 for id in ids {
                     let result =
-                        tokio::select! {_=tx.closed()=>return,r=layer.get(Key{kind,id})=>r};
+                        tokio::select! {_=tx.closed()=>return,r=layer.get(&repo,Key{kind,id})=>r};
                     let bytes = match result {
                         Ok(bytes) => bytes,
                         Err(error) => {
@@ -620,6 +696,11 @@ impl Service {
         response
             .metadata_mut()
             .insert(LAYER_HEADER, self.layer.role.name().parse().unwrap());
+        if let Some(value) = identity.and_then(|v| v.parse().ok()) {
+            response
+                .metadata_mut()
+                .insert(kasu_object::REPOSITORY_HEADER, value);
+        }
         Ok(response)
     }
 }

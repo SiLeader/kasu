@@ -904,7 +904,7 @@ async fn real_cli_uses_the_unix_daemon_and_a_snapshot_can_boot_without_the_cache
     };
     let cache = Layer::new(
         Role::Cache,
-        b"repo".to_vec(),
+        vec![b"repo".to_vec()],
         "daemon-hop",
         "server-hop",
         Client::connect(&f.url, Some("server-hop"), Some(Role::Server))
@@ -924,10 +924,10 @@ async fn real_cli_uses_the_unix_daemon_and_a_snapshot_can_boot_without_the_cache
             .await
             .unwrap();
     }));
-    let disk = Arc::new(DiskStore::open(&f.root.join("daemon-data"), b"repo").unwrap());
+    let disk = Arc::new(DiskStore::open(&f.root.join("daemon-data")).unwrap());
     let daemon = Layer::new(
         Role::Daemon,
-        b"repo".to_vec(),
+        vec![b"repo".to_vec()],
         "token",
         "daemon-hop",
         Client::connect(&url, Some("daemon-hop"), Some(Role::Cache))
@@ -976,7 +976,7 @@ async fn real_cli_uses_the_unix_daemon_and_a_snapshot_can_boot_without_the_cache
     assert_eq!(cache.stats().upstream, 7);
     let snapshot = f.root.join("node-snapshot.tar");
     assert_eq!(disk.export_snapshot(&snapshot).unwrap(), 7);
-    let restored = Arc::new(DiskStore::open(&f.root.join("restored-data"), b"repo").unwrap());
+    let restored = Arc::new(DiskStore::open(&f.root.join("restored-data")).unwrap());
     restored.import_snapshot(&snapshot, 1024 * 1024).unwrap();
     let closed = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let unavailable = format!("http://{}", closed.local_addr().unwrap());
@@ -989,7 +989,7 @@ async fn real_cli_uses_the_unix_daemon_and_a_snapshot_can_boot_without_the_cache
     .unwrap();
     let node2 = Layer::new(
         Role::Daemon,
-        b"repo".to_vec(),
+        vec![b"repo".to_vec()],
         "token",
         "daemon-hop",
         upper,

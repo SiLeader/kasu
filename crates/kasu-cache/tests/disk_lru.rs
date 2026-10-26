@@ -56,7 +56,6 @@ fn byte_and_entry_limits_persist_lru_and_inflight_frames_survive_eviction() {
     let limit = (fa.len() + fb.len()) as u64;
     let store = DiskStore::open_with_limits(
         root,
-        b"repo",
         DiskLimits {
             bytes: limit,
             entries: 10,
@@ -66,7 +65,7 @@ fn byte_and_entry_limits_persist_lru_and_inflight_frames_survive_eviction() {
     store.put(a, fa.clone()).unwrap();
     store.put(b, fb).unwrap();
     let pinned = store.get(a).unwrap().unwrap();
-    let reopened = DiskStore::open(root, b"repo").unwrap();
+    let reopened = DiskStore::open(root).unwrap();
     assert_eq!(reopened.limits().unwrap().bytes, limit);
     reopened.put(c, fc).unwrap();
     assert!(store.get(b).unwrap().is_none());
@@ -75,7 +74,6 @@ fn byte_and_entry_limits_persist_lru_and_inflight_frames_survive_eviction() {
     assert_eq!(pinned.as_slice(), fa.as_slice());
     let tightened = DiskStore::open_with_limits(
         root,
-        b"repo",
         DiskLimits {
             bytes: limit,
             entries: 1,
@@ -98,7 +96,6 @@ fn shared_tree_blob_frame_counts_once_and_type_eviction_preserves_other_registra
     };
     let store = DiskStore::open_with_limits(
         temp.path(),
-        b"repo",
         DiskLimits {
             bytes: frame.len() as u64,
             entries: 2,
@@ -110,7 +107,6 @@ fn shared_tree_blob_frame_counts_once_and_type_eviction_preserves_other_registra
     assert_eq!(store.usage(), (2, frame.len()));
     let one = DiskStore::open_with_limits(
         temp.path(),
-        b"repo",
         DiskLimits {
             bytes: frame.len() as u64,
             entries: 1,
@@ -131,7 +127,6 @@ fn oversized_frames_are_served_uncached_without_evicting_existing_entries() {
     let (a, fa) = object(b"small");
     let store = DiskStore::open_with_limits(
         temp.path(),
-        b"repo",
         DiskLimits {
             bytes: fa.len() as u64,
             entries: 1,
@@ -179,7 +174,7 @@ fn legacy_markers_migrate_but_orphans_and_interrupted_owned_staging_are_removed(
     fs::write(root.join(".snapshot-import-abcdef/file"), b"unfinished").unwrap();
     fs::write(root.join("index/blobs/.kasu-index-abcdef"), b"partial").unwrap();
     fs::write(root.join("operator-note"), b"preserve").unwrap();
-    let store = DiskStore::open(root, b"repo").unwrap();
+    let store = DiskStore::open(root).unwrap();
     assert_eq!(store.get(a).unwrap().unwrap(), fa);
     assert!(
         store
@@ -206,7 +201,7 @@ fn valid_snapshot_import_pins_every_manifest_key_and_capacity_rejection_has_no_p
         ..shared
     };
     let (other, second) = object(b"another file");
-    let source = DiskStore::open(&temp.path().join("source"), b"repo").unwrap();
+    let source = DiskStore::open(&temp.path().join("source")).unwrap();
     source.put(shared, frame.clone()).unwrap();
     source.put(other, second.clone()).unwrap();
     let archive = temp.path().join("seed.tar");
@@ -214,7 +209,6 @@ fn valid_snapshot_import_pins_every_manifest_key_and_capacity_rejection_has_no_p
     let limit = (frame.len() + second.len()) as u64;
     let dest = DiskStore::open_with_limits(
         &temp.path().join("dest"),
-        b"repo",
         DiskLimits {
             bytes: limit,
             entries: 2,
@@ -230,7 +224,6 @@ fn valid_snapshot_import_pins_every_manifest_key_and_capacity_rejection_has_no_p
     assert_disk(&dest, &temp.path().join("dest"));
     let tiny = DiskStore::open_with_limits(
         &temp.path().join("tiny"),
-        b"repo",
         DiskLimits {
             bytes: limit,
             entries: 1,
@@ -255,16 +248,13 @@ fn concurrent_instances_and_snapshots_share_one_budget_without_wrong_frames() {
     let root = temp.path().join("cache");
     let first = DiskStore::open_with_limits(
         &root,
-        b"repo",
         DiskLimits {
             bytes: 4096,
             entries: 4,
         },
     )
     .unwrap();
-    let stores: Vec<_> = (0..4)
-        .map(|_| DiskStore::open(&root, b"repo").unwrap())
-        .collect();
+    let stores: Vec<_> = (0..4).map(|_| DiskStore::open(&root).unwrap()).collect();
     let barrier = Barrier::new(4);
     std::thread::scope(|scope| {
         for (n, store) in stores.iter().enumerate() {
@@ -294,7 +284,7 @@ fn concurrent_instances_and_snapshots_share_one_budget_without_wrong_frames() {
 #[test]
 fn managed_snapshot_retention_ignores_user_files_and_diagnostics_do_not_wait_for_disk_lock() {
     let temp = tempfile::tempdir().unwrap();
-    let store = Arc::new(DiskStore::open(temp.path(), b"repo").unwrap());
+    let store = Arc::new(DiskStore::open(temp.path()).unwrap());
     let folder = temp.path().join("snapshots");
     fs::create_dir(&folder).unwrap();
     for n in 1..=4 {
@@ -336,7 +326,7 @@ fn symlinked_managed_directories_and_files_fail_without_touching_targets() {
     let root = temp.path().join("cache");
     fs::create_dir_all(root.join("index")).unwrap();
     symlink(&outside, root.join("index/blobs")).unwrap();
-    assert!(DiskStore::open(&root, b"repo").is_err());
+    assert!(DiskStore::open(&root).is_err());
     assert_eq!(fs::read(outside.join("important")).unwrap(), b"preserve");
 }
 
@@ -344,7 +334,7 @@ fn symlinked_managed_directories_and_files_fail_without_touching_targets() {
 fn interrupted_publication_and_eviction_are_reconciled_before_the_next_operation() {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path();
-    let store = DiskStore::open(root, b"repo").unwrap();
+    let store = DiskStore::open(root).unwrap();
     let (a, fa) = object(b"committed");
     store.put(a, fa).unwrap();
     let db = rusqlite::Connection::open(root.join("cache-lru-v1.sqlite3")).unwrap();
@@ -376,7 +366,6 @@ fn lru_clock_and_cumulative_counters_handle_the_signed_integer_boundary() {
     let temp = tempfile::tempdir().unwrap();
     let store = DiskStore::open_with_limits(
         temp.path(),
-        b"repo",
         DiskLimits {
             bytes: 4096,
             entries: 2,
@@ -404,7 +393,7 @@ fn disk_writer_child() {
     let Some(root) = std::env::var_os("KASU_DISK_CRASH_CHILD") else {
         return;
     };
-    let store = DiskStore::open(Path::new(&root), b"repo").unwrap();
+    let store = DiskStore::open(Path::new(&root)).unwrap();
     for n in 0..5000 {
         let (key, frame) = object(format!("crash writer {n}").as_bytes());
         store.put(key, frame).unwrap();
@@ -426,7 +415,6 @@ fn kill_during_a_physical_mutation_recovers_a_bounded_valid_cache() {
     let root = temp.path();
     let store = DiskStore::open_with_limits(
         root,
-        b"repo",
         DiskLimits {
             bytes: 4096,
             entries: 2,
@@ -500,7 +488,7 @@ fn kill_during_a_physical_mutation_recovers_a_bounded_valid_cache() {
     };
     child.0.kill().unwrap();
     assert!(!child.0.wait().unwrap().success());
-    let recovered = DiskStore::open(root, b"repo").unwrap();
+    let recovered = DiskStore::open(root).unwrap();
     assert_disk(&recovered, root);
     let integrity: String = db
         .query_row("PRAGMA integrity_check", [], |r| r.get(0))
@@ -529,14 +517,13 @@ fn first_compressed_frame_is_preserved_and_snapshot_budget_uses_its_actual_size(
     let first = Arc::new(encoder.finish().unwrap());
     assert!(first.len() > plain.len());
     let (second, other) = object(b"another object");
-    let source = DiskStore::open(&temp.path().join("source"), b"repo").unwrap();
+    let source = DiskStore::open(&temp.path().join("source")).unwrap();
     source.put(key, plain.clone()).unwrap();
     source.put(second, other.clone()).unwrap();
     let snapshot = temp.path().join("seed.tar");
     source.export_snapshot(&snapshot).unwrap();
     let dest = DiskStore::open_with_limits(
         &temp.path().join("dest"),
-        b"repo",
         DiskLimits {
             bytes: (first.len() + other.len() - 1) as u64,
             entries: 2,
@@ -581,7 +568,7 @@ fn invalid_limits_do_not_create_a_cache() {
     .enumerate()
     {
         let root = temp.path().join(n.to_string());
-        assert!(DiskStore::open_with_limits(&root, b"repo", limits).is_err());
+        assert!(DiskStore::open_with_limits(&root, limits).is_err());
         assert!(!root.exists());
     }
 }
@@ -592,7 +579,7 @@ fn initialization_cannot_adopt_unrelated_files_or_authoritative_repository_stora
     let unknown = temp.path().join("unknown");
     fs::create_dir(&unknown).unwrap();
     fs::write(unknown.join("operator-data"), b"preserve").unwrap();
-    assert!(DiskStore::open(&unknown, b"repo").is_err());
+    assert!(DiskStore::open(&unknown).is_err());
     assert!(!unknown.join("scope.json").exists());
     assert_eq!(
         fs::read(unknown.join("operator-data")).unwrap(),
@@ -610,6 +597,6 @@ fn initialization_cannot_adopt_unrelated_files_or_authoritative_repository_stora
         serde_json::to_vec(&serde_json::json!({"version":1,"repository":b"repo"})).unwrap(),
     )
     .unwrap();
-    assert!(DiskStore::open(&authority, b"repo").is_err());
+    assert!(DiskStore::open(&authority).is_err());
     assert_eq!(blobs.get(id).unwrap(), b"authoritative bytes");
 }

@@ -52,7 +52,6 @@ pub struct DiskStats {
 struct CachedStats([AtomicU64; 8]);
 pub struct DiskStore {
     pub(super) root: PathBuf,
-    pub(super) repo: Vec<u8>,
     connection: Mutex<Connection>,
     cached: CachedStats,
 }
@@ -133,14 +132,16 @@ fn lock(root: &Path, exclusive: bool) -> Result<fs::File, Status> {
     }
 }
 impl DiskStore {
-    pub fn open(root: &Path, repo: &[u8]) -> Result<Self, Status> {
-        Self::open_inner(root, repo, None)
+    /// Open a disk cache shared by every repository. A cache created for a
+    /// single repository keeps serving its frames to that repository.
+    pub fn open(root: &Path) -> Result<Self, Status> {
+        Self::open_inner(root, None)
     }
-    pub fn open_with_limits(root: &Path, repo: &[u8], limits: DiskLimits) -> Result<Self, Status> {
+    pub fn open_with_limits(root: &Path, limits: DiskLimits) -> Result<Self, Status> {
         limits.validate()?;
-        Self::open_inner(root, repo, Some(limits))
+        Self::open_inner(root, Some(limits))
     }
-    fn open_inner(root: &Path, repo: &[u8], limits: Option<DiskLimits>) -> Result<Self, Status> {
+    fn open_inner(root: &Path, limits: Option<DiskLimits>) -> Result<Self, Status> {
         fs::create_dir_all(root).map_err(io)?;
         directory(root)?;
         // SQLite NOFOLLOW also checks parent components; resolve system aliases such as /var.
@@ -153,8 +154,8 @@ impl DiskStore {
             ));
         }
         let scope = Scope {
-            version: 1,
-            repository: repo.to_vec(),
+            version: 2,
+            repository: Vec::new(),
         };
         let path = root.join("scope.json");
         if regular(&path)?.is_none() {
@@ -186,10 +187,12 @@ impl DiskStore {
         }
         let stored: Scope = serde_json::from_slice(&fs::read(path).map_err(io)?)
             .map_err(|_| Status::data_loss("invalid cache scope file"))?;
-        if stored != scope {
-            return Err(Status::permission_denied(
-                "disk cache belongs to another repository",
-            ));
+        // Version 1 caches were bound to one repository, recorded in the catalog.
+        if !matches!(
+            (stored.version, stored.repository.is_empty()),
+            (1, false) | (2, true)
+        ) {
+            return Err(Status::data_loss("unsupported cache scope file"));
         }
         for path in [
             root.join("index"),
@@ -236,16 +239,25 @@ impl DiskStore {
           CREATE TEMP TABLE candidates(kind TEXT,id TEXT,accessed INTEGER,PRIMARY KEY(kind,id));
           CREATE INDEX candidate_lru ON candidates(accessed,id,kind);
           CREATE INDEX candidate_frame ON candidates(id);
+          CREATE TABLE IF NOT EXISTS members(repo BLOB NOT NULL,kind TEXT NOT NULL,id TEXT NOT NULL,PRIMARY KEY(repo,kind,id)) WITHOUT ROWID;
+          CREATE TABLE IF NOT EXISTS identities(repo BLOB PRIMARY KEY,identity TEXT NOT NULL) WITHOUT ROWID;
           PRAGMA user_version=1;").map_err(io)?;
         let defaults = DiskLimits::default();
-        conn.execute("INSERT OR IGNORE INTO config(singleton,repository,max_bytes,max_entries) VALUES(1,?1,?2,?3)",params![repo,defaults.bytes,defaults.entries]).map_err(io)?;
+        conn.execute("INSERT OR IGNORE INTO config(singleton,repository,max_bytes,max_entries) VALUES(1,X'',?1,?2)",params![defaults.bytes,defaults.entries]).map_err(io)?;
         let saved: Vec<u8> = conn
             .query_row("SELECT repository FROM config", [], |r| r.get(0))
             .map_err(io)?;
-        if saved != repo {
-            return Err(Status::permission_denied(
-                "disk catalog belongs to another repository",
-            ));
+        if !saved.is_empty() {
+            // Frames of a single-repository cache were confirmed for that repository.
+            if let Some(repo) = crate::normalize(&saved) {
+                conn.execute(
+                    "INSERT OR IGNORE INTO members(repo,kind,id) SELECT ?1,kind,id FROM kinds",
+                    [repo],
+                )
+                .map_err(io)?;
+            }
+            conn.execute("UPDATE config SET repository=X''", [])
+                .map_err(io)?;
         }
         if let Some(limits) = limits {
             conn.execute(
@@ -256,7 +268,6 @@ impl DiskStore {
         }
         let store = Self {
             root: root.to_owned(),
-            repo: repo.to_vec(),
             connection: Mutex::new(conn),
             cached: CachedStats::default(),
         };
@@ -910,14 +921,129 @@ impl DiskStore {
         Ok(())
     }
 }
-impl Store for DiskStore {
-    fn bind(&self, repo: &[u8]) -> Result<(), Status> {
-        if self.repo != repo {
-            return Err(Status::permission_denied(
-                "disk store belongs to another repository",
-            ));
+/// (normalized repository, its upstream identity, confirmed key)
+pub(super) type Membership = (Vec<u8>, Option<String>, Key);
+impl DiskStore {
+    pub(super) fn add_member_locked(
+        &self,
+        conn: &Connection,
+        repo: &[u8],
+        key: Key,
+    ) -> Result<(), Status> {
+        conn.execute(
+            "INSERT OR IGNORE INTO members(repo,kind,id) VALUES(?1,?2,?3)",
+            params![repo, key.kind.name(), key.id.to_string()],
+        )
+        .map_err(io)?;
+        // Memberships outlive evicted frames; keep them bounded by the catalog.
+        let (members, limit): (u64, u64) = conn
+            .query_row(
+                "SELECT (SELECT COUNT(*) FROM members),max_entries FROM config",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .map_err(io)?;
+        if members > limit.saturating_mul(4) {
+            conn.execute(
+                "DELETE FROM members WHERE NOT EXISTS(SELECT 1 FROM kinds WHERE kinds.kind=members.kind AND kinds.id=members.id)",
+                [],
+            )
+            .map_err(io)?;
         }
         Ok(())
+    }
+    pub(super) fn identify_locked(
+        &self,
+        conn: &mut Connection,
+        repo: &[u8],
+        identity: &str,
+    ) -> Result<(), Status> {
+        let tx = conn
+            .transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)
+            .map_err(io)?;
+        let known: Option<String> = tx
+            .query_row(
+                "SELECT identity FROM identities WHERE repo=?1",
+                [repo],
+                |r| r.get(0),
+            )
+            .optional()
+            .map_err(io)?;
+        if known.as_deref() != Some(identity) {
+            if known.is_some() {
+                tx.execute("DELETE FROM members WHERE repo=?1", [repo])
+                    .map_err(io)?;
+            }
+            tx.execute(
+                "INSERT INTO identities(repo,identity) VALUES(?1,?2) ON CONFLICT(repo) DO UPDATE SET identity=excluded.identity",
+                params![repo, identity],
+            )
+            .map_err(io)?;
+        }
+        tx.commit().map_err(io)
+    }
+    /// Memberships by normalized repository name.
+    pub(super) fn members_locked(&self, conn: &Connection) -> Result<Vec<Membership>, Status> {
+        let mut statement = conn
+            .prepare("SELECT members.repo,identities.identity,kind,id FROM members LEFT JOIN identities USING(repo) ORDER BY members.repo,kind,id")
+            .map_err(io)?;
+        let rows = statement
+            .query_map([], |r| {
+                Ok((
+                    r.get::<_, Vec<u8>>(0)?,
+                    r.get::<_, Option<String>>(1)?,
+                    r.get::<_, String>(2)?,
+                    r.get::<_, String>(3)?,
+                ))
+            })
+            .map_err(io)?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(io)?;
+        rows.into_iter()
+            .map(|(repo, identity, kind, id)| {
+                Ok((
+                    repo,
+                    identity,
+                    Key {
+                        kind: match kind.as_str() {
+                            "trees" => Kind::Tree,
+                            "blobs" => Kind::Blob,
+                            _ => return Err(Status::data_loss("invalid disk catalog kind")),
+                        },
+                        id: id.parse().map_err(io)?,
+                    },
+                ))
+            })
+            .collect()
+    }
+}
+impl Store for DiskStore {
+    fn member(&self, repo: &[u8], key: Key) -> Result<bool, Status> {
+        let conn = self.guard(false)?;
+        conn.query_row(
+            "SELECT EXISTS(SELECT 1 FROM members WHERE repo=?1 AND kind=?2 AND id=?3)",
+            params![repo, key.kind.name(), key.id.to_string()],
+            |r| r.get(0),
+        )
+        .map_err(io)
+    }
+    fn add_member(&self, repo: &[u8], key: Key) -> Result<(), Status> {
+        let conn = self.guard(false)?;
+        self.add_member_locked(&conn, repo, key)
+    }
+    fn identify(&self, repo: &[u8], identity: &str) -> Result<(), Status> {
+        let mut conn = self.guard(false)?;
+        self.identify_locked(&mut conn, repo, identity)
+    }
+    fn identity(&self, repo: &[u8]) -> Result<Option<String>, Status> {
+        let conn = self.guard(false)?;
+        conn.query_row(
+            "SELECT identity FROM identities WHERE repo=?1",
+            [repo],
+            |r| r.get(0),
+        )
+        .optional()
+        .map_err(io)
     }
     fn get(&self, key: Key) -> Result<Option<Frame>, Status> {
         let mut conn = self.guard(false)?;

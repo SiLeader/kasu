@@ -200,7 +200,7 @@ fn limits() -> Limits {
 async fn cache(f: &Fixture, limits: Limits) -> Arc<Layer> {
     Layer::new(
         Role::Cache,
-        b"repo".to_vec(),
+        vec![b"repo".to_vec()],
         "daemon-hop",
         "server-hop",
         Client::connect(&f.authority.url, Some("server-hop"), Some(Role::Server))
@@ -221,11 +221,10 @@ async fn thousand_clients_coalesce_across_two_nodes_and_warm_hits_survive_cache_
     let mut layers = vec![];
     let mut stores = vec![];
     for n in 0..2 {
-        let store =
-            Arc::new(DiskStore::open(&f._temp.path().join(format!("node-{n}")), b"repo").unwrap());
+        let store = Arc::new(DiskStore::open(&f._temp.path().join(format!("node-{n}"))).unwrap());
         let layer = Layer::new(
             Role::Daemon,
-            b"repo".to_vec(),
+            vec![b"repo".to_vec()],
             "user",
             "daemon-hop",
             Client::connect(&regional.url, Some("daemon-hop"), Some(Role::Cache))
@@ -316,7 +315,7 @@ async fn distinct_misses_obey_global_concurrency_and_request_spacing() {
     let mut joins = tokio::task::JoinSet::new();
     for key in f.keys.iter().take(12).copied() {
         let layer = layer.clone();
-        joins.spawn(async move { layer.get(key).await });
+        joins.spawn(async move { layer.get(b"repo", key).await });
     }
     while let Some(result) = joins.join_next().await {
         result.unwrap().unwrap();
@@ -342,14 +341,14 @@ async fn outage_opens_a_circuit_and_concurrent_requests_cannot_amplify_it() {
     settings.fills = 1;
     let layer = cache(&f, settings).await;
     for key in f.keys.iter().take(3).copied() {
-        assert!(layer.get(key).await.is_err());
+        assert!(layer.get(b"repo", key).await.is_err());
     }
     let before = f.calls.load(Ordering::SeqCst);
     assert_eq!(before, 3);
     let mut tasks = tokio::task::JoinSet::new();
     for key in f.keys.iter().skip(3).take(30).copied() {
         let layer = layer.clone();
-        tasks.spawn(async move { layer.get(key).await });
+        tasks.spawn(async move { layer.get(b"repo", key).await });
     }
     while let Some(result) = tasks.join_next().await {
         assert!(result.unwrap().is_err());
@@ -358,7 +357,7 @@ async fn outage_opens_a_circuit_and_concurrent_requests_cannot_amplify_it() {
     assert!(layer.stats().circuit_rejections >= 30);
     f.fail.store(false, Ordering::SeqCst);
     tokio::time::sleep(Duration::from_millis(260)).await;
-    assert!(layer.get(f.keys[0]).await.is_ok());
+    assert!(layer.get(b"repo", f.keys[0]).await.is_ok());
     assert_eq!(f.calls.load(Ordering::SeqCst), before + 1);
     assert_eq!(layer.stats().pending, 0);
 }
@@ -399,23 +398,27 @@ async fn hierarchy_credentials_roles_scope_and_cancelled_leaders_are_enforced() 
             .await
             .unwrap_err()
             .code(),
-        tonic::Code::PermissionDenied
+        tonic::Code::NotFound
     );
     let before = f.calls.load(Ordering::SeqCst);
     let first = layer.clone();
-    let leader = tokio::spawn(async move { first.get(key).await });
+    let leader = tokio::spawn(async move { first.get(b"repo", key).await });
     while f.calls.load(Ordering::SeqCst) == before {
         tokio::task::yield_now().await;
     }
     leader.abort();
-    assert!(layer.get(key).await.is_ok());
+    assert!(layer.get(b"repo", key).await.is_ok());
     assert_eq!(f.calls.load(Ordering::SeqCst), before + 1);
-    let store = Arc::new(MemoryStore::new(1024));
-    store.bind(b"repo").unwrap();
+    // A frame cached for one repository is not a hit for another: the other
+    // repository is asked upstream, which does not know the object there.
+    let calls = f.calls.load(Ordering::SeqCst);
     assert_eq!(
-        store.bind(b"other").unwrap_err().code(),
-        tonic::Code::PermissionDenied
+        layer.get(b"other", key).await.unwrap_err().code(),
+        tonic::Code::NotFound
     );
+    assert_eq!(f.calls.load(Ordering::SeqCst), calls + 1);
+    assert!(layer.get(b"repo", key).await.is_ok());
+    assert_eq!(f.calls.load(Ordering::SeqCst), calls + 1);
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
@@ -451,7 +454,7 @@ async fn stream_and_pending_limits_reject_excess_work_then_release_capacity() {
         tonic::Code::ResourceExhausted
     );
     assert_eq!(
-        layer.get(f.keys[2]).await.unwrap_err().code(),
+        layer.get(b"repo", f.keys[2]).await.unwrap_err().code(),
         tonic::Code::ResourceExhausted
     );
     assert_eq!(f.calls.load(Ordering::SeqCst), 2);
@@ -476,8 +479,14 @@ struct FailingWrites {
     fail: AtomicBool,
 }
 impl Store for FailingWrites {
-    fn bind(&self, repo: &[u8]) -> Result<(), Status> {
-        self.inner.bind(repo)
+    fn member(&self, repo: &[u8], key: Key) -> Result<bool, Status> {
+        self.inner.member(repo, key)
+    }
+    fn add_member(&self, repo: &[u8], key: Key) -> Result<(), Status> {
+        self.inner.add_member(repo, key)
+    }
+    fn identify(&self, repo: &[u8], identity: &str) -> Result<(), Status> {
+        self.inner.identify(repo, identity)
     }
     fn hot(&self, key: Key) -> Result<Option<kasu_cache::Frame>, Status> {
         self.inner.hot(key)
@@ -505,7 +514,7 @@ async fn cache_write_failures_stop_refetches_preserve_warm_hits_and_recover() {
     settings.cooldown = Duration::from_secs(1);
     let layer = Layer::new(
         Role::Cache,
-        b"repo".to_vec(),
+        vec![b"repo".to_vec()],
         "cache-hop",
         "server-hop",
         Client::connect(&f.authority.url, Some("server-hop"), Some(Role::Server))
@@ -515,11 +524,11 @@ async fn cache_write_failures_stop_refetches_preserve_warm_hits_and_recover() {
         settings,
     )
     .unwrap();
-    let warm = layer.get(f.keys[0]).await.unwrap();
+    let warm = layer.get(b"repo", f.keys[0]).await.unwrap();
     store.fail.store(true, Ordering::SeqCst);
     for key in f.keys.iter().skip(1).take(3).copied() {
         assert_eq!(
-            layer.get(key).await.unwrap_err().code(),
+            layer.get(b"repo", key).await.unwrap_err().code(),
             tonic::Code::Internal
         );
     }
@@ -528,7 +537,7 @@ async fn cache_write_failures_stop_refetches_preserve_warm_hits_and_recover() {
     let mut requests = tokio::task::JoinSet::new();
     for key in f.keys.iter().skip(4).take(30).copied() {
         let layer = layer.clone();
-        requests.spawn(async move { layer.get(key).await });
+        requests.spawn(async move { layer.get(b"repo", key).await });
     }
     while let Some(result) = requests.join_next().await {
         assert_eq!(
@@ -538,24 +547,24 @@ async fn cache_write_failures_stop_refetches_preserve_warm_hits_and_recover() {
     }
     assert_eq!(f.calls.load(Ordering::SeqCst), before);
     assert!(layer.stats().circuit_rejections >= 30);
-    assert_eq!(layer.get(f.keys[0]).await.unwrap(), warm);
+    assert_eq!(layer.get(b"repo", f.keys[0]).await.unwrap(), warm);
     assert_eq!(f.calls.load(Ordering::SeqCst), before);
     // A successful upstream read alone must not clear the persistence fault.
     tokio::time::sleep(Duration::from_millis(1010)).await;
     assert_eq!(
-        layer.get(f.keys[1]).await.unwrap_err().code(),
+        layer.get(b"repo", f.keys[1]).await.unwrap_err().code(),
         tonic::Code::Internal
     );
     assert_eq!(f.calls.load(Ordering::SeqCst), before + 1);
     assert_eq!(
-        layer.get(f.keys[2]).await.unwrap_err().code(),
+        layer.get(b"repo", f.keys[2]).await.unwrap_err().code(),
         tonic::Code::Unavailable
     );
     assert_eq!(f.calls.load(Ordering::SeqCst), before + 1);
     store.fail.store(false, Ordering::SeqCst);
     tokio::time::sleep(Duration::from_millis(1010)).await;
-    let recovered = layer.get(f.keys[1]).await.unwrap();
+    let recovered = layer.get(b"repo", f.keys[1]).await.unwrap();
     assert_eq!(f.calls.load(Ordering::SeqCst), before + 2);
-    assert_eq!(layer.get(f.keys[1]).await.unwrap(), recovered);
+    assert_eq!(layer.get(b"repo", f.keys[1]).await.unwrap(), recovered);
     assert_eq!(f.calls.load(Ordering::SeqCst), before + 2);
 }

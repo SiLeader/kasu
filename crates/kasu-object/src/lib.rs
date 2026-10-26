@@ -11,6 +11,9 @@ pub const CHUNK_BYTES: usize = 64 * 1024;
 pub const BATCH_LIMIT: usize = 128;
 pub const MAX_FRAME_BYTES: usize = kasu_store::MAX_COMPRESSED_OBJECT_SIZE;
 pub const LAYER_HEADER: &str = "x-kasu-object-layer";
+/// Opaque, stable identity of the repository a response was served for. It
+/// changes when a name is reused by a different repository.
+pub const REPOSITORY_HEADER: &str = "x-kasu-repository";
 pub fn token_eq(a: &[u8], b: &[u8]) -> bool {
     use subtle::ConstantTimeEq;
     bool::from(a.ct_eq(b))
@@ -202,6 +205,24 @@ impl Client {
         Ok(())
     }
     pub async fn fetch(&self, repo: &[u8], id: ObjectId, kind: Kind) -> Result<Vec<u8>, Status> {
+        self.fetch_scoped(repo, id, kind)
+            .await
+            .map(|(bytes, _)| bytes)
+    }
+    /// Fetch one frame and the repository identity the upstream reported.
+    pub async fn fetch_scoped(
+        &self,
+        repo: &[u8],
+        id: ObjectId,
+        kind: Kind,
+    ) -> Result<(Vec<u8>, Option<String>), Status> {
+        let identity = |metadata: &tonic::metadata::MetadataMap| {
+            metadata
+                .get(REPOSITORY_HEADER)
+                .and_then(|v| v.to_str().ok())
+                .filter(|v| v.len() <= 128)
+                .map(str::to_owned)
+        };
         let span = kasu_telemetry::client_span(
             if kind == Kind::Tree {
                 "GetTrees"
@@ -218,21 +239,24 @@ impl Client {
                 Kind::Tree => {
                     let response = client.get_trees(q).await?;
                     self.check(&response)?;
+                    let scope = identity(response.metadata());
                     let mut stream = response.into_inner();
                     while let Some(chunk) = stream.message().await? {
                         frame.push(&chunk.id, chunk.offset, &chunk.data, chunk.last)?;
                     }
+                    Ok((frame.finish()?, scope))
                 }
                 Kind::Blob => {
                     let response = client.get_blobs(q).await?;
                     self.check(&response)?;
+                    let scope = identity(response.metadata());
                     let mut stream = response.into_inner();
                     while let Some(chunk) = stream.message().await? {
                         frame.push(&chunk.id, chunk.offset, &chunk.data, chunk.last)?;
                     }
+                    Ok((frame.finish()?, scope))
                 }
             }
-            frame.finish()
         }
         .instrument(span.clone())
         .with_current_subscriber()

@@ -403,6 +403,71 @@ fn empty_repository_has_unborn_head_and_cli_imports_it() {
 }
 
 #[test]
+fn cli_registers_repositories_and_imports_them_independently() {
+    let dir = tempfile::tempdir().unwrap();
+    let source: PathBuf = dir.path().join("empty.git");
+    init(&source);
+    let destination = dir.path().join("native");
+    let ingest = |args: &[&str]| {
+        Command::new(env!("CARGO_BIN_EXE_kasu-ingest"))
+            .args(args)
+            .arg(&source)
+            .arg(&destination)
+            .output()
+            .unwrap()
+    };
+    let with = |name: &str, create: bool| {
+        let mut args = vec![];
+        if create {
+            args.push("--create");
+        }
+        let output = Command::new(env!("CARGO_BIN_EXE_kasu-ingest"))
+            .args(&args)
+            .arg(&source)
+            .arg(&destination)
+            .arg(name)
+            .output()
+            .unwrap();
+        (
+            output.status.success(),
+            String::from_utf8_lossy(&output.stderr).into_owned(),
+        )
+    };
+    assert!(!ingest(&[]).status.success());
+    // The first import into an empty registry keeps the legacy key layout.
+    assert!(with("legacy", false).0);
+    // Afterwards, new names must be created explicitly and get fresh keys.
+    let (ok, stderr) = with("team/app", false);
+    assert!(!ok);
+    assert!(stderr.contains("--create"), "{stderr}");
+    assert!(with("team/app", true).0);
+    assert!(with("team/app", false).0);
+    let meta = SqliteStore::open(destination.join("meta.db")).unwrap();
+    let key = |name: &str| {
+        meta.resolve_repository_name(&kasu_core::RepoName::new(name).unwrap(), 0)
+            .unwrap()
+            .unwrap()
+            .key
+    };
+    assert_eq!(key("legacy").as_bytes(), b"legacy");
+    let app = key("team/app");
+    assert!(!app.is_legacy());
+    assert!(
+        meta.resolve_git(app.as_bytes(), b"HEAD")
+            .unwrap()
+            .value
+            .is_some()
+    );
+    assert!(
+        meta.resolve_git(b"team/app", b"HEAD")
+            .unwrap()
+            .value
+            .is_none()
+    );
+    assert!(!with("bad name", true).0);
+}
+
+#[test]
 #[ignore = "requires pinned libgit2/TestGitRepository checkout in KASU_OSS_REPO"]
 fn pinned_oss_repository_roundtrips_all_objects_through_pack_and_clone() {
     let source = PathBuf::from(std::env::var_os("KASU_OSS_REPO").expect(

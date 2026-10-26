@@ -137,7 +137,7 @@ async fn cache_executable_serves_only_objects_exposes_metrics_and_uses_its_hop_t
             .await
             .unwrap_err()
             .code(),
-        tonic::Code::PermissionDenied
+        tonic::Code::NotFound
     );
     let mut stream = tokio::net::TcpStream::connect(&metrics).await.unwrap();
     stream

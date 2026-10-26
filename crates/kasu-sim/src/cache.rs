@@ -276,8 +276,14 @@ impl WriteFault {
     }
 }
 impl Store for WriteFault {
-    fn bind(&self, repo: &[u8]) -> std::result::Result<(), Status> {
-        self.inner.bind(repo)
+    fn member(&self, repo: &[u8], key: Key) -> std::result::Result<bool, Status> {
+        self.inner.member(repo, key)
+    }
+    fn add_member(&self, repo: &[u8], key: Key) -> std::result::Result<(), Status> {
+        self.inner.add_member(repo, key)
+    }
+    fn identify(&self, repo: &[u8], identity: &str) -> std::result::Result<(), Status> {
+        self.inner.identify(repo, identity)
     }
     fn hot(&self, key: Key) -> std::result::Result<Option<Frame>, Status> {
         self.inner.hot(key)
@@ -311,7 +317,7 @@ fn limits(role: Role) -> Limits {
 fn region(channel: &Channel, store: Arc<WriteFault>) -> Arc<Layer> {
     Layer::new(
         Role::Cache,
-        REPO.to_vec(),
+        vec![REPO.to_vec()],
         "node-hop",
         "server-hop",
         Client::new(channel.clone(), Some("server-hop"), Some(Role::Server)).unwrap(),
@@ -323,11 +329,11 @@ fn region(channel: &Channel, store: Arc<WriteFault>) -> Arc<Layer> {
 fn node(channel: &Channel, directory: &std::path::Path, n: usize) -> Arc<Layer> {
     Layer::new(
         Role::Daemon,
-        REPO.to_vec(),
+        vec![REPO.to_vec()],
         &format!("client-{n}"),
         "node-hop",
         Client::new(channel.clone(), Some("node-hop"), Some(Role::Cache)).unwrap(),
-        Arc::new(DiskStore::open(directory, REPO).unwrap()),
+        Arc::new(DiskStore::open(directory).unwrap()),
         limits(Role::Daemon),
     )
     .unwrap()
@@ -367,7 +373,7 @@ async fn source_get(
     tick(2).await;
     let calls = source.calls.load(Ordering::SeqCst);
     let sleeping = source.sleeping.load(Ordering::SeqCst);
-    let task = tokio::spawn(async move { node.get(key).await });
+    let task = tokio::spawn(async move { node.get(REPO, key).await });
     until(|| {
         source.calls.load(Ordering::SeqCst) == calls + 1
             && (!healthy || source.sleeping.load(Ordering::SeqCst) == sleeping + 1)
@@ -488,7 +494,7 @@ async fn run(seed: u64, clients: usize) -> CacheSimulation {
     for n in order {
         let node = nodes[n % 2].clone();
         let key = keys[0];
-        joins.spawn(async move { (n, node.get(key).await) });
+        joins.spawn(async move { (n, node.get(REPO, key).await) });
     }
     until(|| {
         source.calls.load(Ordering::SeqCst) == 1
@@ -522,10 +528,10 @@ async fn run(seed: u64, clients: usize) -> CacheSimulation {
 
     *rpc.current.lock().unwrap() = None;
     for node in &nodes {
-        assert_eq!(spin(node.get(keys[0])).await.unwrap(), frames[0]);
+        assert_eq!(spin(node.get(REPO, keys[0])).await.unwrap(), frames[0]);
         tick(2).await;
         assert_eq!(
-            spin(node.get(keys[1])).await.unwrap_err().code(),
+            spin(node.get(REPO, keys[1])).await.unwrap_err().code(),
             tonic::Code::Unavailable
         );
     }
@@ -550,7 +556,7 @@ async fn run(seed: u64, clients: usize) -> CacheSimulation {
         frames[1]
     );
     tick(2).await;
-    assert_eq!(spin(nodes[1].get(keys[1])).await.unwrap(), frames[1]);
+    assert_eq!(spin(nodes[1].get(REPO, keys[1])).await.unwrap(), frames[1]);
     events.push(event("empty_cache_restarted", start, &source, &rpc, &nodes));
 
     source.mode.store(1, Ordering::SeqCst);
@@ -582,7 +588,7 @@ async fn run(seed: u64, clients: usize) -> CacheSimulation {
     let stalled_before = source.stalled.load(Ordering::SeqCst);
     let node0 = nodes[0].clone();
     let key = keys[3];
-    let stalled = tokio::spawn(async move { node0.get(key).await });
+    let stalled = tokio::spawn(async move { node0.get(REPO, key).await });
     until(|| source.stalled.load(Ordering::SeqCst) == stalled_before + 1).await;
     tick(51).await;
     assert_eq!(
@@ -618,7 +624,7 @@ async fn run(seed: u64, clients: usize) -> CacheSimulation {
     for _ in 0..30 {
         let node = nodes[1].clone();
         let key = keys[7];
-        joins.spawn(async move { (0, node.get(key).await) });
+        joins.spawn(async move { (0, node.get(REPO, key).await) });
     }
     until(|| {
         nodes[1].stats().requests == requests + 30 && rpc.calls.load(Ordering::SeqCst) == calls + 1
@@ -632,7 +638,7 @@ async fn run(seed: u64, clients: usize) -> CacheSimulation {
         );
     }
     assert_eq!(source.calls.load(Ordering::SeqCst), before);
-    assert_eq!(spin(nodes[0].get(keys[0])).await.unwrap(), frames[0]);
+    assert_eq!(spin(nodes[0].get(REPO, keys[0])).await.unwrap(), frames[0]);
     events.push(event(
         "persistence_circuit_blocks_burst",
         start,
@@ -650,7 +656,7 @@ async fn run(seed: u64, clients: usize) -> CacheSimulation {
     );
     tick(2).await;
     assert_eq!(
-        spin(nodes[1].get(keys[8])).await.unwrap_err().code(),
+        spin(nodes[1].get(REPO, keys[8])).await.unwrap_err().code(),
         tonic::Code::Unavailable
     );
     assert_eq!(source.calls.load(Ordering::SeqCst), before + 1);
@@ -670,12 +676,12 @@ async fn run(seed: u64, clients: usize) -> CacheSimulation {
         frames[7]
     );
     tick(2).await;
-    assert_eq!(spin(nodes[1].get(keys[7])).await.unwrap(), frames[7]);
+    assert_eq!(spin(nodes[1].get(REPO, keys[7])).await.unwrap(), frames[7]);
     events.push(event("persistence_recovered", start, &source, &rpc, &nodes));
     let before_reopen = source.calls.load(Ordering::SeqCst);
     nodes[0] = node(&cache_peer.channel, &node_paths[0], 0);
-    assert_eq!(spin(nodes[0].get(keys[0])).await.unwrap(), frames[0]);
-    assert_eq!(spin(nodes[0].get(keys[7])).await.unwrap(), frames[7]);
+    assert_eq!(spin(nodes[0].get(REPO, keys[0])).await.unwrap(), frames[0]);
+    assert_eq!(spin(nodes[0].get(REPO, keys[7])).await.unwrap(), frames[7]);
     let disk_reopen_authority_requests = source.calls.load(Ordering::SeqCst) - before_reopen;
     assert_eq!(disk_reopen_authority_requests, 0);
     events.push(event("daemon_disk_reopened", start, &source, &rpc, &nodes));

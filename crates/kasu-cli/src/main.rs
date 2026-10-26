@@ -46,6 +46,24 @@ enum Command {
         #[arg(long)]
         sparse: Vec<PathBuf>,
     },
+    /// Check out `repo` from `server` into `destination` (default: the last
+    /// segment of the repository name) at its default branch.
+    Clone {
+        server: String,
+        repo: String,
+        destination: Option<PathBuf>,
+        #[arg(long)]
+        revision: Option<OsString>,
+        #[arg(long)]
+        sparse: Vec<PathBuf>,
+    },
+    /// Repository administration.
+    Repo {
+        #[arg(long, env = "KASU_SERVER", default_value = "http://127.0.0.1:50051")]
+        server: String,
+        #[command(subcommand)]
+        action: RepoAction,
+    },
     Status {
         #[arg(long)]
         watch: bool,
@@ -83,6 +101,22 @@ enum Command {
     Show {
         revision: Option<OsString>,
         path: Option<PathBuf>,
+    },
+}
+#[derive(Subcommand)]
+enum RepoAction {
+    /// List repositories visible to the caller.
+    List {
+        #[arg(long, default_value = "")]
+        prefix: String,
+    },
+    Create {
+        name: String,
+        #[arg(long)]
+        default_branch: Option<String>,
+    },
+    Show {
+        name: String,
     },
 }
 #[derive(Subcommand)]
@@ -194,6 +228,68 @@ async fn main() {
         std::process::exit(1);
     }
 }
+async fn repo(cli: &Cli, server: &str, action: &RepoAction) -> Result<()> {
+    let mut admin = kasu_cli::Admin::connect(server, cli.token.as_deref()).await?;
+    let show = |r: &p::Repository| {
+        let state = p::RepositoryState::try_from(r.state)
+            .map(|s| s.as_str_name())
+            .unwrap_or("UNKNOWN");
+        println!(
+            "{}\t{}\t{}",
+            r.name,
+            state,
+            String::from_utf8_lossy(&r.default_branch)
+        );
+    };
+    match action {
+        RepoAction::List { prefix } => {
+            let mut cursor = String::new();
+            let mut all = Vec::new();
+            loop {
+                let q = admin.request(p::ListRepositoriesRequest {
+                    prefix: prefix.clone(),
+                    cursor,
+                    limit: 1000,
+                });
+                let page = admin.client.list_repositories(q).await?.into_inner();
+                all.extend(page.repositories);
+                if page.cursor.is_empty() {
+                    break;
+                }
+                cursor = page.cursor;
+            }
+            if cli.json {
+                return emit(&all);
+            }
+            all.iter().for_each(show);
+        }
+        RepoAction::Create {
+            name,
+            default_branch,
+        } => {
+            let q = admin.request(p::CreateRepositoryRequest {
+                name: name.clone(),
+                default_branch: default_branch.clone().unwrap_or_default().into_bytes(),
+                config_json: String::new(),
+                idempotency_key: vec![],
+            });
+            let created = admin.client.create_repository(q).await?.into_inner();
+            if cli.json {
+                return emit(&created);
+            }
+            show(&created);
+        }
+        RepoAction::Show { name } => {
+            let q = admin.request(p::GetRepositoryRequest { name: name.clone() });
+            let repository = admin.client.get_repository(q).await?.into_inner();
+            if cli.json {
+                return emit(&repository);
+            }
+            show(&repository);
+        }
+    }
+    Ok(())
+}
 async fn run(cli: &Cli) -> Result<()> {
     #[cfg(target_os = "linux")]
     if let Command::Mount {
@@ -254,6 +350,55 @@ async fn run(cli: &Cli) -> Result<()> {
             server.clone(),
             objects.to_owned(),
             revision.as_bytes(),
+            &destination,
+            SparseProfile::new(sparse.iter().map(|p| profile_path(p)).collect())?,
+        )
+        .await?;
+        println!("{}", copy.state.id()?);
+        return Ok(());
+    }
+    if let Command::Repo { server, action } = &cli.command {
+        return repo(cli, server, action).await;
+    }
+    if let Command::Clone {
+        server,
+        repo,
+        destination,
+        revision,
+        sparse,
+    } = &cli.command
+    {
+        let destination = destination
+            .clone()
+            .unwrap_or_else(|| PathBuf::from(repo.rsplit('/').next().unwrap_or(repo.as_str())));
+        let destination = if destination.is_absolute() {
+            destination
+        } else {
+            cli.directory.join(destination)
+        };
+        let revision = match revision {
+            Some(revision) => revision.as_bytes().to_vec(),
+            None => match kasu_cli::Admin::connect(server, cli.token.as_deref()).await {
+                Ok(mut admin) => admin
+                    .default_branch(repo)
+                    .await
+                    .unwrap_or_else(|_| b"main".to_vec()),
+                Err(_) => b"main".to_vec(),
+            },
+        };
+        let objects = cli.objects.as_deref().unwrap_or(server);
+        let mut remote = Remote::connect(
+            server,
+            objects,
+            repo.as_bytes().to_vec(),
+            cli.token.as_deref(),
+        )
+        .await?;
+        let copy = WorkingCopy::checkout(
+            &mut remote,
+            server.clone(),
+            objects.to_owned(),
+            &revision,
             &destination,
             SparseProfile::new(sparse.iter().map(|p| profile_path(p)).collect())?,
         )

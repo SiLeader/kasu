@@ -22,12 +22,63 @@ struct Scope {
 mod state;
 pub use state::{DiskLimits, DiskStats, DiskStore};
 impl DiskStore {
+    /// Export every cached frame with the repository memberships that let it
+    /// be served.
     pub fn export_snapshot(&self, path: &Path) -> Result<usize, Status> {
+        self.export_snapshot_for(path, &[])
+    }
+    /// Export only frames confirmed for `repositories` (all when empty).
+    pub fn export_snapshot_for(
+        &self,
+        path: &Path,
+        repositories: &[Vec<u8>],
+    ) -> Result<usize, Status> {
+        let selected = repositories
+            .iter()
+            .map(|r| {
+                crate::normalize(r).ok_or_else(|| Status::invalid_argument("invalid repository"))
+            })
+            .collect::<Result<BTreeSet<_>, _>>()?;
         let guard = self.guard(false)?;
-        let keys = self.catalog_locked(&guard)?;
+        let members: Vec<_> = self
+            .members_locked(&guard)?
+            .into_iter()
+            .filter(|(repo, _, _)| selected.is_empty() || selected.contains(repo))
+            .collect();
+        let wanted: std::collections::HashSet<Key> =
+            members.iter().map(|(_, _, key)| *key).collect();
+        let keys: Vec<_> = self
+            .catalog_locked(&guard)?
+            .into_iter()
+            .filter(|(key, _)| selected.is_empty() || wanted.contains(key))
+            .collect();
+        let position: std::collections::HashMap<Key, usize> = keys
+            .iter()
+            .enumerate()
+            .map(|(n, (key, _))| (*key, n))
+            .collect();
+        let mut snapshot_repositories: Vec<SnapshotRepository> = Vec::new();
+        for (repo, identity, key) in members {
+            let Some(index) = position.get(&key) else {
+                continue;
+            };
+            if snapshot_repositories.last().is_none_or(|r| r.name != repo) {
+                snapshot_repositories.push(SnapshotRepository {
+                    name: repo,
+                    identity,
+                    members: Vec::new(),
+                });
+            }
+            snapshot_repositories
+                .last_mut()
+                .unwrap()
+                .members
+                .push(*index);
+        }
         let manifest = Manifest {
-            version: 1,
-            repository: self.repo.clone(),
+            version: 2,
+            repository: None,
+            repositories: snapshot_repositories,
             entries: keys
                 .iter()
                 .map(|(key, size)| Item {
@@ -87,10 +138,39 @@ impl DiskStore {
         header.read_to_end(&mut bytes).map_err(io)?;
         let manifest: Manifest = serde_json::from_slice(&bytes)
             .map_err(|_| Status::data_loss("invalid snapshot manifest"))?;
-        if manifest.version != 1 || manifest.repository != self.repo {
-            return Err(Status::permission_denied(
-                "snapshot repository or version mismatch",
+        // Version 1 snapshots hold frames of one repository.
+        let repositories = match (manifest.version, &manifest.repository) {
+            (1, Some(repository)) if manifest.repositories.is_empty() => {
+                vec![SnapshotRepository {
+                    name: repository.clone(),
+                    identity: None,
+                    members: (0..manifest.entries.len()).collect(),
+                }]
+            }
+            (2, None) => manifest.repositories.clone(),
+            _ => return Err(Status::data_loss("unsupported snapshot version")),
+        };
+        let mut memberships = Vec::new();
+        if repositories.len() > 4096 {
+            return Err(Status::resource_exhausted(
+                "snapshot repository count exceeds limit",
             ));
+        }
+        for repository in repositories {
+            let name = crate::normalize(&repository.name)
+                .ok_or_else(|| Status::data_loss("invalid snapshot repository"))?;
+            if repository
+                .identity
+                .as_ref()
+                .is_some_and(|i| i.is_empty() || i.len() > 128)
+                || repository
+                    .members
+                    .iter()
+                    .any(|n| *n >= manifest.entries.len())
+            {
+                return Err(Status::data_loss("invalid snapshot membership"));
+            }
+            memberships.push((name, repository.identity, repository.members));
         }
         if manifest.entries.len() > 100_000 {
             return Err(Status::resource_exhausted(
@@ -212,6 +292,14 @@ impl DiskStore {
             .execute_batch("DELETE FROM pinned;DELETE FROM candidates;")
             .map_err(io)?;
         result?;
+        for (repo, identity, members) in memberships {
+            if let Some(identity) = identity {
+                self.identify_locked(&mut guard, &repo, &identity)?;
+            }
+            for index in members {
+                self.add_member_locked(&guard, &repo, keys[index])?;
+            }
+        }
         Ok(keys.len())
     }
 }
@@ -219,8 +307,19 @@ impl DiskStore {
 #[serde(deny_unknown_fields)]
 struct Manifest {
     version: u32,
-    repository: Vec<u8>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    repository: Option<Vec<u8>>,
+    #[serde(default)]
+    repositories: Vec<SnapshotRepository>,
     entries: Vec<Item>,
+}
+/// Frames confirmed for one repository, as indices into `entries`.
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SnapshotRepository {
+    name: Vec<u8>,
+    identity: Option<String>,
+    members: Vec<usize>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]

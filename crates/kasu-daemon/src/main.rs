@@ -32,8 +32,9 @@ enum Command {
     Snapshot {
         #[arg(long)]
         data: PathBuf,
+        /// Repositories to include (repeatable); none includes every repository.
         #[arg(long)]
-        repo: std::ffi::OsString,
+        repo: Vec<std::ffi::OsString>,
         output: PathBuf,
     },
 }
@@ -42,8 +43,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let _telemetry = kasu_telemetry::init("kasu-daemon")?;
     match Args::parse().command {
         Command::Snapshot { data, repo, output } => {
-            let store = DiskStore::open(&data, repo.as_bytes())?;
-            println!("{}", store.export_snapshot(&output)?);
+            let store = DiskStore::open(&data)?;
+            let repositories: Vec<_> = repo.iter().map(|r| r.as_bytes().to_vec()).collect();
+            println!("{}", store.export_snapshot_for(&output, &repositories)?);
         }
         Command::Serve {
             common,
@@ -71,7 +73,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             let _data = Lease::acquire(&data.join("daemon.lock"))?;
             let store = Arc::new(DiskStore::open_with_limits(
                 &data,
-                common.repo.as_bytes(),
                 DiskLimits {
                     bytes: disk_bytes,
                     entries: disk_entries,

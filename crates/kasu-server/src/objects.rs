@@ -34,7 +34,7 @@ impl ObjectService {
         request: Request<p::ObjectRequest>,
         tree: bool,
         encode: fn(Vec<u8>, u64, Vec<u8>, bool) -> T,
-    ) -> Result<ReceiverStream<Result<T, Status>>, Status> {
+    ) -> Result<(ReceiverStream<Result<T, Status>>, String), Status> {
         let authorization = request
             .metadata()
             .get("authorization")
@@ -81,6 +81,7 @@ impl ObjectService {
         })
         .await
         .map_err(|_| Status::internal("object authorization worker failed"))??;
+        let identity = ObjectId::hash(scoped.key()).to_string();
         let (tx, rx) = tokio::sync::mpsc::channel(2);
         let state = scoped.clone();
         crate::admission::blocking(move || {
@@ -119,8 +120,20 @@ impl ObjectService {
                 }
             }
         });
-        Ok(ReceiverStream::new(rx))
+        Ok((ReceiverStream::new(rx), identity))
     }
+}
+fn respond<T>(stream: T, identity: &str) -> Response<T> {
+    let mut response = Response::new(stream);
+    response
+        .metadata_mut()
+        .insert(kasu_object::LAYER_HEADER, "server".parse().unwrap());
+    if let Ok(value) = identity.parse() {
+        response
+            .metadata_mut()
+            .insert(kasu_object::REPOSITORY_HEADER, value);
+    }
+    response
 }
 #[tonic::async_trait]
 impl Objects for ObjectService {
@@ -130,36 +143,28 @@ impl Objects for ObjectService {
         &self,
         request: Request<p::ObjectRequest>,
     ) -> Result<Response<Self::GetTreesStream>, Status> {
-        let mut response = Response::new(
-            self.stream(request, true, |id, offset, data, last| p::TreeObject {
+        let (stream, identity) = self
+            .stream(request, true, |id, offset, data, last| p::TreeObject {
                 id,
                 offset,
                 data,
                 last,
             })
-            .await?,
-        );
-        response
-            .metadata_mut()
-            .insert(kasu_object::LAYER_HEADER, "server".parse().unwrap());
-        Ok(response)
+            .await?;
+        Ok(respond(stream, &identity))
     }
     async fn get_blobs(
         &self,
         request: Request<p::ObjectRequest>,
     ) -> Result<Response<Self::GetBlobsStream>, Status> {
-        let mut response = Response::new(
-            self.stream(request, false, |id, offset, data, last| p::BlobChunk {
+        let (stream, identity) = self
+            .stream(request, false, |id, offset, data, last| p::BlobChunk {
                 id,
                 offset,
                 data,
                 last,
             })
-            .await?,
-        );
-        response
-            .metadata_mut()
-            .insert(kasu_object::LAYER_HEADER, "server".parse().unwrap());
-        Ok(response)
+            .await?;
+        Ok(respond(stream, &identity))
     }
 }

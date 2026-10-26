@@ -7,43 +7,69 @@ use std::sync::Arc;
 #[test]
 fn disk_reopen_and_snapshot_preserve_exact_frames_and_repo_scope() {
     let temp = tempfile::tempdir().unwrap();
-    let store = DiskStore::open(&temp.path().join("source"), b"repo").unwrap();
+    let store = DiskStore::open(&temp.path().join("source")).unwrap();
     let raw = vec![
         (Kind::Tree, Tree::default().encode()),
         (Kind::Blob, b"snapshot blob".to_vec()),
+        (Kind::Blob, b"other repository blob".to_vec()),
     ];
     let mut expected = vec![];
-    for (kind, raw) in raw {
+    for (n, (kind, raw)) in raw.into_iter().enumerate() {
         let key = Key {
             kind,
             id: ObjectId::hash(&raw),
         };
         let frame = Arc::new(kasu_store::compress(&raw).unwrap());
         store.put(key, frame.clone()).unwrap();
+        store
+            .add_member(if n < 2 { b"team/repo" } else { b"team/other" }, key)
+            .unwrap();
         expected.push((key, frame));
     }
-    assert_eq!(store.usage().0, 2);
+    store.identify(b"team/repo", "identity-a").unwrap();
+    assert_eq!(store.usage().0, 3);
     let path = temp.path().join("snapshot.tar");
-    assert_eq!(store.export_snapshot(&path).unwrap(), 2);
+    assert_eq!(store.export_snapshot(&path).unwrap(), 3);
     assert!(store.export_snapshot(&path).is_err());
-    let reopened = DiskStore::open(&temp.path().join("source"), b"repo").unwrap();
+    let reopened = DiskStore::open(&temp.path().join("source")).unwrap();
     assert_eq!(reopened.usage(), store.usage());
-    assert!(DiskStore::open(&temp.path().join("source"), b"foreign").is_err());
-    let restored = DiskStore::open(&temp.path().join("restored"), b"repo").unwrap();
-    assert_eq!(restored.import_snapshot(&path, 1024 * 1024).unwrap(), 2);
-    for (key, bytes) in expected {
-        assert_eq!(
-            restored.get(key).unwrap().unwrap().as_slice(),
-            bytes.as_slice()
-        );
-        assert_eq!(
-            reopened.get(key).unwrap().unwrap().as_slice(),
-            bytes.as_slice()
-        );
+    let restored = DiskStore::open(&temp.path().join("restored")).unwrap();
+    assert_eq!(restored.import_snapshot(&path, 1024 * 1024).unwrap(), 3);
+    for (n, (key, bytes)) in expected.iter().enumerate() {
+        for store in [&restored, &reopened] {
+            assert_eq!(
+                store.get(*key).unwrap().unwrap().as_slice(),
+                bytes.as_slice()
+            );
+            assert_eq!(store.member(b"team/repo", *key).unwrap(), n < 2);
+            assert_eq!(store.member(b"team/other", *key).unwrap(), n == 2);
+        }
     }
-    let foreign = DiskStore::open(&temp.path().join("foreign"), b"foreign").unwrap();
-    assert!(foreign.import_snapshot(&path, 1024 * 1024).is_err());
-    assert_eq!(foreign.usage(), (0, 0));
+    assert_eq!(
+        restored.identity(b"team/repo").unwrap().as_deref(),
+        Some("identity-a")
+    );
+    // A snapshot of a repository set carries only frames confirmed for it.
+    let subset = temp.path().join("subset.tar");
+    assert_eq!(
+        store
+            .export_snapshot_for(&subset, &[b"Team/Other".to_vec()])
+            .unwrap(),
+        1
+    );
+    let partial = DiskStore::open(&temp.path().join("partial")).unwrap();
+    assert_eq!(partial.import_snapshot(&subset, 1024 * 1024).unwrap(), 1);
+    assert!(partial.member(b"team/other", expected[2].0).unwrap());
+    assert!(partial.get(expected[0].0).unwrap().is_none());
+    // A new identity for a name means another repository: forget its frames.
+    restored.identify(b"team/repo", "identity-b").unwrap();
+    assert!(!restored.member(b"team/repo", expected[0].0).unwrap());
+    assert!(restored.member(b"team/other", expected[2].0).unwrap());
+    assert!(
+        store
+            .export_snapshot_for(&subset, &[b"bad name".to_vec()])
+            .is_err()
+    );
 }
 
 fn archive(
@@ -107,7 +133,7 @@ fn invalid_snapshot_never_publishes_a_prefix_and_never_extracts_archive_paths() 
                 (name, bytes, link),
             ],
         );
-        let store = DiskStore::open(&temp.path().join(format!("target-{n}")), b"repo").unwrap();
+        let store = DiskStore::open(&temp.path().join(format!("target-{n}"))).unwrap();
         assert!(store.import_snapshot(&path, 1024 * 1024).is_err());
         assert_eq!(store.usage(), (0, 0));
         assert!(
@@ -130,7 +156,7 @@ fn invalid_snapshot_never_publishes_a_prefix_and_never_extracts_archive_paths() 
             (format!("objects/blobs/{second}.zst"), b, false),
         ],
     );
-    let store = DiskStore::open(&temp.path().join("limited"), b"repo").unwrap();
+    let store = DiskStore::open(&temp.path().join("limited")).unwrap();
     assert!(store.import_snapshot(&path, 1).is_err());
     assert_eq!(store.usage(), (0, 0));
 }
@@ -138,7 +164,7 @@ fn invalid_snapshot_never_publishes_a_prefix_and_never_extracts_archive_paths() 
 #[test]
 fn lru_budget_and_disk_type_index_do_not_expose_unregistered_data() {
     let temp = tempfile::tempdir().unwrap();
-    let disk = DiskStore::open(temp.path(), b"repo").unwrap();
+    let disk = DiskStore::open(temp.path()).unwrap();
     let raw = b"unindexed";
     let id = ObjectId::hash(raw);
     let blobs = FsBlobStore::open(temp.path().join("objects")).unwrap();
@@ -154,7 +180,6 @@ fn lru_budget_and_disk_type_index_do_not_expose_unregistered_data() {
     let a = Arc::new(kasu_store::compress(b"one").unwrap());
     let b = Arc::new(kasu_store::compress(b"two").unwrap());
     let memory = MemoryStore::new(a.len().max(b.len()));
-    memory.bind(b"repo").unwrap();
     let ka = Key {
         kind: Kind::Blob,
         id: ObjectId::hash(b"one"),

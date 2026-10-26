@@ -4,8 +4,9 @@ use std::{path::PathBuf, sync::Arc, time::Duration};
 use tonic::Status;
 #[derive(clap::Args)]
 pub struct CommonArgs {
+    /// Repositories this layer serves (repeatable); none serves every repository.
     #[arg(long)]
-    pub repo: std::ffi::OsString,
+    pub repo: Vec<std::ffi::OsString>,
     #[arg(long)]
     pub upstream: String,
     #[arg(long, env = "KASU_LAYER_TOKEN_FILE")]
@@ -46,7 +47,7 @@ impl CommonArgs {
         )?;
         Layer::new(
             role,
-            self.repo.as_bytes().to_vec(),
+            self.repo.iter().map(|r| r.as_bytes().to_vec()).collect(),
             &token,
             &upper,
             client,

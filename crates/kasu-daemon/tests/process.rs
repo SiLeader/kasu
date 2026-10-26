@@ -101,7 +101,7 @@ async fn executable_boots_offline_snapshots_periodically_and_reclaims_only_stale
     std::fs::set_permissions(&run, std::fs::Permissions::from_mode(0o700)).unwrap();
     std::fs::write(root.join("user-token"), b"user\n").unwrap();
     std::fs::write(root.join("hop-token"), b"daemon-hop\n").unwrap();
-    let source = DiskStore::open(&root.join("source"), b"repo").unwrap();
+    let source = DiskStore::open(&root.join("source")).unwrap();
     let raw = b"offline daemon frame";
     let key = Key {
         kind: Kind::Blob,
@@ -109,6 +109,7 @@ async fn executable_boots_offline_snapshots_periodically_and_reclaims_only_stale
     };
     let frame = kasu_store::compress(raw).unwrap();
     source.put(key, Arc::new(frame.clone())).unwrap();
+    source.add_member(b"repo", key).unwrap();
     let snapshot = root.join("seed.tar");
     source.export_snapshot(&snapshot).unwrap();
     let unavailable = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -357,7 +358,7 @@ async fn bounded_disk_refills_after_eviction_survives_restart_and_retains_only_m
     }
     assert_eq!(requests.load(Ordering::Relaxed), 2);
     let data = root.join("data");
-    let probe = DiskStore::open(&data, b"repo").unwrap();
+    let probe = DiskStore::open(&data).unwrap();
     assert_eq!(probe.limits().unwrap().entries, 1);
     assert!(
         probe
