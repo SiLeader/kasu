@@ -80,7 +80,7 @@ impl Remote {
         kasu_telemetry::inject(request.metadata_mut());
         request
     }
-    pub async fn resolve(&mut self, name: &[u8]) -> Result<(ChangesetId, Vec<u8>)> {
+    pub async fn resolve(&mut self, name: &[u8]) -> Result<(ChangesetId, Option<Vec<u8>>)> {
         if let Ok(text) = std::str::from_utf8(name)
             && let Ok(id) = text.parse::<ChangesetId>()
         {
@@ -89,7 +89,7 @@ impl Remote {
                 id: id.0.to_vec(),
             });
             self.metadata.get_changeset(q).await?;
-            return Ok((id, b"refs/heads/main".to_vec()));
+            return Ok((id, None));
         }
         let name = if name.starts_with(b"refs/") {
             name.to_vec()
@@ -108,7 +108,7 @@ impl Remote {
                 .try_into()
                 .map_err(|_| invalid("invalid ref target"))?,
         );
-        Ok((id, name))
+        Ok((id, Some(name)))
     }
     pub async fn fetch(
         &mut self,
@@ -180,6 +180,7 @@ impl Remote {
             .objects
             .fetch(&self.repo, ObjectId(id.0), kasu_object::Kind::Blob)
             .await?;
+        kasu_object::validate(kasu_object::Kind::Blob, ObjectId(id.0), &frame)?;
         Ok(kasu_store::decompress(&frame)?)
     }
     async fn snapshot_mode(

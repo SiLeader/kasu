@@ -146,6 +146,117 @@ fn object(path: &Path, kind: &str, raw: &[u8]) -> GitOid {
     oid_from_hex(git(path, &["hash-object", "-w", "-t", kind, "--stdin"], raw).trim_ascii())
         .unwrap()
 }
+
+#[tokio::test]
+async fn path_projection_url_suffix_preserves_dot_git_directory_names() {
+    use axum::{
+        body::{Body, to_bytes},
+        http::{Request, StatusCode},
+    };
+    use kasu_derived::Ctx;
+    use kasu_ops::Operations;
+    use tower::ServiceExt;
+
+    let dir = tempfile::tempdir().unwrap();
+    let meta = Arc::new(SqliteStore::memory().unwrap());
+    let blobs = Arc::new(FsBlobStore::open(dir.path().join("objects")).unwrap());
+    let engine = Engine::standard();
+    let ops = Operations {
+        engine: &engine,
+        ctx: Ctx {
+            repo: Repository {
+                meta: meta.as_ref(),
+                blobs: blobs.as_ref(),
+            },
+        },
+    };
+    let signature = Signature {
+        name: b"Author".as_slice().into(),
+        email: b"a@b".as_slice().into(),
+        timestamp: 1700000000,
+        tz: b"+0000".as_slice().into(),
+    };
+    let id = ops
+        .create_changeset(&Changeset {
+            parents: vec![],
+            author: signature.clone(),
+            committer: signature,
+            message: b"projection suffix".as_slice().into(),
+            changes: [b"app.git/file".as_slice(), b"app/file"]
+                .into_iter()
+                .map(|path| FileChange::Set {
+                    path: RepoPath::new(path).unwrap(),
+                    entry: Entry::File {
+                        blob: ops.ctx.repo.put_blob(path).unwrap(),
+                        executable: false,
+                    },
+                })
+                .collect(),
+            git_provenance: None,
+        })
+        .unwrap();
+    ops.ctx.repo.associate_changeset(b"repo", id).unwrap();
+    meta.compare_and_swap(
+        b"repo",
+        &[RefUpdate {
+            name: b"refs/heads/main".to_vec(),
+            expected: RefState::default(),
+            new: Some(id),
+        }],
+        b"fixture",
+        0,
+    )
+    .unwrap();
+    let app = git_http_router(Arc::new(Backend::new(
+        b"repo".to_vec(),
+        meta.clone(),
+        blobs.clone(),
+        meta,
+        Some("secret".into()),
+    )));
+    let mut projections = Vec::new();
+    for paths in [
+        &[
+            "path/app",
+            "path/app.git",
+            "path-hex/617070",
+            "path-hex/617070.git",
+        ][..],
+        &[
+            "path/app.git.git",
+            "path-hex/6170702e676974",
+            "path-hex/6170702e676974.git",
+        ][..],
+    ] {
+        let mut expected = None;
+        for repo in ["repo", "repo.git"] {
+            for path in paths {
+                let response = app
+                    .clone()
+                    .oneshot(
+                        Request::get(format!(
+                            "/{repo}/-/{path}/info/refs?service=git-upload-pack"
+                        ))
+                        .header("authorization", "Bearer secret")
+                        .body(Body::empty())
+                        .unwrap(),
+                    )
+                    .await
+                    .unwrap();
+                assert_eq!(response.status(), StatusCode::OK);
+                let body = to_bytes(response.into_body(), 1024 * 1024).await.unwrap();
+                if let Some(expected) = &expected {
+                    assert_eq!(&body, expected, "{repo}/-/{path}");
+                } else {
+                    expected = Some(body);
+                }
+            }
+        }
+        projections.push(expected.unwrap());
+    }
+    assert_ne!(projections[0], projections[1]);
+}
+
 fn commit(path: &Path, n: u32, parents: &[GitOid]) -> GitOid {
     let data = object(path, "blob", format!("manifest {n}\n").as_bytes());
     let executable = object(path, "blob", b"#!/bin/sh\necho yes\n");

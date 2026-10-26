@@ -19,6 +19,7 @@ use tonic::{Request, Response, Status};
 struct LostLand {
     inner: WriteService,
     lose: std::sync::atomic::AtomicBool,
+    retry: bool,
 }
 macro_rules! forward_writer {($(($method:ident,$input:ty,$output:ty)),*)=>{
     #[tonic::async_trait]
@@ -26,7 +27,17 @@ macro_rules! forward_writer {($(($method:ident,$input:ty,$output:ty)),*)=>{
         $(async fn $method(&self,q:Request<$input>)->std::result::Result<Response<$output>,Status>{self.inner.$method(q).await})*
         async fn land(&self,q:Request<p::LandRequest>)->std::result::Result<Response<p::LandResponse>,Status>{
             let response=self.inner.land(q).await?;
-            if self.lose.swap(false,std::sync::atomic::Ordering::SeqCst){Err(Status::unavailable("injected lost Land response"))}else{Ok(response)}
+            if self.lose.swap(false,std::sync::atomic::Ordering::SeqCst){
+                if self.retry {
+                    Ok(Response::new(p::LandResponse {
+                        outcome: p::LandOutcome::Retry as i32,
+                        message: "injected lost Land response after commit".into(),
+                        ..Default::default()
+                    }))
+                } else {
+                    Err(Status::unavailable("injected lost Land response"))
+                }
+            }else{Ok(response)}
         }
     }
 }}
@@ -106,9 +117,9 @@ impl Fixture {
         Self::with_lost_land(false).await
     }
     async fn with_lost_land(lose: bool) -> Self {
-        Self::configured(lose, false).await
+        Self::configured(lose, false, false).await
     }
-    async fn configured(lose: bool, strict: bool) -> Self {
+    async fn configured(lose: bool, strict: bool, retry: bool) -> Self {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path().to_owned();
         let meta = Arc::new(SqliteStore::open(root.join("meta.db")).unwrap());
@@ -210,6 +221,7 @@ impl Fixture {
                 .add_service(WriterServer::new(LostLand {
                     inner: WriteService::new(service),
                     lose: std::sync::atomic::AtomicBool::new(lose),
+                    retry,
                 }))
                 .add_service(ObjectsServer::new(observed))
                 .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener))
@@ -676,33 +688,167 @@ async fn byte_paths_survive_the_remote_snapshot_and_platform_checkout_rules() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-async fn lost_land_reply_retains_the_key_and_blocks_a_new_commit_until_replay() {
-    let f = Fixture::with_lost_land(true).await;
-    let wc = f.checkout("lost", "app").await;
-    std::fs::write(wc.join("app/a"), b"landed once\n").unwrap();
-    f.ok(&wc, &["commit", "-m", "lost reply"]).await;
-    assert!(!f.cli(&wc, &["land"]).await.status.success());
-    let state: kasu_cli::State =
-        serde_json::from_slice(&std::fs::read(wc.join(".kasu/state.json")).unwrap()).unwrap();
-    assert!(state.land_key.is_some());
-    assert!(state.land_outcome.is_none());
-    let head = f.meta.resolve(b"repo", b"refs/heads/main").unwrap();
-    let sequence = f.meta.tail(b"repo", 0, 100).unwrap().len();
-    std::fs::write(wc.join("app/a"), b"later edit\n").unwrap();
-    assert!(
-        !f.cli(&wc, &["commit", "-m", "must wait"])
-            .await
-            .status
-            .success()
+async fn lost_land_reply_and_retry_retain_the_key_and_block_rewrites_until_replay() {
+    for retry in [false, true] {
+        let f = Fixture::configured(true, false, retry).await;
+        let wc = f.checkout("lost", "app").await;
+        std::fs::write(wc.join("app/a"), b"landed once\n").unwrap();
+        f.ok(&wc, &["commit", "-m", "lost reply"]).await;
+        assert!(!f.cli(&wc, &["land"]).await.status.success());
+        let state: kasu_cli::State =
+            serde_json::from_slice(&std::fs::read(wc.join(".kasu/state.json")).unwrap()).unwrap();
+        assert!(state.land_key.is_some());
+        assert_eq!(
+            state.land_outcome,
+            retry.then_some(p::LandOutcome::Retry as i32)
+        );
+        let head = f.meta.resolve(b"repo", b"refs/heads/main").unwrap();
+        let sequence = f.meta.tail(b"repo", 0, 100).unwrap().len();
+        std::fs::write(wc.join("app/a"), b"later edit\n").unwrap();
+        let output = f.cli(&wc, &["commit", "-m", "must wait"]).await;
+        assert!(!output.status.success());
+        assert!(String::from_utf8_lossy(&output.stderr).contains("pending Land must be replayed"));
+        assert_eq!(std::fs::read(wc.join("app/a")).unwrap(), b"later edit\n");
+        std::fs::write(wc.join("app/a"), b"landed once\n").unwrap();
+        let output = f.cli(&wc, &["rebase", "--onto", "main"]).await;
+        assert!(!output.status.success());
+        assert!(String::from_utf8_lossy(&output.stderr).contains("pending Land must be replayed"));
+        let pending = kasu_cli::WorkingCopy::open(&wc).unwrap();
+        assert_eq!(pending.state.land_key, state.land_key);
+        assert_eq!(pending.state.base, state.base);
+        drop(pending);
+        let response: p::LandResponse =
+            serde_json::from_str(&f.ok(&wc, &["--json", "land"]).await).unwrap();
+        assert!(response.replayed);
+        assert_eq!(response.id, head.target.map(|id| id.0.to_vec()));
+        assert_eq!(sequence, f.meta.tail(b"repo", 0, 100).unwrap().len());
+        assert_eq!(f.ok(&wc, &["status"]).await, "");
+    }
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn rebase_by_changeset_id_preserves_the_land_branch() {
+    let f = Fixture::new().await;
+    f.meta
+        .compare_and_swap(
+            b"repo",
+            &[RefUpdate {
+                name: b"refs/heads/feature".to_vec(),
+                expected: RefState::default(),
+                new: Some(f.id),
+            }],
+            b"fixture",
+            0,
+        )
+        .unwrap();
+    f.ok(
+        &f.root,
+        &[
+            "checkout",
+            "feature",
+            "feature-work",
+            "--server",
+            &f.url,
+            "--repo",
+            "repo",
+            "--sparse",
+            "app",
+        ],
+    )
+    .await;
+    let wc = f.root.join("feature-work");
+    for draft in [false, true] {
+        if draft {
+            std::fs::write(wc.join("app/a"), b"feature work\n").unwrap();
+            f.ok(&wc, &["commit", "-m", "feature change"]).await;
+        }
+        f.ok(&wc, &["rebase", "--onto", &f.id.to_string()]).await;
+        let copy = kasu_cli::WorkingCopy::open(&wc).unwrap();
+        assert_eq!(copy.state.reference, b"refs/heads/feature");
+    }
+    f.ok(&wc, &["land"]).await;
+    assert_eq!(
+        f.meta.resolve(b"repo", b"refs/heads/main").unwrap().target,
+        Some(f.id)
     );
-    assert_eq!(std::fs::read(wc.join("app/a")).unwrap(), b"later edit\n");
-    std::fs::write(wc.join("app/a"), b"landed once\n").unwrap();
-    let response: p::LandResponse =
-        serde_json::from_str(&f.ok(&wc, &["--json", "land"]).await).unwrap();
-    assert!(response.replayed);
-    assert_eq!(response.id, head.target.map(|id| id.0.to_vec()));
-    assert_eq!(sequence, f.meta.tail(b"repo", 0, 100).unwrap().len());
-    assert_eq!(f.ok(&wc, &["status"]).await, "");
+    assert_ne!(
+        f.meta
+            .resolve(b"repo", b"refs/heads/feature")
+            .unwrap()
+            .target,
+        Some(f.id)
+    );
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn checkout_by_changeset_id_requires_an_explicit_land_branch() {
+    let f = Fixture::new().await;
+    f.ok(
+        &f.root,
+        &[
+            "checkout",
+            &f.id.to_string(),
+            "detached",
+            "--server",
+            &f.url,
+            "--repo",
+            "repo",
+            "--sparse",
+            "app",
+        ],
+    )
+    .await;
+    let wc = f.root.join("detached");
+    std::fs::write(wc.join("app/a"), b"detached work\n").unwrap();
+    f.ok(&wc, &["commit", "-m", "detached change"]).await;
+    f.ok(&wc, &["rebase", "--onto", &f.id.to_string()]).await;
+    let output = f.cli(&wc, &["land"]).await;
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("specify --ref"));
+    let copy = kasu_cli::WorkingCopy::open(&wc).unwrap();
+    assert!(copy.state.reference.is_empty());
+    assert!(copy.state.land_key.is_none());
+    let draft = copy.state.id().unwrap();
+    drop(copy);
+    f.ok(&wc, &["land", "--ref", "feature"]).await;
+    assert_eq!(
+        f.meta.resolve(b"repo", b"refs/heads/main").unwrap().target,
+        Some(f.id)
+    );
+    assert_eq!(
+        f.meta
+            .resolve(b"repo", b"refs/heads/feature")
+            .unwrap()
+            .target,
+        Some(draft)
+    );
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn lazy_blob_reads_verify_content_hashes() {
+    let f = Fixture::new().await;
+    f.backend
+        .get_root_tree(p::ChangesetRequest {
+            repo: b"repo".to_vec(),
+            id: f.id.0.to_vec(),
+        })
+        .unwrap();
+    let mut remote = kasu_cli::Remote::connect(&f.url, &f.url, b"repo".to_vec(), Some("token"))
+        .await
+        .unwrap();
+    let id = BlobId::hash(b"one\nbase\n");
+    assert_eq!(remote.fetch_blob_bytes(id).await.unwrap(), b"one\nbase\n");
+    let hex = id.to_string();
+    std::fs::write(
+        f.root.join("objects").join(&hex[..2]).join(&hex[2..]),
+        compress(b"bad\nblob\n").unwrap(),
+    )
+    .unwrap();
+    let error = remote.fetch_blob_bytes(id).await.unwrap_err();
+    assert_eq!(
+        error.downcast_ref::<Status>().unwrap().code(),
+        tonic::Code::DataLoss
+    );
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 6)]
@@ -715,7 +861,7 @@ async fn real_cli_uses_the_unix_daemon_and_a_snapshot_can_boot_without_the_cache
             self.0.abort();
         }
     }
-    let f = Fixture::configured(false, true).await;
+    let f = Fixture::configured(false, true, false).await;
     let direct = f
         .cli(
             &f.root,
@@ -1210,7 +1356,7 @@ async fn virtual_mount_reads_lazily_and_commits_through_copy_on_write_and_remoun
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn read_scoped_account_checks_out_commits_and_lands_without_hidden_objects() {
-    let f = Fixture::configured(false, true).await;
+    let f = Fixture::configured(false, true, false).await;
     let check = |o: Output| {
         assert!(o.status.success(), "{}", String::from_utf8_lossy(&o.stderr));
         o

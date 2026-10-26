@@ -158,7 +158,7 @@ impl WorkingCopy {
             objects,
             repo: remote.repo.clone(),
             base: id.0.to_vec(),
-            reference,
+            reference: reference.unwrap_or_default(),
             draft: false,
             sparse,
             files: vec![],

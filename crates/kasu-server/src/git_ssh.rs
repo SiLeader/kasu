@@ -385,6 +385,23 @@ mod tests {
         }
     }
     #[test]
+    fn projection_suffix_preserves_dot_git_directory_names() {
+        for (argument, directory) in [
+            ("repo/-/path/app.git", b"app".as_slice()),
+            ("repo.git/-/path/app.git.git", b"app.git"),
+            ("repo/-/path-hex/6170702e676974.git", b"app.git"),
+        ] {
+            let (_, path) = command(format!("git-upload-pack '{argument}'").as_bytes()).unwrap();
+            assert_eq!(
+                projection_from_bytes(&path).unwrap(),
+                ProjectionId::path(
+                    b"repo".as_slice(),
+                    kasu_core::RepoPath::new(directory).unwrap()
+                )
+            );
+        }
+    }
+    #[test]
     fn incremental_pkt_line_reader_handles_fragmentation_delimiters_and_done() {
         use std::io::{BufReader, Cursor};
         let mut bytes = Vec::new();

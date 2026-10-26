@@ -50,6 +50,10 @@ cd work
 先の commit の変更を保持しつつ、追加の取り消しにも対応します。ローカル履歴は計算・保存しません。
 作成した過去の Changeset はサーバーの不変ストアに残ります。
 
+Changeset ID を指定した `rebase --onto` は、既存の Land 先を維持します。
+ID から新規に `checkout`／`mount` した場合は Land 先を持たないため、
+`land --ref <branch>` で明示してください。ref を指定した rebase は、その ref を Land 先にします。
+
 ## スパースと保存形式
 
 `--sparse` を省略すると全体を選択します。繰り返し指定すると、それらのパスだけを選択します。
@@ -89,6 +93,7 @@ checkout は既存の destination を上書きせず、一時 directory の完�
 Rebase／Land の競合は `.kasu/conflicts.json` に保存し、現在のファイルと基底を保持します。
 内容を修正して commit し、rebase／land を再実行できます。
 Land の応答喪失時はキーを保持し、次の `land` で同じ要求を再送します。
+`Retry` も保存成功後の応答喪失を含み得るため、同じキーを保持して結果を確認します。
 結果が不明なまま別の commit／rebase を作ることは拒否します。
 応答待ちの間に編集した場合は、その編集を別の場所へ保全して working copy を clean に戻し、
 元の Land を再送してから編集を戻してください。

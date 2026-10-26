@@ -161,7 +161,7 @@ pub async fn mount(q: MountRequest<'_>) -> Result<()> {
             repo: q.repo,
             revision: q.revision.to_vec(),
             origin: id.0.to_vec(),
-            reference,
+            reference: reference.unwrap_or_default(),
             sparse: q.sparse,
             mountpoint: mountpoint.clone(),
         };

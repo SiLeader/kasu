@@ -22,10 +22,12 @@ pub fn wire_entry(entry: &Entry) -> p::Entry {
 impl WorkingCopy {
     fn require_resolved_land(&self) -> Result<()> {
         if self.state.land_key.is_some()
-            && self
-                .state
-                .land_outcome
-                .is_none_or(|outcome| outcome == p::LandOutcome::Landed as i32)
+            && self.state.land_outcome.is_none_or(|outcome| {
+                !matches!(
+                    p::LandOutcome::try_from(outcome),
+                    Ok(p::LandOutcome::Conflict | p::LandOutcome::Denied)
+                )
+            })
         {
             return Err(invalid(
                 "pending Land must be replayed before commit/rebase; preserve local edits and retry land",
@@ -192,7 +194,9 @@ impl WorkingCopy {
         self.require_clean()?;
         let (onto, reference) = remote.resolve(onto).await?;
         let mut state = self.state.clone();
-        state.reference = reference;
+        if let Some(reference) = reference {
+            state.reference = reference;
+        }
         state.land_key = None;
         state.land_outcome = None;
         let mut response = None;
@@ -239,6 +243,11 @@ impl WorkingCopy {
                 }
             })
             .unwrap_or_else(|| self.state.reference.clone());
+        if name.is_empty() {
+            return Err(invalid(
+                "no Land target; specify --ref after checkout by changeset ID",
+            ));
+        }
         if self.state.land_key.is_some() && self.state.reference != name {
             return Err(invalid(
                 "pending Land targets another ref; retry that request first",

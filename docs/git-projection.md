@@ -16,6 +16,10 @@ source の同じ branch 名を使い、ディレクトリ外だけの更新で�
 `my-repo/-/path-hex/ff.git`、`deploy` は `my-repo/-/path-hex/6465706c6f79.git` です。
 どちらの指定方法でも、同じ repo／パスは同じ射影になります。空・絶対・dot component・NUL のパスは拒否します。
 
+URL 末尾の `.git` は省略可能なサフィックスで、ディレクトリ名には含みません。
+`app.git` ディレクトリは `my-repo/-/path/app.git.git`、または
+`my-repo/-/path-hex/6170702e676974.git` と指定してください。HTTP／SSH とも同じ規則です。
+
 ## 履歴の生成規則 v1
 
 `ProjectionId` は repo とバイト列パスを持ち、Derived Data の SubKey と Git OID 索引の namespace に使います。
