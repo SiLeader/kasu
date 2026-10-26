@@ -85,8 +85,9 @@ class Test:
             if not shutil.which(tool):
                 raise RuntimeError(f'tool missing: {tool}')
         version = command([self.args.kind, 'version']).stdout.decode()
-        if VERSIONS['kind'] not in version:
+        if VERSIONS['kind'] not in version and not self.args.unpinned_kind:
             raise RuntimeError('kind version differs from versions.json')
+        (self.evidence / 'kind-version.txt').write_text(version)
         for component in ['argocd', 'flux']:
             spec = VERSIONS[component]
             path = self.vendor / f'{component}-{spec["version"]}.yaml'
@@ -101,8 +102,11 @@ class Test:
             clusters = command([self.args.kind, 'get', 'clusters']).stdout.decode().splitlines()
             if self.args.cluster in clusters:
                 raise RuntimeError('cluster already exists; use --reuse only for this test cluster')
+            # --unpinned-kind uses the installed kind and its default node image;
+            # the actual versions are recorded in the evidence.
+            image = [] if self.args.unpinned_kind else ['--image', VERSIONS['node_image']]
             command([self.args.kind, 'create', 'cluster', '--name', self.args.cluster,
-                     '--image', VERSIONS['node_image'], '--kubeconfig', self.kubeconfig,
+                     *image, '--kubeconfig', self.kubeconfig,
                      '--wait', '120s'], timeout=600)
         elif not self.kubeconfig.exists():
             raise RuntimeError('--reuse requires the test kubeconfig')
@@ -377,6 +381,8 @@ def argument_parser():
     parser.add_argument('--keep', action='store_true')
     parser.add_argument('--webhooks', action='store_true', help='verify signed webhook-only refresh with 1h polling')
     parser.add_argument('--timeout', type=int, default=600)
+    parser.add_argument('--unpinned-kind', action='store_true',
+                        help='use the installed kind version and its default node image (recorded in evidence)')
     return parser
 
 

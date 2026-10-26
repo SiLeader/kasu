@@ -123,9 +123,12 @@ python3 tools/gitops/multi_repository.py --workdir /tmp/kasu-gitops-multi
 同期の成立は payload が正しいリポジトリを名指ししたことを示します。両リポジトリについて順に行い、
 `evidence/multi-repository-proof.json` に記録します。ほかの規則（専用クラスター、`--reuse`、`--keep`）は `run.py` と同じです。
 
-このシナリオは未実行です。同じ経路（宣言ファイル、リポジトリ引数なしの起動、リポジトリごとの署名付き webhook、
-複数セグメント名の `git clone`）を実バイナリで検証する
-`cargo test -p kasu-server --test multi_repository_process --locked` は通過しています。
+2026-10-26 に Linux x86_64 の Docker 上で実行し、成功しました。固定版の kind v0.33.0 が用意できなかったため、
+`--unpinned-kind` で導入済みの kind v0.29.0 と既定の node image（Kubernetes v1.33.1）を使っています
+（ArgoCD v3.5.6／Flux v2.9.6 は固定版）。`team-a/apps`、`team-b/apps` の順に更新し、各更新から約5.7秒で
+そのリポジトリの ArgoCD／Flux だけが新 SHA に同期し、配信確定は更新したリポジトリの両 endpoint だけで増えました。
+[証跡・環境](verification/gitops-multi-repository/) に保存しています。
+`--unpinned-kind` は kind のバージョン固定を外し、実際の版を `evidence/kind-version.txt` に記録します。
 
 ## 2026-10-23 の実測
 

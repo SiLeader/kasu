@@ -1,0 +1,32 @@
+{
+  "pollInterval": "1h",
+  "manualRefreshAfterUpdate": false,
+  "repositories": {
+    "a": "team-a/apps",
+    "b": "team-b/apps"
+  },
+  "steps": [
+    {
+      "repository": "team-a/apps",
+      "head": "e8aa518169537e8c13bcd1a117742f777a8d4cba",
+      "elapsedSeconds": 5.743,
+      "acknowledgements": {
+        "team-a/apps/argocd": 2,
+        "team-b/apps/argocd": 1,
+        "team-b/apps/flux": 1,
+        "team-a/apps/flux": 2
+      }
+    },
+    {
+      "repository": "team-b/apps",
+      "head": "4cde7757d8f29ee829573675e125256f78fa0b39",
+      "elapsedSeconds": 5.756,
+      "acknowledgements": {
+        "team-a/apps/argocd": 2,
+        "team-b/apps/argocd": 2,
+        "team-b/apps/flux": 2,
+        "team-a/apps/flux": 2
+      }
+    }
+  ]
+}

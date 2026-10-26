@@ -1,0 +1,8 @@
+2026-10-26T12:04:06.275924Z  INFO kasu_server::webhook: webhook acknowledged repository=team-a/apps endpoint=argocd stream=Native sequence=1
+2026-10-26T12:04:06.276774Z  INFO kasu_server::webhook: webhook acknowledged repository=team-b/apps endpoint=argocd stream=Native sequence=2
+2026-10-26T12:04:06.380084Z  INFO kasu_server::webhook: webhook acknowledged repository=team-b/apps endpoint=flux stream=Native sequence=2
+2026-10-26T12:04:06.380922Z  INFO kasu_server::webhook: webhook acknowledged repository=team-a/apps endpoint=flux stream=Native sequence=1
+2026-10-26T12:04:48.069371Z  INFO kasu_server::webhook: webhook acknowledged repository=team-a/apps endpoint=argocd stream=Native sequence=3
+2026-10-26T12:04:48.076677Z  INFO kasu_server::webhook: webhook acknowledged repository=team-a/apps endpoint=flux stream=Native sequence=3
+2026-10-26T12:04:53.843557Z  INFO kasu_server::webhook: webhook acknowledged repository=team-b/apps endpoint=argocd stream=Native sequence=4
+2026-10-26T12:04:53.847184Z  INFO kasu_server::webhook: webhook acknowledged repository=team-b/apps endpoint=flux stream=Native sequence=4

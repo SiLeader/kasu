@@ -1,0 +1,9 @@
+{
+  "kind": "kind v0.29.0 go1.24.2 linux/amd64",
+  "kubernetesServer": "v1.33.1",
+  "argocd": "v3.5.6",
+  "flux": "v2.9.6",
+  "pinnedKind": "v0.33.0",
+  "pinnedNodeImage": "kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5",
+  "note": "run with --unpinned-kind: installed kind and its default node image, not the pinned ones"
+}
