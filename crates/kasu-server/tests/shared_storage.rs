@@ -227,7 +227,9 @@ async fn two_server_processes_share_ingest_git_atomic_push_native_cas_and_land_r
     git(&source, &["commit", "-qm", "initial"]);
     let mut ingest =
         config.command(std::env::var_os("KASU_TEST_INGEST_BIN").expect("KASU_TEST_INGEST_BIN"));
+    // The shared registry may already hold other repositories.
     ingest
+        .arg("--create")
         .arg(&source)
         .arg(root.join("unused-import"))
         .arg(&config.repo);
@@ -343,7 +345,13 @@ async fn two_server_processes_share_ingest_git_atomic_push_native_cas_and_land_r
     let mut pg_options = PostgresOptions::new(std::env::var("KASU_TEST_POSTGRES").unwrap());
     pg_options.allow_plaintext = true;
     let store = PostgresStore::connect(pg_options).unwrap();
-    let before = store.tail(repo, 0, 100).unwrap().len();
+    // Refs are stored under the registered key, not the name.
+    let key = store
+        .resolve_repository_name(&kasu_core::RepoName::new(&config.repo).unwrap(), 0)
+        .unwrap()
+        .unwrap()
+        .key;
+    let before = store.tail(key.as_bytes(), 0, 100).unwrap().len();
     let request = |target| {
         auth(p::UpdateRefRequest {
             repo: repo.to_vec(),
@@ -360,7 +368,10 @@ async fn two_server_processes_share_ingest_git_atomic_push_native_cas_and_land_r
     let ra = ra.unwrap().into_inner();
     let rb = rb.unwrap().into_inner();
     assert_ne!(ra.applied, rb.applied);
-    assert_eq!(store.tail(repo, 0, 100).unwrap().len(), before + 1);
+    assert_eq!(
+        store.tail(key.as_bytes(), 0, 100).unwrap().len(),
+        before + 1
+    );
     let head = current(&mut bm, repo).await;
     assert_eq!(current(&mut am, repo).await, head);
     let draft = create(
@@ -386,7 +397,10 @@ async fn two_server_processes_share_ingest_git_atomic_push_native_cas_and_land_r
     let replay = bw.land(auth(q.clone())).await.unwrap().into_inner();
     assert!(replay.replayed);
     assert_eq!(replay.id, first.id);
-    assert_eq!(store.tail(repo, 0, 100).unwrap().len(), before + 2);
+    assert_eq!(
+        store.tail(key.as_bytes(), 0, 100).unwrap().len(),
+        before + 2
+    );
     let foreign = bm
         .get_changeset(auth(p::ChangesetRequest {
             repo: b"foreign".to_vec(),
@@ -394,7 +408,7 @@ async fn two_server_processes_share_ingest_git_atomic_push_native_cas_and_land_r
         }))
         .await
         .unwrap_err();
-    assert_eq!(foreign.code(), tonic::Code::PermissionDenied);
+    assert_eq!(foreign.code(), tonic::Code::NotFound);
     a.child.kill().unwrap();
     a.child.wait().unwrap();
     drop(am);
@@ -410,7 +424,10 @@ async fn two_server_processes_share_ingest_git_atomic_push_native_cas_and_land_r
         .into_inner();
     assert!(replay.replayed);
     assert_eq!(replay.id, first.id);
-    assert_eq!(store.tail(repo, 0, 100).unwrap().len(), before + 2);
+    assert_eq!(
+        store.tail(key.as_bytes(), 0, 100).unwrap().len(),
+        before + 2
+    );
     assert_eq!(
         current(&mut restarted.metadata().await, repo).await,
         current(&mut bm, repo).await
