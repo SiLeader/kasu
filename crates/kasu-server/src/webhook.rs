@@ -534,7 +534,7 @@ impl WebhookDispatcher {
                 .as_ref()
                 .is_ok_and(|response| response.status().is_success());
             if !success {
-                tracing::warn!(endpoint=%endpoint.id,stream=?stream,sequence,status=?response.as_ref().ok().map(|response|response.status().as_u16()),"webhook delivery will retry");
+                tracing::warn!(repository=%self.backend.record().name,endpoint=%endpoint.id,stream=?stream,sequence,status=?response.as_ref().ok().map(|response|response.status().as_u16()),"webhook delivery will retry");
             }
             success
         };
@@ -565,7 +565,7 @@ impl WebhookDispatcher {
         .await
         .map_err(|_| Status::internal("webhook acknowledgement worker failed"))??;
         if success && sent && updated {
-            tracing::info!(endpoint=%endpoint.id,stream=?stream,sequence,"webhook acknowledged");
+            tracing::info!(repository=%self.backend.record().name,endpoint=%endpoint.id,stream=?stream,sequence,"webhook acknowledged");
         }
         Ok(if success {
             WebhookOutcome::Acknowledged(sequence)

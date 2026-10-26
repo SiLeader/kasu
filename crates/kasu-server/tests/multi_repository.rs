@@ -699,3 +699,36 @@ async fn thin_pack_bases_resolve_only_within_the_receiving_repository() {
     let report = a.receive_pack(&push(base, tip, thin)).unwrap();
     assert!(String::from_utf8_lossy(&report).contains("ok refs/heads/main"));
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn object_hop_credentials_are_limited_to_their_repository_patterns() {
+    let f = Fixture::with(&["region-a/app", "region-b/app"], |b| {
+        b.with_object_token("hop-token".into())
+            .unwrap()
+            .with_object_repositories(vec![RepoPattern::parse("region-a/*").unwrap()])
+            .unwrap()
+    });
+    for repo in ["region-a/app", "region-b/app"] {
+        f.commit("operator", repo, None, &[(b"f", b"same")]).await;
+    }
+    let service = ObjectService::new(f.state.clone());
+    let fetch = |repo: &str| {
+        let mut request = tonic::Request::new(p::ObjectRequest {
+            repo: repo.as_bytes().to_vec(),
+            ids: vec![ObjectId::hash(b"same").0.to_vec()],
+        });
+        request
+            .metadata_mut()
+            .insert("authorization", "Bearer hop-token".parse().unwrap());
+        let service = service.clone();
+        async move {
+            use kasu_proto::v1::objects_server::Objects;
+            service.get_blobs(request).await.map(|_| ())
+        }
+    };
+    fetch("region-a/app").await.unwrap();
+    assert_eq!(
+        fetch("region-b/app").await.unwrap_err().code(),
+        tonic::Code::NotFound
+    );
+}
