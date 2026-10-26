@@ -165,7 +165,7 @@ impl Backend {
         paths.extend(extra);
         let oid = ops
             .engine
-            .derive::<GitCommit>(&ops.ctx, id, &ProjectionId::full(self.repository.clone()))
+            .derive::<GitCommit>(&ops.ctx, id, &self.full_projection())
             .map_err(status)?
             .0;
         let timestamp = jiff::Timestamp::from_second(cs.committer.timestamp)
@@ -188,7 +188,7 @@ impl Backend {
         };
         let index = GitIndex {
             repo: ops.ctx.repo,
-            projection: ProjectionId::full(self.repository.clone()),
+            projection: self.full_projection(),
         };
         let (oid, kind) = peel(&index, oid).map_err(status)?;
         match kind {
@@ -212,7 +212,7 @@ impl Backend {
         cursor: u64,
     ) -> Result<Option<Event>, Status> {
         let ops = self.ops();
-        let projection = ProjectionId::full(self.repository.clone());
+        let projection = self.full_projection();
         let commit_oid = |id: Option<ChangesetId>| {
             id.map(|id| {
                 ops.engine
@@ -225,7 +225,7 @@ impl Backend {
         Ok(match stream {
             WebhookStream::Native => self
                 .refs
-                .tail(&self.repository, cursor, 1)
+                .tail(self.key(), cursor, 1)
                 .map_err(status)?
                 .into_iter()
                 .next()
@@ -242,7 +242,7 @@ impl Backend {
                 .transpose()?,
             WebhookStream::Git => self
                 .refs
-                .tail_git(&self.repository, cursor, 1)
+                .tail_git(self.key(), cursor, 1)
                 .map_err(status)?
                 .into_iter()
                 .next()
@@ -313,7 +313,7 @@ impl Backend {
             }
             _ => event.old.is_some() && event.new.is_some() && event.old != event.new,
         };
-        let name = String::from_utf8_lossy(&self.repository);
+        let name = self.record().name.as_str();
         let html = config.repository_url.trim_end_matches(".git");
         let payload = json!({"ref":String::from_utf8_lossy(&event.name),"before":event.old.unwrap_or(GitOid([0;20])).to_string(),"after":event.new.unwrap_or(GitOid([0;20])).to_string(),
             "created":event.old.is_none(),"deleted":event.new.is_none(),"forced":forced,"size":size,"distinct_size":size,"commits":commits,
@@ -466,7 +466,7 @@ impl WebhookDispatcher {
         let config = self.config.clone();
         let state = crate::admission::blocking(move || {
             let current = store
-                .webhook_state(&backend.repository, &consumer, stream)
+                .webhook_state(backend.key(), &consumer, stream)
                 .map_err(status)?;
             if current.pending.is_some() {
                 return Ok::<_, Status>(current);
@@ -477,7 +477,7 @@ impl WebhookDispatcher {
             let body = backend.webhook_body(&event, &config)?;
             store
                 .prepare_webhook(
-                    &backend.repository,
+                    backend.key(),
                     &consumer,
                     stream,
                     current.cursor,
@@ -496,7 +496,7 @@ impl WebhookDispatcher {
         }
         let sequence = delivery.sequence;
         let sent = !delivery.body.is_empty();
-        let id = webhook_delivery_id(&self.backend.repository, &endpoint.id, stream, sequence);
+        let id = webhook_delivery_id(self.backend.key(), &endpoint.id, stream, sequence);
         let success = if delivery.body.is_empty() {
             true
         } else {
@@ -538,7 +538,7 @@ impl WebhookDispatcher {
             )
         };
         let store = self.store.clone();
-        let repo = self.backend.repository.clone();
+        let repo = self.backend.key().to_vec();
         let consumer = endpoint.id.clone();
         let updated = crate::admission::blocking(move || {
             store

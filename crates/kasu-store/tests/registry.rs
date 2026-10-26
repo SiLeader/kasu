@@ -90,6 +90,11 @@ fn registry_contract(store: &dyn RepositoryStore, refs: Option<&dyn GitRefStore>
             .unwrap(),
     );
     assert_eq!(renamed.name.as_str(), moved);
+    assert_eq!(
+        renamed.names().map(RepoName::as_str).collect::<Vec<_>>(),
+        [moved.as_str(), team.as_str()]
+    );
+    assert_eq!(store.repository(&record.key).unwrap().unwrap(), renamed);
     let alias = store
         .resolve_repository_name(&name(&team), 21)
         .unwrap()

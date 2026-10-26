@@ -37,6 +37,7 @@ impl Fixture {
             .with_object_token("hop-secret".into())
             .unwrap()
             .with_projection_accounts(vec![ProjectionAccount {
+                scopes: vec![],
                 name: "reader".into(),
                 token: "reader-secret".into(),
                 directories: vec![RepoPath::new(b"deploy".as_slice()).unwrap()],

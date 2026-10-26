@@ -499,7 +499,7 @@ async fn http_rejects_foreign_objects_malformed_uploads_and_unfinished_streams()
     cross.repo = b"other".to_vec();
     assert_eq!(
         f.state.create_changeset(cross).unwrap_err().code(),
-        tonic::Code::PermissionDenied
+        tonic::Code::NotFound
     );
     let foreign_cs = f
         .repo()

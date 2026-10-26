@@ -8,6 +8,7 @@ use std::{collections::BTreeMap, sync::Mutex};
 pub const GIT_COMMIT_RULE: u32 = 1;
 pub const DEFAULT_BRANCH: &[u8] = b"main";
 pub const MAX_REPOSITORY_CONFIG_BYTES: usize = 1024 * 1024;
+const MAX_FORMER_NAMES: usize = 64;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RepositoryRecord {
@@ -28,6 +29,9 @@ pub struct RepositoryRecord {
     pub deleted_at: i64,
     /// Mutable rows and indexes of a Deleting repository have been removed.
     pub purged: bool,
+    /// Earlier primary names, oldest first. Account grants match these as well,
+    /// so a rename never removes access; aliases are never matched.
+    pub former_names: Vec<RepoName>,
     /// Row version for compare-and-swap; not part of the encoded record.
     pub version: u64,
 }
@@ -46,8 +50,25 @@ impl RepositoryRecord {
             creation_key: Vec::new(),
             deleted_at: 0,
             purged: false,
+            former_names: Vec::new(),
             version: 0,
         }
+    }
+    /// The current name followed by earlier primary names.
+    pub fn names(&self) -> impl Iterator<Item = &RepoName> {
+        std::iter::once(&self.name).chain(self.former_names.iter().rev())
+    }
+    pub(crate) fn renamed(mut self, name: &RepoName) -> Self {
+        let old = std::mem::replace(&mut self.name, name.clone());
+        if old.normalized() != name.normalized() {
+            self.former_names
+                .retain(|n| n.normalized() != old.normalized());
+            self.former_names.push(old);
+            if self.former_names.len() > MAX_FORMER_NAMES {
+                self.former_names.remove(0);
+            }
+        }
+        self
     }
     pub fn head(&self) -> Vec<u8> {
         [b"refs/heads/".as_slice(), &self.default_branch].concat()
@@ -86,6 +107,10 @@ impl Canonical for RepositoryRecord {
         out.bytes(&self.creation_key);
         out.i64(self.deleted_at);
         out.byte(u8::from(self.purged));
+        out.len(self.former_names.len());
+        for name in &self.former_names {
+            out.bytes(name.as_str().as_bytes());
+        }
     }
     fn decode_from(input: &mut Decoder<'_>) -> Result<Self> {
         if input.byte()? != 1 {
@@ -107,6 +132,15 @@ impl Canonical for RepositoryRecord {
                 0 => false,
                 1 => true,
                 _ => return Err(invalid("invalid repository purge flag")),
+            },
+            former_names: {
+                let count = input.u32()? as usize;
+                if count > MAX_FORMER_NAMES {
+                    return Err(invalid("too many former repository names"));
+                }
+                (0..count)
+                    .map(|_| RepoName::from_bytes(input.bytes()?))
+                    .collect::<Result<_>>()?
             },
             version: 0,
         })
@@ -199,7 +233,10 @@ pub(crate) fn require_deleting(record: Option<&RepositoryRecord>) -> Result<()> 
 }
 pub(crate) fn check_update(current: &RepositoryRecord, next: &RepositoryRecord) -> Result<()> {
     next.validate()?;
-    if current.key != next.key || current.name != next.name {
+    if current.key != next.key
+        || current.name != next.name
+        || current.former_names != next.former_names
+    {
         return Err(invalid(
             "repository key and name are changed by rename only",
         ));
@@ -399,8 +436,7 @@ impl RepositoryStore for MemoryRepositoryStore {
                 expires_at: None,
             },
         );
-        let mut stored = current;
-        stored.name = name.clone();
+        let mut stored = current.renamed(name);
         stored.version += 1;
         state.records.insert(key.clone(), stored.clone());
         state.append(key, "renamed", actor, time);

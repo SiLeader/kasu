@@ -277,7 +277,7 @@ async fn authorization_precedes_validation_and_batches_do_not_leak_foreign_objec
     other.get_mut().repo = b"other".to_vec();
     assert_eq!(
         service.get_trees(other).await.err().unwrap().code(),
-        Code::PermissionDenied
+        Code::NotFound
     );
     assert!(f.blobs.reads.lock().unwrap().is_empty());
     assert!(

@@ -30,15 +30,26 @@ macro_rules! endpoints {
         #[tonic::async_trait]
         impl Writer for WriteService {
             async fn land(&self, request: Request<p::LandRequest>) -> Result<Response<p::LandResponse>, Status> {
-                let state = self.state.writer(request.metadata().get("authorization").and_then(|v| v.to_str().ok()))?;
-                Ok(Response::new(state.land(request.into_inner()).await?))
+                let authorization = request.metadata().get("authorization").and_then(|v| v.to_str().ok()).map(str::to_owned);
+                let input = request.into_inner();
+                let state = self.state.scoped(authorization.as_deref(), &input.repo, crate::Mode::Write).await?;
+                Ok(Response::new(state.land(input).await?))
             }
             async fn upload_blobs(&self, request: Request<tonic::Streaming<p::BlobUpload>>) -> Result<Response<p::UploadBlobsResponse>, Status> {
-                let state = self.state.writer(request.metadata().get("authorization").and_then(|v| v.to_str().ok()))?;
+                let authorization = request.metadata().get("authorization").and_then(|v| v.to_str().ok()).map(str::to_owned);
                 let mut stream = request.into_inner();
                 let mut buffer = UploadBuffer::default();
+                let mut scoped: Option<Arc<Backend>> = None;
                 while let Some(chunk) = stream.message().await? {
-                    let state = state.clone();
+                    // Every chunk must name the repository the first one resolved.
+                    let state = match &scoped {
+                        Some(state) => state.clone(),
+                        None => {
+                            let state = self.state.scoped(authorization.as_deref(), &chunk.repo, crate::Mode::Write).await?;
+                            scoped = Some(state.clone());
+                            state
+                        }
+                    };
                     buffer = crate::admission::blocking(move || {
                         buffer.push(&state, chunk)?;
                         Ok::<_, Status>(buffer)
@@ -47,14 +58,15 @@ macro_rules! endpoints {
                 Ok(Response::new(buffer.finish()?))
             }
             $(async fn $method(&self, request: Request<p::$request>) -> Result<Response<p::$response>, Status> {
-                let state = self.state.writer(request.metadata().get("authorization").and_then(|v| v.to_str().ok()))?;
+                let authorization = request.metadata().get("authorization").and_then(|v| v.to_str().ok()).map(str::to_owned);
                 let input = request.into_inner();
+                let state = self.state.scoped(authorization.as_deref(), &input.repo, crate::Mode::Write).await?;
                 let result = crate::admission::blocking(move || state.$method(input)).await.map_err(|_| Status::internal("write worker failed"))??;
                 Ok(Response::new(result))
             })*
         }
         $(async fn $method(State(state): State<Arc<Backend>>, headers: HeaderMap, Json(input): Json<p::$request>) -> Result<Json<p::$response>, crate::transport::HttpError> {
-            let state = state.writer(headers.get("authorization").and_then(|v| v.to_str().ok())).map_err(crate::transport::HttpError)?;
+            let state = state.scoped(headers.get("authorization").and_then(|v| v.to_str().ok()), &input.repo, crate::Mode::Write).await.map_err(crate::transport::HttpError)?;
             let result = crate::admission::blocking(move || state.$method(input)).await.map_err(|_| crate::transport::HttpError(Status::internal("write worker failed")))?.map_err(crate::transport::HttpError)?;
             Ok(Json(result))
         })*
@@ -69,14 +81,19 @@ async fn guarded_land(
     headers: HeaderMap,
     Json(input): Json<p::LandRequest>,
 ) -> Result<Json<p::LandResponse>, crate::transport::HttpError> {
-    let state = state
-        .writer(headers.get("authorization").and_then(|v| v.to_str().ok()))
+    let authorization = headers.get("authorization").and_then(|v| v.to_str().ok());
+    state
+        .precheck(authorization, crate::Mode::Write)
         .map_err(crate::transport::HttpError)?;
     if input.required_ancestor.len() != 32 {
         return Err(crate::transport::HttpError(Status::invalid_argument(
             "guarded Land requires a 32-byte ancestor",
         )));
     }
+    let state = state
+        .scoped(authorization, &input.repo, crate::Mode::Write)
+        .await
+        .map_err(crate::transport::HttpError)?;
     Ok(Json(
         state
             .land(input)
@@ -90,7 +107,12 @@ async fn land(
     Json(input): Json<p::LandRequest>,
 ) -> Result<Json<p::LandResponse>, crate::transport::HttpError> {
     let state = state
-        .writer(headers.get("authorization").and_then(|v| v.to_str().ok()))
+        .scoped(
+            headers.get("authorization").and_then(|v| v.to_str().ok()),
+            &input.repo,
+            crate::Mode::Write,
+        )
+        .await
         .map_err(crate::transport::HttpError)?;
     Ok(Json(
         state
@@ -110,8 +132,18 @@ async fn upload_blobs(
     headers: HeaderMap,
     Json(input): Json<p::UploadBlobsHttpRequest>,
 ) -> Result<Json<p::UploadBlobsResponse>, crate::transport::HttpError> {
+    let repo = input
+        .chunks
+        .first()
+        .map(|c| c.repo.clone())
+        .unwrap_or_default();
     let state = state
-        .writer(headers.get("authorization").and_then(|v| v.to_str().ok()))
+        .scoped(
+            headers.get("authorization").and_then(|v| v.to_str().ok()),
+            &repo,
+            crate::Mode::Write,
+        )
+        .await
         .map_err(crate::transport::HttpError)?;
     let result = crate::admission::blocking(move || {
         let mut buffer = UploadBuffer::default();

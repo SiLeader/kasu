@@ -28,19 +28,29 @@ async fn main() {
         let _entered = span.enter();
         kasu_telemetry::blocking(|| -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             let args: Vec<_> = std::env::args_os().skip(1).collect();
-            if args.len() != 3 {
-                return Err(
-                    "usage: kasu-git-ssh <kasu-directory> <repository-name> <credential-file>"
-                        .into(),
-                );
-            }
+            // The repository comes from the client's command. The older form
+            // also names one repository, and serves only that repository.
+            let (root, repository, credential) = match args.as_slice() {
+                [root, credential] => (root, None, credential),
+                [root, repository, credential] => (
+                    root,
+                    Some(repository.as_encoded_bytes().to_vec()),
+                    credential,
+                ),
+                _ => {
+                    return Err(
+                        "usage: kasu-git-ssh <kasu-directory> [repository-name] <credential-file>"
+                            .into(),
+                    );
+                }
+            };
             let original = std::env::var_os("SSH_ORIGINAL_COMMAND")
                 .ok_or("SSH_ORIGINAL_COMMAND is required")?;
-            let token = kasu_object::read_token(&PathBuf::from(&args[2]))?;
-            let config = kasu_server::load_backend(
-                &PathBuf::from(&args[0]),
-                args[1].as_encoded_bytes().to_vec(),
-            )?;
+            let token = kasu_object::read_token(&PathBuf::from(credential))?;
+            let mut config = kasu_server::load_backend(&PathBuf::from(root), repository)?;
+            if let Some(record) = &config.legacy {
+                config.backend = config.backend.with_pinned_repository(record.key.clone());
+            }
             let protocol = std::env::var("GIT_PROTOCOL").ok();
             let mut input = BufReader::with_capacity(64 * 1024, std::io::stdin());
             let mut output = BufWriter::with_capacity(64 * 1024, std::io::stdout());

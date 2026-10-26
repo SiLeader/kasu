@@ -1,7 +1,7 @@
-use crate::{Backend, auth::Access, backend::status};
+use crate::{Backend, backend::status};
 use kasu_core::{BlobId, Encoder, ObjectId, RepoPath, Tree, TreeEntry, TreeId};
 use kasu_proto::v1 as p;
-use std::{collections::BTreeMap, sync::Arc};
+use std::collections::BTreeMap;
 use tonic::Status;
 
 pub(crate) struct ReadScope {
@@ -30,38 +30,6 @@ pub(crate) fn below(path: &[u8], prefix: &[u8]) -> bool {
             .is_some_and(|s| s.starts_with(b"/"))
 }
 impl Backend {
-    pub(crate) fn reader(&self, authorization: Option<&str>) -> Result<Arc<Self>, Status> {
-        let mut scoped = self.clone();
-        scoped.read_scope = match self.authenticate(authorization)? {
-            Access::Repository => None,
-            Access::Account(a) => a
-                .read_directories
-                .as_ref()
-                .map(|dirs| Arc::new(ReadScope::new(&self.repository, dirs))),
-            Access::Projection(_) => {
-                return Err(Status::permission_denied(
-                    "projection credentials require a Git projection endpoint",
-                ));
-            }
-        };
-        Ok(Arc::new(scoped))
-    }
-    pub(crate) fn object_reader(&self, authorization: Option<&str>) -> Result<Arc<Self>, Status> {
-        if let Some(token) = &self.object_token {
-            let expected = format!("Bearer {token}");
-            if authorization
-                .is_some_and(|v| kasu_object::token_eq(v.as_bytes(), expected.as_bytes()))
-            {
-                return Ok(Arc::new(self.clone()));
-            }
-            let reader = self.reader(authorization)?;
-            if reader.read_scope.is_none() {
-                return Err(Status::unauthenticated("object hop token required"));
-            }
-            return Ok(reader);
-        }
-        self.reader(authorization)
-    }
     pub(crate) fn read_allows(&self, path: &[u8]) -> bool {
         self.read_scope
             .as_ref()
@@ -88,7 +56,7 @@ impl Backend {
         self.read_scope
             .as_ref()
             .map(|s| s.namespace.as_slice())
-            .unwrap_or(&self.repository)
+            .unwrap_or(self.key())
     }
     pub(crate) fn grant_read_blob(&self, id: BlobId) -> Result<(), Status> {
         self.ops()
@@ -124,7 +92,7 @@ impl Backend {
     pub(crate) fn read_root(&self, root: TreeId) -> Result<TreeId, Status> {
         let repo = self.ops().ctx.repo;
         let Some(scope) = &self.read_scope else {
-            repo.associate_tree_graph(&self.repository, root)
+            repo.associate_tree_graph(self.key(), root)
                 .map_err(status)?;
             return Ok(root);
         };

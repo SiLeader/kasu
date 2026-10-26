@@ -32,3 +32,5 @@ mod accounts;
 pub use accounts::*;
 
 mod read_scope;
+mod registry;
+pub use registry::{Registry, RepositoryConfig};

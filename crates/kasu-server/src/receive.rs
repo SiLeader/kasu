@@ -40,7 +40,7 @@ impl Backend {
         if command.name.starts_with(b"refs/heads/") {
             let expected = self
                 .refs
-                .resolve(&self.repository, &command.name)
+                .resolve(self.key(), &command.name)
                 .map_err(status)?;
             let old = expected
                 .target
@@ -80,7 +80,7 @@ impl Backend {
         } else if command.name.starts_with(b"refs/tags/") {
             let expected = self
                 .refs
-                .resolve_git(&self.repository, &command.name)
+                .resolve_git(self.key(), &command.name)
                 .map_err(status)?;
             let old = match &expected.value {
                 None => None,
@@ -156,23 +156,13 @@ impl Backend {
         let applied = match update {
             PreparedRef::Native(update) => matches!(
                 self.refs
-                    .compare_and_swap(
-                        &self.repository,
-                        &[update],
-                        self.write_actor(b"git-push"),
-                        time
-                    )
+                    .compare_and_swap(self.key(), &[update], self.write_actor(b"git-push"), time)
                     .map_err(status)?,
                 CasResult::Applied(_)
             ),
             PreparedRef::Git(update) => matches!(
                 self.refs
-                    .compare_git(
-                        &self.repository,
-                        &[update],
-                        self.write_actor(b"git-push"),
-                        time
-                    )
+                    .compare_git(self.key(), &[update], self.write_actor(b"git-push"), time)
                     .map_err(status)?,
                 GitCasResult::Applied(_)
             ),
@@ -213,7 +203,7 @@ impl Backend {
             return statuses;
         }
         let error = match self.refs.compare_native_and_git(
-            &self.repository,
+            self.key(),
             &native,
             &git,
             self.write_actor(b"git-push"),
@@ -242,9 +232,16 @@ impl Backend {
             tracing::trace!(old=?command.old,new=?command.new,name=%String::from_utf8_lossy(&command.name).escape_default(),"Git receive command");
         }
         let ops = self.ops();
-        let projection = ProjectionId::full(self.repository.clone());
+        let projection = self.full_projection();
         let refs = resolve_advertised(
-            &list_refs(ops.engine, &ops.ctx, self.refs.as_ref(), &projection).map_err(status)?,
+            &list_refs_with_head(
+                ops.engine,
+                &ops.ctx,
+                self.refs.as_ref(),
+                &projection,
+                &self.record().head(),
+            )
+            .map_err(status)?,
         )
         .map_err(status)?;
         let index = GitIndex {
@@ -345,7 +342,12 @@ impl Backend {
             .duration_since(std::time::UNIX_EPOCH)
             .map_err(|_| Status::internal("clock before epoch"))?
             .as_secs() as i64;
-        let statuses = if q.atomic {
+        let statuses = if !self.record().state.writable() {
+            q.commands
+                .iter()
+                .map(|c| (c.name.clone(), Some("repository is read-only".to_owned())))
+                .collect()
+        } else if q.atomic {
             self.receive_atomic(&index, &q.commands, time)
         } else {
             q.commands
@@ -384,7 +386,7 @@ pub(crate) async fn handle_receive(
         .strip_suffix(".git")
         .unwrap_or(path.strip_suffix(suffix).unwrap());
     if let Err(error) = state.repo(repo.as_bytes()) {
-        return (StatusCode::FORBIDDEN, error.message().to_owned()).into_response();
+        return (StatusCode::NOT_FOUND, error.message().to_owned()).into_response();
     }
     if (advert && request.method() != axum::http::Method::GET)
         || (!advert && request.method() != axum::http::Method::POST)
@@ -427,11 +429,12 @@ pub(crate) async fn handle_receive(
         if advert {
             let ops = state.ops();
             let refs = resolve_advertised(
-                &list_refs(
+                &list_refs_with_head(
                     ops.engine,
                     &ops.ctx,
                     state.refs.as_ref(),
-                    &ProjectionId::full(state.repository.clone()),
+                    &state.full_projection(),
+                    &state.record().head(),
                 )
                 .map_err(status)?,
             )
@@ -462,6 +465,7 @@ pub(crate) async fn handle_receive(
             let code = match error.code() {
                 tonic::Code::InvalidArgument => StatusCode::BAD_REQUEST,
                 tonic::Code::PermissionDenied => StatusCode::FORBIDDEN,
+                tonic::Code::NotFound => StatusCode::NOT_FOUND,
                 _ => StatusCode::INTERNAL_SERVER_ERROR,
             };
             (code, error.message().to_owned()).into_response()

@@ -290,8 +290,7 @@ impl RepositoryStore for SqliteStore {
                 expires_at: None,
             },
         )?;
-        let mut stored = current;
-        stored.name = value.clone();
+        let mut stored = current.renamed(value);
         stored.version = stored
             .version
             .checked_add(1)

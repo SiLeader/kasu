@@ -67,6 +67,8 @@ fn error(status: tonic::Status) -> Response {
         tonic::Code::PermissionDenied => StatusCode::FORBIDDEN,
         tonic::Code::NotFound => StatusCode::NOT_FOUND,
         tonic::Code::InvalidArgument => StatusCode::BAD_REQUEST,
+        tonic::Code::FailedPrecondition => StatusCode::PRECONDITION_FAILED,
+        tonic::Code::ResourceExhausted => StatusCode::TOO_MANY_REQUESTS,
         _ => StatusCode::INTERNAL_SERVER_ERROR,
     };
     let mut out = (code, status.message().to_owned()).into_response();
@@ -128,15 +130,14 @@ async fn handle(
     Path(path): Path<String>,
     request: Request<Body>,
 ) -> Response {
-    let access = match state.authenticate(
-        request
-            .headers()
-            .get(header::AUTHORIZATION)
-            .and_then(|v| v.to_str().ok()),
-    ) {
-        Ok(access) => access,
-        Err(status) => return error(status),
-    };
+    let authorization = request
+        .headers()
+        .get(header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+        .map(str::to_owned);
+    if let Err(status) = state.authenticate(authorization.as_deref()) {
+        return error(status);
+    }
     let receiving = path.ends_with("/git-receive-pack")
         || (path.ends_with("/info/refs")
             && request.uri().query() == Some("service=git-receive-pack"));
@@ -150,24 +151,39 @@ async fn handle(
         return StatusCode::NOT_FOUND.into_response();
     };
     let repo = repo.strip_suffix(".git").unwrap_or(repo);
-    let projection = match projection_from_url(repo) {
+    let requested = match projection_from_url(repo) {
         Ok(projection) => projection,
-        Err(e) => return error(status(e)),
+        Err(_) => return error(crate::auth::not_found()),
     };
-    if let Err(status) = state.repo(&projection.repo) {
-        return error(status);
-    }
-    if let Err(status) = access.check_git(&projection, receiving) {
-        return error(status);
-    }
+    let scoping = state.clone();
+    let name = requested.repo.to_vec();
+    let directory = requested.path.clone();
+    let state = match crate::admission::blocking(move || {
+        scoping.scope_git(
+            authorization.as_deref(),
+            &name,
+            directory.as_ref(),
+            receiving,
+        )
+    })
+    .await
+    {
+        Ok(Ok(state)) => match state.admit().await {
+            Ok(state) => Arc::new(state),
+            Err(status) => return error(status),
+        },
+        Ok(Err(status)) => return error(status),
+        Err(_) => return error(tonic::Status::internal("Git worker failed")),
+    };
+    // Every index below is keyed by the resolved repository, never by the URL name.
+    let projection = ProjectionId {
+        repo: state.key().into(),
+        path: requested.path,
+    };
     if receiving {
         if projection.path.is_some() {
             return StatusCode::METHOD_NOT_ALLOWED.into_response();
         }
-        let state = match state.scope_writer(&access) {
-            Ok(state) => Arc::new(state),
-            Err(status) => return error(status),
-        };
         return crate::receive::handle_receive(state, path, request).await;
     }
     if advert
@@ -223,11 +239,12 @@ async fn handle(
     let prepared = crate::admission::blocking(move || -> Result<Prepared> {
         let ops = prepare_state.ops();
         let projection = prepare_projection;
-        let refs = resolve_advertised(&list_refs(
+        let refs = resolve_advertised(&list_refs_with_head(
             ops.engine,
             &ops.ctx,
             prepare_state.refs.as_ref(),
             &projection,
+            &prepare_state.record().head(),
         )?)?;
         if advert {
             return Ok(Prepared::Bytes(advertisement(protocol, &refs)?));

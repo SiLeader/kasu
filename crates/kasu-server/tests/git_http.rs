@@ -524,6 +524,7 @@ async fn scoped_projection_pat_allows_git_but_denies_full_repository_and_native_
     let running = Running::with_accounts(
         true,
         vec![ProjectionAccount {
+            scopes: vec![],
             name: "deploy-reader".into(),
             token: "scoped-reader".into(),
             directories: vec![RepoPath::new(b"deploy".as_slice()).unwrap()],

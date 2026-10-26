@@ -921,7 +921,7 @@ async fn grpc_over_tcp_and_http_json_preserve_bytes_and_enforce_access() {
     };
     assert_eq!(
         client.get_changeset(auth(wrong)).await.unwrap_err().code(),
-        tonic::Code::PermissionDenied
+        tonic::Code::NotFound
     );
     let malformed = p::ChangesetRequest {
         repo: b"repo".to_vec(),

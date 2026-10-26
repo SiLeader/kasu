@@ -148,7 +148,8 @@ impl Backend {
         }
         let mut encoded = Encoder::default();
         encoded.raw(b"kasu.land\0v1");
-        for bytes in [&request.repo, &request.name, &request.id] {
+        // The key keeps receipts stable across renames and aliases.
+        for bytes in [self.key(), &request.name, &request.id] {
             encoded.bytes(bytes);
         }
         encoded.bytes(b"api");
@@ -191,7 +192,7 @@ impl Backend {
     }
     fn land_existing(&self, operation: &LandOperation) -> Result<Option<p::LandResponse>, Status> {
         self.refs
-            .land_record(&operation.request.repo, &operation.storage_key)
+            .land_record(self.key(), &operation.storage_key)
             .map_err(status)?
             .map(|record| receipt(record, operation.fingerprint, true))
             .transpose()
@@ -211,7 +212,7 @@ impl Backend {
         if let Some(response) = self.land_existing(operation)? {
             return Ok(LandPreparation::Complete(response));
         }
-        let expected = self.refs.resolve(&q.repo, &q.name).map_err(status)?;
+        let expected = self.refs.resolve(self.key(), &q.name).map_err(status)?;
         if !q.required_ancestor.is_empty() {
             let ancestor = self.id(&q.repo, &q.required_ancestor)?;
             let allowed = match expected.target {
@@ -249,7 +250,7 @@ impl Backend {
                 self.ops()
                     .ctx
                     .repo
-                    .require_membership(&q.repo, onto)
+                    .require_membership(self.key(), onto)
                     .map_err(status)?;
                 if self.ops().is_ancestor(source, onto).map_err(status)? {
                     Some(onto)
@@ -299,11 +300,7 @@ impl Backend {
             }
             let ops = self.ops();
             ops.engine
-                .derive::<kasu_git::GitCommit>(
-                    &ops.ctx,
-                    candidate,
-                    &kasu_git::ProjectionId::full(q.repo.clone()),
-                )
+                .derive::<kasu_git::GitCommit>(&ops.ctx, candidate, &self.full_projection())
                 .map_err(status)?;
             response.id = Some(candidate.0.to_vec());
             if expected.target != Some(candidate) {
@@ -372,7 +369,7 @@ impl Backend {
             match self
                 .refs
                 .commit_land(
-                    &q.repo,
+                    self.key(),
                     &operation.storage_key,
                     &prepared.commit,
                     self.write_actor(b"api"),

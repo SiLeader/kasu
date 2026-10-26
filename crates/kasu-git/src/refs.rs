@@ -30,6 +30,16 @@ pub fn list_refs(
     store: &dyn GitRefStore,
     projection: &ProjectionId,
 ) -> Result<Vec<AdvertisedRef>> {
+    list_refs_with_head(engine, ctx, store, projection, b"refs/heads/main")
+}
+/// Advertise refs with `head` as the HEAD symref unless HEAD is stored explicitly.
+pub fn list_refs_with_head(
+    engine: &Engine,
+    ctx: &Ctx<'_>,
+    store: &dyn GitRefStore,
+    projection: &ProjectionId,
+    head: &[u8],
+) -> Result<Vec<AdvertisedRef>> {
     let mut refs = BTreeMap::new();
     for (name, state) in store.list(&projection.repo, b"refs/heads/")? {
         if let Some(target) = state.target {
@@ -66,7 +76,7 @@ pub fn list_refs(
         }
     }
     refs.entry(b"HEAD".to_vec()).or_insert(GitRef::Symbolic {
-        target: b"refs/heads/main".to_vec(),
+        target: head.to_vec(),
     });
     Ok(refs
         .into_iter()

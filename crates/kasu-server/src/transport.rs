@@ -44,6 +44,7 @@ impl axum::response::IntoResponse for HttpError {
             tonic::Code::PermissionDenied => StatusCode::FORBIDDEN,
             tonic::Code::Unauthenticated => StatusCode::UNAUTHORIZED,
             tonic::Code::ResourceExhausted => StatusCode::TOO_MANY_REQUESTS,
+            tonic::Code::FailedPrecondition => StatusCode::PRECONDITION_FAILED,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         };
         (
@@ -76,13 +77,14 @@ macro_rules! endpoints {
         #[tonic::async_trait]
         impl Metadata for MetadataService {
             $(async fn $method(&self,request:Request<p::$request>)->Result<Response<p::$response>,Status> {
-                let state=self.state.reader(request.metadata().get("authorization").and_then(|v|v.to_str().ok()))?;let input=request.into_inner();
+                let authorization=request.metadata().get("authorization").and_then(|v|v.to_str().ok()).map(str::to_owned);let input=request.into_inner();
+                let state=self.state.scoped(authorization.as_deref(),&input.repo,crate::Mode::Read).await?;
                 let result=crate::admission::blocking(move||state.$method(input)).await.map_err(|_|Status::internal("metadata worker failed"))??;
                 Ok(Response::new(result))
             })*
         }
         $(async fn $method(State(state):State<Arc<Backend>>,headers:HeaderMap,Json(input):Json<p::$request>)->Result<Json<p::$response>,HttpError> {
-            let state=state.reader(headers.get("authorization").and_then(|v|v.to_str().ok())).map_err(HttpError)?;
+            let state=state.scoped(headers.get("authorization").and_then(|v|v.to_str().ok()),&input.repo,crate::Mode::Read).await.map_err(HttpError)?;
             let result=crate::admission::blocking(move||state.$method(input)).await.map_err(|_|HttpError(Status::internal("metadata worker failed")))?.map_err(HttpError)?;
             Ok(Json(result))
         })*

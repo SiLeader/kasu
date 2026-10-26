@@ -119,6 +119,7 @@ impl Fixture {
             .with_write_policy(global)
             .with_repository_accounts(vec![
                 RepositoryAccount {
+                    grants: vec![],
                     read_directories: None,
                     name: "alice".into(),
                     token: "alice-pat".into(),
@@ -132,6 +133,7 @@ impl Fixture {
                     )),
                 },
                 RepositoryAccount {
+                    grants: vec![],
                     read_directories: None,
                     name: "bob".into(),
                     token: "bob-pat".into(),
@@ -145,6 +147,7 @@ impl Fixture {
                     )),
                 },
                 RepositoryAccount {
+                    grants: vec![],
                     read_directories: None,
                     name: "reader".into(),
                     token: "reader-pat".into(),
@@ -879,6 +882,7 @@ async fn directory_read_views_filter_metadata_objects_and_writer_blob_references
         ))
         .unwrap();
     let limited = || RepositoryAccount {
+        grants: vec![],
         name: "limited".into(),
         token: "limited-pat".into(),
         write_policy: Some(WritePolicy::default()),

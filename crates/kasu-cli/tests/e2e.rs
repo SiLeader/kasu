@@ -196,6 +196,7 @@ impl Fixture {
         );
         let backend = backend
             .with_repository_accounts(vec![RepositoryAccount {
+                grants: vec![],
                 name: "app-user".into(),
                 token: "app-user-pat".into(),
                 read_directories: Some(vec![RepoPath::new(b"app".as_slice()).unwrap()]),

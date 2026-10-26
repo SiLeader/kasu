@@ -8,7 +8,7 @@ use kasu_proto::v1 as p;
 use kasu_store::{CasResult, RefState, RefUpdate};
 use tonic::Status;
 
-#[derive(Clone, Debug, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct WritePolicy {
     #[serde(deserialize_with = "byte_rules")]
@@ -78,7 +78,7 @@ impl WritePolicy {
         })
     }
 }
-fn glob(pattern: &[u8], text: &[u8]) -> bool {
+pub(crate) fn glob(pattern: &[u8], text: &[u8]) -> bool {
     let (mut p, mut t, mut star, mut retry) = (0, 0, None, 0);
     while t < text.len() {
         if p < pattern.len() && (pattern[p] == b'?' || pattern[p] == text[t]) {
@@ -209,13 +209,13 @@ impl Backend {
             {
                 ops.ctx
                     .repo
-                    .associate_blob(&self.repository, blob)
+                    .associate_blob(self.key(), blob)
                     .map_err(status)?;
             }
         }
         ops.ctx
             .repo
-            .associate_changeset(&self.repository, id)
+            .associate_changeset(self.key(), id)
             .map_err(status)?;
         self.read_changeset(changeset(id, cs))
     }
@@ -303,14 +303,14 @@ impl Backend {
                                 .ops()
                                 .ctx
                                 .repo
-                                .associate_tree_graph(&self.repository, *id)
+                                .associate_tree_graph(self.key(), *id)
                                 .map_err(status)?,
                             c::TreeEntry::Leaf(entry) => {
                                 if let Some(blob) = entry.blob() {
                                     self.ops()
                                         .ctx
                                         .repo
-                                        .associate_blob(&self.repository, blob)
+                                        .associate_blob(self.key(), blob)
                                         .map_err(status)?;
                                 }
                             }
@@ -431,7 +431,7 @@ impl Backend {
                 "force update is disabled for this ref",
             ));
         }
-        let actual = self.refs.resolve(&q.repo, &q.name).map_err(status)?;
+        let actual = self.refs.resolve(self.key(), &q.name).map_err(status)?;
         if actual != expected {
             return Ok(p::UpdateRefResponse {
                 applied: false,
@@ -449,11 +449,7 @@ impl Backend {
             // the immutable Git projection also rejects unexportable identities.
             let ops = self.ops();
             ops.engine
-                .derive::<kasu_git::GitCommit>(
-                    &ops.ctx,
-                    new,
-                    &kasu_git::ProjectionId::full(q.repo.clone()),
-                )
+                .derive::<kasu_git::GitCommit>(&ops.ctx, new, &self.full_projection())
                 .map_err(status)?;
         }
         self.check_changeset_acl(expected.target, new)?;
@@ -464,7 +460,7 @@ impl Backend {
         let outcome = self
             .refs
             .compare_and_swap(
-                &q.repo,
+                self.key(),
                 &[RefUpdate {
                     name: q.name.clone(),
                     expected,
@@ -540,7 +536,7 @@ impl UploadBuffer {
                     return Err(Status::invalid_argument("blob ID does not match content"));
                 }
                 repo.put_blob(&pending.bytes).map_err(status)?;
-                repo.associate_blob(&q.repo, id).map_err(status)?;
+                repo.associate_blob(backend.key(), id).map_err(status)?;
                 backend.grant_read_blob(id)?;
                 pending.bytes.len() as u64
             };

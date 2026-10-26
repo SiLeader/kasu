@@ -281,8 +281,7 @@ impl RepositoryStore for PostgresStore {
                     expires_at: None,
                 },
             )?;
-            let mut stored = current;
-            stored.name = value.clone();
+            let mut stored = current.renamed(value);
             stored.version = next_version(stored.version)?;
             store(&mut tx, &stored)?;
             append(&mut tx, key, "renamed", actor, time)?;

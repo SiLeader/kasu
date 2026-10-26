@@ -143,11 +143,12 @@ fn raw_advertisement(bytes: Vec<u8>, service: Service, protocol: Protocol) -> Re
 }
 fn refs(state: &Backend, projection: &ProjectionId) -> Result<Vec<ResolvedRef>> {
     let ops = state.ops();
-    resolve_advertised(&list_refs(
+    resolve_advertised(&list_refs_with_head(
         ops.engine,
         &ops.ctx,
         state.refs.as_ref(),
         projection,
+        &state.record().head(),
     )?)
 }
 fn send_pack(
@@ -194,20 +195,28 @@ pub fn serve_git_ssh(
     {
         return Err(invalid("SSH requires configured credential identities"));
     }
-    let access = state
+    state
         .authenticate(Some(authorization))
         .map_err(|e| invalid(e.message()))?;
     let (service, path) = command(original_command)?;
-    let projection = projection_from_bytes(&path)?;
-    state
-        .repo(&projection.repo)
-        .map_err(|e| invalid(e.message()))?;
-    access
-        .check_git(&projection, service == Service::Receive)
-        .map_err(|e| invalid(e.message()))?;
-    if service == Service::Receive && projection.path.is_some() {
+    let requested = projection_from_bytes(&path).map_err(|_| invalid("repository not found"))?;
+    if service == Service::Receive && requested.path.is_some() {
         return Err(invalid("SSH projection is read-only"));
     }
+    // The repository comes from the client's command, e.g. `git-upload-pack 'team/app.git'`.
+    let scoped = state
+        .scope_git(
+            Some(authorization),
+            &requested.repo,
+            requested.path.as_ref(),
+            service == Service::Receive,
+        )
+        .map_err(|e| invalid(e.message()))?;
+    let state = &scoped;
+    let projection = ProjectionId {
+        repo: state.key().into(),
+        path: requested.path,
+    };
     let protocol = if service == Service::Receive {
         Protocol::V0
     } else {
@@ -229,9 +238,6 @@ pub fn serve_git_ssh(
     output.flush().map_err(storage_error)?;
     let mut budget = 0;
     if service == Service::Receive {
-        let state = state
-            .scope_writer(&access)
-            .map_err(|e| invalid(e.message()))?;
         let Some(mut bytes) = round(input, &mut budget, false)? else {
             return Ok(());
         };

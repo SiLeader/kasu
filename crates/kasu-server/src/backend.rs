@@ -1,9 +1,9 @@
-use kasu_core as core;
+use kasu_core::{self as core, RepoKey, RepoName};
 use kasu_derived::{Blame, Ctx, Engine};
 use kasu_git::{GitIndex, ProjectionId, register_git};
 use kasu_ops::Operations;
 use kasu_proto::v1 as p;
-use kasu_store::{BlobStore, GitRefStore, MetaStore, Repository};
+use kasu_store::{BlobStore, GitRefStore, MetaStore, Repository, RepositoryStore};
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -11,14 +11,22 @@ pub struct Backend {
     pub(crate) runtime: Arc<crate::admission::Runtime>,
     pub(crate) projection_accounts: Arc<Vec<crate::ProjectionAccount>>,
     pub(crate) repository_accounts: Arc<Vec<crate::RepositoryAccount>>,
-    pub(crate) writer_account: Option<usize>,
+    /// The (account, grant) whose write policy applies to this request.
+    pub(crate) writer_grant: Option<(usize, usize)>,
     pub(crate) read_scope: Option<Arc<crate::read_scope::ReadScope>>,
+    pub(crate) registry: Arc<crate::Registry>,
+    /// The repository of pre-registry configuration (old-format accounts).
+    pub(crate) legacy: Option<RepoKey>,
+    /// Serve only this repository (single-repository SSH entry points).
+    pub(crate) pinned: Option<RepoKey>,
+    pub(crate) object_repositories: Arc<Vec<crate::RepoPattern>>,
+    /// Set once a request is scoped to a resolved repository.
+    pub(crate) repo: Option<Arc<crate::registry::RepoContext>>,
     pub(crate) write_policy: crate::WritePolicy,
     pub(crate) receive_limits: kasu_git::ReceiveLimits,
     pub(crate) token: Option<String>,
     pub(crate) object_token: Option<String>,
     pub(crate) pack_cache: Arc<kasu_git::PackCache>,
-    pub(crate) repository: Vec<u8>,
     meta: Arc<dyn MetaStore>,
     blobs: Arc<dyn BlobStore>,
     pub(crate) refs: Arc<dyn GitRefStore>,
@@ -29,11 +37,39 @@ impl Backend {
         self.pack_cache.stats()
     }
 
+    /// A single-repository backend: `repository` is registered in memory as a
+    /// legacy repository, and direct method calls act on it with full access.
     pub fn new(
         repository: Vec<u8>,
         meta: Arc<dyn MetaStore>,
         blobs: Arc<dyn BlobStore>,
         refs: Arc<dyn GitRefStore>,
+        token: Option<String>,
+    ) -> Self {
+        let name = RepoName::from_bytes(&repository)
+            .expect("legacy repository names must follow the repository naming rules");
+        let registry = kasu_store::MemoryRepositoryStore::legacy(&name)
+            .expect("an in-memory registry accepts its first repository");
+        let mut backend = Self::with_registry(meta, blobs, refs, Arc::new(registry), token);
+        backend.legacy = Some(RepoKey::legacy(&name));
+        let repo = backend
+            .registry
+            .resolve(&name)
+            .ok()
+            .flatten()
+            .expect("the legacy repository is registered");
+        backend.repo = Some(Arc::new(crate::registry::RepoContext {
+            repo,
+            requested: repository,
+        }));
+        backend
+    }
+    /// A multi-repository backend that resolves every request in `registry`.
+    pub fn with_registry(
+        meta: Arc<dyn MetaStore>,
+        blobs: Arc<dyn BlobStore>,
+        refs: Arc<dyn GitRefStore>,
+        registry: Arc<dyn RepositoryStore>,
         token: Option<String>,
     ) -> Self {
         let mut engine = Engine::standard();
@@ -45,11 +81,18 @@ impl Backend {
             runtime,
             projection_accounts: Arc::new(Vec::new()),
             repository_accounts: Arc::new(Vec::new()),
-            writer_account: None,
+            writer_grant: None,
             read_scope: None,
+            registry: Arc::new(crate::Registry::new(
+                registry,
+                std::time::Duration::from_secs(1),
+            )),
+            legacy: None,
+            pinned: None,
+            object_repositories: Arc::new(vec![crate::RepoPattern::parse("**").unwrap()]),
+            repo: None,
             write_policy: crate::WritePolicy::default(),
             receive_limits: kasu_git::ReceiveLimits::default(),
-            repository,
             meta,
             blobs,
             refs,
@@ -95,13 +138,61 @@ impl Backend {
             },
         }
     }
+    pub fn registry(&self) -> &Arc<crate::Registry> {
+        &self.registry
+    }
+    /// Treat old-format accounts and projection directories as grants on this
+    /// repository.
+    pub fn with_legacy_repository(mut self, key: RepoKey) -> Self {
+        self.legacy = Some(key);
+        self
+    }
+    pub fn with_pinned_repository(mut self, key: RepoKey) -> Self {
+        self.pinned = Some(key);
+        self
+    }
+    pub fn with_registry_ttl(mut self, ttl: std::time::Duration) -> Self {
+        self.registry = Arc::new(crate::Registry::new(self.registry.store().clone(), ttl));
+        self
+    }
+    /// Limit the object hop credential to repositories matching `patterns`.
+    pub fn with_object_repositories(
+        mut self,
+        patterns: Vec<crate::RepoPattern>,
+    ) -> Result<Self, tonic::Status> {
+        if patterns.is_empty() || patterns.len() > 128 {
+            return Err(tonic::Status::invalid_argument(
+                "expected 1..128 object hop repository patterns",
+            ));
+        }
+        self.object_repositories = Arc::new(patterns);
+        Ok(self)
+    }
+    /// Per-repository admission; see `ServerLimits`.
+    pub(crate) async fn admit(self) -> Result<Self, tonic::Status> {
+        Ok(self)
+    }
+    fn context(&self) -> &crate::registry::RepoContext {
+        self.repo
+            .as_deref()
+            .expect("repository operations run on a scoped backend")
+    }
+    pub(crate) fn record(&self) -> &kasu_store::RepositoryRecord {
+        &self.context().repo.record
+    }
+    /// The resolved internal key; every persistent key uses it, never the name.
+    pub(crate) fn key(&self) -> &[u8] {
+        self.record().key.as_bytes()
+    }
+    pub(crate) fn full_projection(&self) -> ProjectionId {
+        ProjectionId::full(self.key())
+    }
+    /// Requests carry the repository name they were scoped with; any other
+    /// name is indistinguishable from a repository that does not exist.
     pub(crate) fn repo(&self, repo: &[u8]) -> Result<(), tonic::Status> {
-        if repo != self.repository {
-            Err(tonic::Status::permission_denied(
-                "repository is not authorized",
-            ))
-        } else {
-            Ok(())
+        match &self.repo {
+            Some(context) if context.requested == repo => Ok(()),
+            _ => Err(crate::auth::not_found()),
         }
     }
     pub(crate) fn id(&self, repo: &[u8], raw: &[u8]) -> Result<core::ChangesetId, tonic::Status> {
@@ -113,7 +204,7 @@ impl Backend {
         self.ops()
             .ctx
             .repo
-            .require_membership(repo, id)
+            .require_membership(self.key(), id)
             .map_err(status)?;
         Ok(id)
     }
@@ -165,12 +256,12 @@ impl Backend {
     }
     pub fn resolve_ref(&self, q: p::RefRequest) -> Result<p::Ref, tonic::Status> {
         self.repo(&q.repo)?;
-        let value = self.refs.resolve(&q.repo, &q.name).map_err(status)?;
+        let value = self.refs.resolve(self.key(), &q.name).map_err(status)?;
         if let Some(target) = value.target {
             self.ops()
                 .ctx
                 .repo
-                .require_membership(&q.repo, target)
+                .require_membership(self.key(), target)
                 .map_err(status)?;
         }
         Ok(p::Ref {
@@ -182,12 +273,12 @@ impl Backend {
     pub fn list_refs(&self, q: p::ListRefsRequest) -> Result<p::ListRefsResponse, tonic::Status> {
         self.repo(&q.repo)?;
         let mut refs = Vec::new();
-        for (name, state) in self.refs.list(&q.repo, &q.prefix).map_err(status)? {
+        for (name, state) in self.refs.list(self.key(), &q.prefix).map_err(status)? {
             if let Some(id) = state.target {
                 self.ops()
                     .ctx
                     .repo
-                    .require_membership(&q.repo, id)
+                    .require_membership(self.key(), id)
                     .map_err(status)?;
             }
             refs.push(p::Ref {
@@ -424,13 +515,13 @@ impl Backend {
         let ops = self.ops();
         let index = GitIndex {
             repo: ops.ctx.repo,
-            projection: ProjectionId::full(q.repo),
+            projection: self.full_projection(),
         };
         let id = index.find_changeset(oid).map_err(status)?;
         if let Some(id) = id {
             index
                 .repo
-                .require_membership(&self.repository, id)
+                .require_membership(self.key(), id)
                 .map_err(status)?;
         }
         Ok(p::FindChangesetResponse {

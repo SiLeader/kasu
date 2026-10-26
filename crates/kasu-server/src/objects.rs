@@ -39,9 +39,12 @@ impl ObjectService {
             .metadata()
             .get("authorization")
             .and_then(|v| v.to_str().ok());
-        let scoped = self.state.object_reader(authorization)?;
+        let authorization = authorization.map(str::to_owned);
         let input = request.into_inner();
-        self.state.repo(&input.repo)?;
+        let scoped = self
+            .state
+            .scoped(authorization.as_deref(), &input.repo, crate::Mode::Objects)
+            .await?;
         if input.ids.len() > OBJECT_BATCH_LIMIT {
             return Err(Status::resource_exhausted("object batch exceeds 128 IDs"));
         }
