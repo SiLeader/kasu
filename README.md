@@ -66,6 +66,18 @@ export KASU_TOKEN=dev-token
 
 See the [native CLI guide](docs/native-cli.md) for editing, committing, rebasing, and landing changes, and the [Git import guide](docs/git-import.md) for supported inputs and limits. `dev-token` is an example credential for local use.
 
+One server can host many repositories. Repository names may contain `/`; each repository has its own refs, Git OIDs, permissions, and configuration, while identical objects are stored once:
+
+```sh
+cargo run -p kasu-ingest -- --create /path/to/infra.git /path/to/kasu-data team-a/infra
+cargo run -p kasu-ingest -- --create /path/to/app.git /path/to/kasu-data team-b/app
+KASU_TOKEN=dev-token cargo run -p kasu-server -- /path/to/kasu-data
+git -c http.extraHeader='Authorization: Bearer dev-token' clone http://127.0.0.1:50080/team-a/infra.git
+./target/debug/kasu repo list
+```
+
+See [multiple repositories](docs/multi-repository.md) for naming, migration of existing data (`kasu-server migrate-registry`), per-repository grants and configuration, the Admin API, deletion, and forks.
+
 ## Documentation and status
 
 The implementation includes the native CLI, server APIs, Git gateway, cache hierarchy, and PostgreSQL/S3 backends. See [implementation status](docs/implementation-status.md) for completed work, verification scope, and remaining work, and the [plan audit](docs/plan-audit.json) for implementation and verification references. Most detailed documentation is currently in Japanese.
@@ -76,6 +88,7 @@ The implementation includes the native CLI, server APIs, Git gateway, cache hier
 | Working copies | [Native CLI](docs/native-cli.md), [virtual checkout](docs/virtual-checkout.md) |
 | Native APIs | [Metadata](docs/metadata-api.md), [writes](docs/write-api.md), [objects](docs/object-api.md), [Land](docs/land.md) |
 | Git compatibility | [Import](docs/git-import.md), [reads](docs/git-read.md), [push](docs/git-push.md), [SSH](docs/git-ssh.md), [external LFS](docs/git-lfs.md) |
+| Multiple repositories | [Registry, grants, Admin API, lifecycle](docs/multi-repository.md) |
 | Access control and projections | [Accounts](docs/repository-accounts.md), [directory reads](docs/directory-read-acl.md), [Git projections](docs/git-projection.md), [projection accounts](docs/projection-accounts.md) |
 | Storage and caches | [PostgreSQL/S3](docs/production-storage.md), [cache hierarchy](docs/cache-hierarchy.md), [disk cache](docs/disk-cache.md) |
 | Operations and automation | [Server limits and metrics](docs/server-runtime.md), [tracing](docs/telemetry.md), [webhooks](docs/webhooks.md), [CI bots](docs/automation.md) |

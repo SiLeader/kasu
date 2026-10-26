@@ -18,6 +18,11 @@ restrict,command="/opt/kasu/kasu-git-ssh /srv/kasu demo /etc/kasu/operator.pat" 
 restrict,command="/opt/kasu/kasu-git-ssh /srv/kasu demo /etc/kasu/deploy-reader.pat" ssh-ed25519 AAAA... deploy-reader
 ```
 
+リポジトリを省略した `kasu-git-ssh /srv/kasu /etc/kasu/operator.pat` は、
+クライアントのコマンド（`git clone git@host:team-a/infra.git` の `git-upload-pack 'team-a/infra.git'`）から
+リポジトリを解決し、資格情報の [grant](multi-repository.md#認証認可) で判定します。
+リポジトリ名を指定した形式は、そのリポジトリだけを提供します。
+
 `sshd_config` の該当ユーザーに、管理者が用意した設定だけを渡します。
 
 ```text

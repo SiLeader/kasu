@@ -23,6 +23,12 @@ POST を配信します。設定は起動時に読み込みます。
 ArgoCD は `webhook.github.secret`、Flux は `type: github` の Receiver と
 その `secretRef` を使います。URL は HTTP／HTTPS を受け付け、リダイレクトには追従しません。
 
+複数リポジトリでは、endpoint を [リポジトリごとの設定](multi-repository.md#webhook) に書きます。
+このファイルは配信設定と、`clone_url` の基底になる `public_url`（または `KASU_PUBLIC_URL`）を与え、
+`endpoints` と `repository_url` は legacy リポジトリのものになります。
+payload の `repository.name`／`full_name`／`clone_url` は現在の名前から生成し、改名後の配信にも反映します。
+`ARCHIVED` のリポジトリには配信しません。
+
 ## 配信と再送
 
 ref の CAS と同じ SQLite トランザクションで記録する `ref_log`／`git_ref_log` を

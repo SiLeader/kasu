@@ -33,6 +33,11 @@ Basic の username は任意です。Bearer も使えます。`name` は設定�
 併用しない場合、射影アカウントだけの読み取りサーバーとして起動できます。
 この設定があると、`KASU_TOKEN` がなくても匿名アクセスは拒否します。
 
+複数リポジトリでは、`directories` の代わりに
+`"projections": [{"repository": "team-a/*", "directories": ["deploy"], "directories_hex": []}]` で
+リポジトリ名 glob とディレクトリの組を指定します。`directories` だけの形式は legacy リポジトリの射影です。
+一致しないリポジトリは存在しないものと同じ `NotFound` です。
+
 ## 許可範囲
 
 | 操作 | 射影専用 PAT |

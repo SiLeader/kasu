@@ -64,6 +64,18 @@ export KASU_TOKEN=dev-token
 
 編集、commit、rebase、Land の使い方は [ネイティブ CLI](docs/native-cli.md)、取り込み可能な入力と制限は [Git 取り込み](docs/git-import.md) を参照してください。`dev-token` はローカル用の認証情報の例です。
 
+1 つのサーバーで複数のリポジトリを提供できます。リポジトリ名には `/` を使えます。ref・Git OID・権限・設定はリポジトリごとに独立し、同じ内容のオブジェクトは1回だけ保存します。
+
+```sh
+cargo run -p kasu-ingest -- --create /path/to/infra.git /path/to/kasu-data team-a/infra
+cargo run -p kasu-ingest -- --create /path/to/app.git /path/to/kasu-data team-b/app
+KASU_TOKEN=dev-token cargo run -p kasu-server -- /path/to/kasu-data
+git -c http.extraHeader='Authorization: Bearer dev-token' clone http://127.0.0.1:50080/team-a/infra.git
+./target/debug/kasu repo list
+```
+
+名前の規則、既存データの移行（`kasu-server migrate-registry`）、リポジトリ単位の grant と設定、Admin API、削除、フォークは [マルチリポジトリ](docs/multi-repository.md) を参照してください。
+
 ## ドキュメントと実装状況
 
 ネイティブ CLI、サーバー API、Git ゲートウェイ、キャッシュ階層、PostgreSQL／S3 バックエンドを実装しています。完了項目、検証範囲、残作業は [実装状況](docs/implementation-status.md)、実装箇所と検証記録の対応は [計画・実装・検証の対応表](docs/plan-audit.json) を参照してください。詳細ドキュメントは現在、主に日本語で記述しています。
@@ -74,6 +86,7 @@ export KASU_TOKEN=dev-token
 | working copy | [ネイティブ CLI](docs/native-cli.md)、[仮想 checkout](docs/virtual-checkout.md) |
 | ネイティブ API | [Metadata](docs/metadata-api.md)、[書き込み](docs/write-api.md)、[Objects](docs/object-api.md)、[Land](docs/land.md) |
 | Git 互換機能 | [取り込み](docs/git-import.md)、[読み取り](docs/git-read.md)、[push](docs/git-push.md)、[SSH](docs/git-ssh.md)、[外部 LFS](docs/git-lfs.md) |
+| マルチリポジトリ | [レジストリ・grant・Admin API・ライフサイクル](docs/multi-repository.md) |
 | アクセス制御・射影 | [アカウント](docs/repository-accounts.md)、[ディレクトリ読み取り](docs/directory-read-acl.md)、[Git 射影](docs/git-projection.md)、[射影アカウント](docs/projection-accounts.md) |
 | ストレージ・キャッシュ | [PostgreSQL／S3](docs/production-storage.md)、[キャッシュ階層](docs/cache-hierarchy.md)、[ディスクキャッシュ](docs/disk-cache.md) |
 | 運用・自動化 | [サーバー制限・メトリクス](docs/server-runtime.md)、[tracing](docs/telemetry.md)、[Webhook](docs/webhooks.md)、[CI bot](docs/automation.md) |

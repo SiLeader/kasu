@@ -35,6 +35,8 @@ curl --fail -H "Authorization: Bearer $KASU_TOKEN" http://127.0.0.1:50080/metric
 | `active` | 1–4096 | 通常リクエストの同時処理数 |
 | `per_identity_active` | 1–`active` | 認証主体ごとの同時数。公開サーバーでは接続元 IP ごと |
 | `pending` | 1–65536 | 待機リクエストの上限 |
+| `per_repository_active` | 1–`active` | 1 リポジトリの同時処理数（既定 `active` の半分）。リポジトリ設定の `limits.active` でさらに絞れます |
+| `per_repository_pending` | 1–`pending` | 1 リポジトリの待機数（既定 `pending` の 1/4） |
 | `queue_timeout_ms` | 1–30000 | 同時実行枠を待つ最大時間 |
 | `client_rate_per_second`, `client_burst` | 各1–1000000 | 接続元 IP の token bucket の補充速度と容量 |
 | `token_rate_per_second`, `token_burst` | 各1–1000000 | 認証主体の token bucket の補充速度と容量 |
@@ -62,6 +64,11 @@ Writer／Land の再送には、それぞれ既存の CAS／冪等性の契約�
 
 複数プロセスの admission は独立しています。クラスタ全体の共通割当量や接続数制限、
 reverse proxy の信頼設定はこの実装に含みません。これはリクエスト数の制限であり、CPU・メモリの容量保証ではありません。
+
+リポジトリ枠を待つ要求は、待機中にサーバー全体の実行枠を返します。
+混んでいるリポジトリが `active` を占有して他のリポジトリを止めることはありません
+（[公平性](multi-repository.md#多テナント運用)）。リポジトリ単位の計測は
+`KASU_METRICS_REPOSITORIES` に挙げたリポジトリだけをラベルにし、それ以外は `other` に集約します。
 
 ## 計測の意味
 

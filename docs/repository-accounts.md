@@ -50,9 +50,17 @@ force と削除は既定で許可しません。書き込み範囲を限定す�
 空文字列は全パス、空の配列は変更可能なパスなしを表します。
 パス境界を照合するため、`deploy` の許可で `deployment` は変更できません。
 
+## リポジトリ単位の grant
+
+複数リポジトリを提供する場合は、アカウントに `grants` を設定します。
+`repositories` のリポジトリ名 glob ごとに `write_policy` と `read_directories` を指定し、
+最も具体的に一致する 1 件だけを使います。grant のないリポジトリは存在しないものと同じ `NotFound` です。
+上記の `grants` なしの形式は、起動引数または `migrate-registry` で登録した legacy リポジトリへの単一 grant として扱います。
+照合の規則と例は [マルチリポジトリ](multi-repository.md#認証認可) を参照してください。
+
 ## サーバー全体の policy との関係
 
-実効権限は、[サーバー全体の WritePolicy](git-push.md) とアカウントの policy の両方が許す範囲です。
+実効権限は、[サーバー全体の WritePolicy](git-push.md)、[リポジトリの policy](multi-repository.md#リポジトリ単位の設定)、アカウントの policy のすべてが許す範囲です。
 アカウント設定はサーバー全体の制限を拡大しません。
 
 | 操作 | 判定 |

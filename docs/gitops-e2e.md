@@ -105,6 +105,28 @@ python3 tools/gitops/record.py --evidence /tmp/kasu-projection-gitops-e2e/eviden
 [サーバー側の通信](../crates/kasu-git/tests/fixtures/clients/path-projection-kind/gitops-kind-server.trace) に保存しています。
 この追加シナリオの GitHub 上の実行結果は未確認です。
 
+## 複数リポジトリ
+
+`tools/gitops/multi_repository.py` は 1 つの kasu-server で 2 つのリポジトリ（`team-a/apps`、`team-b/apps`）を
+提供し、それぞれを別の ArgoCD Application と Flux GitRepository／Kustomization で同期します。
+
+```sh
+python3 tools/gitops/multi_repository.py --workdir /tmp/kasu-gitops-multi
+```
+
+リポジトリは init container の `kasu-ingest --create` で作成し、server はリポジトリ引数なしで起動します。
+`KASU_REPOSITORIES_FILE` にリポジトリごとの webhook（ArgoCD `/api/webhook` と、リポジトリごとの Flux Receiver）を宣言し、
+`KASU_PUBLIC_URL` から payload の `clone_url` を作ります。ArgoCD と Flux のポーリングは1時間です。
+片方のリポジトリだけを更新し、90秒以内にそのリポジトリの両コントローラーが新 SHA と ConfigMap に同期し、
+もう片方は前の revision のままであること、kasu のログで更新したリポジトリの両 endpoint だけに
+配信確定が増えることを検査します。ArgoCD は payload の repository URL で Application を選ぶため、
+同期の成立は payload が正しいリポジトリを名指ししたことを示します。両リポジトリについて順に行い、
+`evidence/multi-repository-proof.json` に記録します。ほかの規則（専用クラスター、`--reuse`、`--keep`）は `run.py` と同じです。
+
+このシナリオは未実行です。同じ経路（宣言ファイル、リポジトリ引数なしの起動、リポジトリごとの署名付き webhook、
+複数セグメント名の `git clone`）を実バイナリで検証する
+`cargo test -p kasu-server --test multi_repository_process --locked` は通過しています。
+
 ## 2026-10-23 の実測
 
 macOS arm64 の Docker 上に kind v0.33.0／Kubernetes v1.37.0 の専用クラスターを作成し、
