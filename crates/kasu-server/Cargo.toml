@@ -36,6 +36,7 @@ http-body = "1"
 
 [dev-dependencies]
 tempfile.workspace = true
+proptest.workspace = true
 http-body-util = "0.1"
 
 [dependencies.base64]

@@ -2429,6 +2429,7 @@ dependencies = [
  "kasu-proto",
  "kasu-store",
  "kasu-telemetry",
+ "proptest",
  "prost",
  "reqwest 0.12.28",
  "serde",
@@ -2446,6 +2447,7 @@ dependencies = [
 name = "kasu-sim"
 version = "0.1.0"
 dependencies = [
+ "axum",
  "hyper-util",
  "kasu-cache",
  "kasu-core",

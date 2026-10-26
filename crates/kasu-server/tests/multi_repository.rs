@@ -530,8 +530,24 @@ async fn migrating_a_single_repository_keeps_every_key_and_git_oid() {
             "/demo.git/info/refs?service=git-upload-pack",
         )
         .await;
+    // A delivered webhook advanced the consumer cursor before migration.
+    store
+        .prepare_webhook(b"demo", "argocd", WebhookStream::Native, 0, 2, b"{}")
+        .unwrap();
+    assert!(
+        store
+            .finish_webhook(b"demo", "argocd", WebhookStream::Native, 2, None)
+            .unwrap()
+    );
     // Migration registers the name bytes as the key and is idempotent.
     let record = migrate_registry(store.as_ref(), &name("demo"), b"test").unwrap();
+    assert_eq!(
+        store
+            .webhook_state(record.key.as_bytes(), "argocd", WebhookStream::Native)
+            .unwrap()
+            .cursor,
+        2
+    );
     assert_eq!(record.key.as_bytes(), b"demo");
     assert_eq!(
         migrate_registry(store.as_ref(), &name("demo"), b"test").unwrap(),
@@ -572,4 +588,114 @@ async fn migrating_a_single_repository_keeps_every_key_and_git_oid() {
             .as_bytes(),
         b"fresh"
     );
+}
+
+fn git(path: &std::path::Path, args: &[&str], input: &[u8]) -> Vec<u8> {
+    use std::io::Write;
+    let mut child = std::process::Command::new("git")
+        .arg("-C")
+        .arg(path)
+        .args(args)
+        .env("GIT_CONFIG_NOSYSTEM", "1")
+        .env("GIT_CONFIG_GLOBAL", "/dev/null")
+        .env("GIT_AUTHOR_NAME", "A")
+        .env("GIT_AUTHOR_EMAIL", "a@b")
+        .env("GIT_COMMITTER_NAME", "A")
+        .env("GIT_COMMITTER_EMAIL", "a@b")
+        .env("GIT_AUTHOR_DATE", "1700000000 +0000")
+        .env("GIT_COMMITTER_DATE", "1700000000 +0000")
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    child.stdin.take().unwrap().write_all(input).unwrap();
+    let output = child.wait_with_output().unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    output.stdout
+}
+fn push(old: &str, new: &str, pack: Vec<u8>) -> Vec<u8> {
+    let mut request = Vec::new();
+    kasu_git::write_packet(
+        &mut request,
+        format!("{old} {new} refs/heads/main\0report-status\n").as_bytes(),
+    )
+    .unwrap();
+    request.extend(b"0000");
+    request.extend(pack);
+    request
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn thin_pack_bases_resolve_only_within_the_receiving_repository() {
+    let f = Fixture::new(&["team-a/infra", "team-b/app"]);
+    let work = tempfile::tempdir().unwrap();
+    let path = work.path();
+    git(path, &["init", "-q", "-b", "main"], b"");
+    let lines: String = (0..200)
+        .map(|n| format!("line {n} of a shared manifest\n"))
+        .collect();
+    std::fs::write(path.join("manifest"), &lines).unwrap();
+    git(path, &["add", "."], b"");
+    git(path, &["commit", "-qm", "base"], b"");
+    let base = String::from_utf8(git(path, &["rev-parse", "HEAD"], b"")).unwrap();
+    let base = base.trim();
+    std::fs::write(
+        path.join("manifest"),
+        lines.replace("line 7 ", "line seven "),
+    )
+    .unwrap();
+    git(path, &["commit", "-qam", "tip"], b"");
+    let tip = String::from_utf8(git(path, &["rev-parse", "HEAD"], b"")).unwrap();
+    let tip = tip.trim();
+    let zero = "0".repeat(40);
+    let full = git(
+        path,
+        &["pack-objects", "--revs", "--stdout"],
+        format!("{base}\n").as_bytes(),
+    );
+    let thin = git(
+        path,
+        &["pack-objects", "--revs", "--thin", "--stdout"],
+        format!("{tip}\n^{base}\n").as_bytes(),
+    );
+    // The pack is thin: its delta base is not included.
+    let empty = tempfile::tempdir().unwrap();
+    git(empty.path(), &["init", "-q", "--bare"], b"");
+    std::fs::write(empty.path().join("thin.pack"), &thin).unwrap();
+    let index = std::process::Command::new("git")
+        .arg("-C")
+        .arg(empty.path())
+        .args(["index-pack", "thin.pack"])
+        .output()
+        .unwrap();
+    assert!(!index.status.success());
+    assert!(String::from_utf8_lossy(&index.stderr).contains("unresolved delta"));
+    let a = f
+        .state
+        .scope(Some("Bearer operator"), b"team-a/infra", Mode::Write)
+        .unwrap();
+    let b = f
+        .state
+        .scope(Some("Bearer operator"), b"team-b/app", Mode::Write)
+        .unwrap();
+    let report = a.receive_pack(&push(&zero, base, full)).unwrap();
+    assert!(String::from_utf8_lossy(&report).contains("unpack ok"));
+    // team-b has never seen the delta base; the other repository's copy of
+    // it must not complete the pack.
+    let report = b.receive_pack(&push(&zero, tip, thin.clone())).unwrap();
+    assert!(String::from_utf8_lossy(&report).contains("unpack unresolved or cyclic delta bases"));
+    let key = |name: &str| f.record(name).key;
+    assert_eq!(
+        f.store
+            .resolve(key("team-b/app").as_bytes(), b"refs/heads/main")
+            .unwrap(),
+        RefState::default()
+    );
+    let report = a.receive_pack(&push(base, tip, thin)).unwrap();
+    assert!(String::from_utf8_lossy(&report).contains("ok refs/heads/main"));
 }

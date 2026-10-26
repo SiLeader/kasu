@@ -18,10 +18,18 @@ fn get(name: &str) -> p::GetRepositoryRequest {
     p::GetRepositoryRequest { name: name.into() }
 }
 fn main_line(advert: &[u8]) -> String {
-    String::from_utf8_lossy(advert)
-        .lines()
-        .find(|l| l.contains("refs/heads/main"))
-        .map(|l| l[4..44].to_owned())
+    kasu_git::parse_packets(advert)
+        .unwrap()
+        .into_iter()
+        .find_map(|packet| match packet {
+            kasu_git::Packet::Data(line) => {
+                let line = line.strip_suffix(b"\n").unwrap_or(line);
+                let (oid, name) = line.split_at_checked(40)?;
+                (name.split(|b| *b == 0).next() == Some(b" refs/heads/main"))
+                    .then(|| String::from_utf8(oid.to_vec()).unwrap())
+            }
+            _ => None,
+        })
         .unwrap()
 }
 
