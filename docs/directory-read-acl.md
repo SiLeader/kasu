@@ -1,8 +1,10 @@
-# Native のディレクトリ読み取り ACL
+# Native Directory Read ACLs
 
-repository account に `read_directories` を設定すると、native Metadata／Objects は
-許可パスの読み取りビューを返します。CLI はそのビューから checkout でき、許可範囲の
-commit／Land は元の Changeset を親にするため、範囲外のファイルを保持できます。
+English | [日本語](directory-read-acl_ja.md)
+
+When `read_directories` is set on a repository account, native Metadata / Objects return
+a read view of the allowed paths. The CLI can check out from that view, and commits / Lands within the allowed scope
+use the original Changeset as parent, so files outside the scope are preserved.
 
 ```json
 {
@@ -21,99 +23,99 @@ commit／Land は元の Changeset を親にするため、範囲外のファイ�
 }
 ```
 
-この JSON を [repository account 設定](repository-accounts.md) の `KASU_ACCOUNTS_FILE` で読み込みます。
-読み取りだけなら `write_policy` を省略します。
-`read_directories` と `read_directories_hex` を両方省略または `null` にすると、従来どおり repo 全体を読み取れます。
-指定した場合は合計1〜128件、各パス4096 bytes までです。空配列は起動エラーです。
-`read_directories_hex: ["ff"]` は非 UTF-8 の `0xff` パスを許可します。
-重複と既に許可した親配下のルールを除き、正規化したパス集合で権限を識別します。
-`app` の許可では `application` は読めません。
+Load this JSON through `KASU_ACCOUNTS_FILE` of the [repository account configuration](repository-accounts.md).
+For read-only access, omit `write_policy`.
+If both `read_directories` and `read_directories_hex` are omitted or `null`, the whole repository is readable as before.
+When given, there must be 1–128 entries in total, each path up to 4096 bytes. An empty array is a startup error.
+`read_directories_hex: ["ff"]` allows the non-UTF-8 path `0xff`.
+Excluding duplicates and rules under an already allowed parent, permissions are identified by the normalized set of paths.
+Allowing `app` does not allow reading `application`.
 
-## Metadata の見え方
+## What Metadata Shows
 
-Changeset の ID・親・author／committer・message、ref、履歴の存在、ancestry／merge-base は
-リポジトリ共通のメタデータとして公開します。コミットメッセージ等に人が書いた文字列を検閲する機能ではありません。
-ファイル内容、変更一覧に含まれる範囲外のパス、tree の範囲外エントリ、raw Git provenance は公開しません。
+Changeset IDs, parents, author / committer, messages, refs, the existence of history, and ancestry / merge-base are
+published as repository-wide metadata. This is not a feature for censoring human-written strings in commit messages and the like.
+File contents, out-of-scope paths in change lists, out-of-scope tree entries, and raw Git provenance are not published.
 
-| RPC | 制限されたアカウントの応答 |
+| RPC | Response for a restricted account |
 |---|---|
-| GetChangeset／Log | 許可パスだけの changes、raw_git_commit は省略、read_filtered=true |
-| GetRootTree | 許可ファイルとその祖先 directory だけの canonical TreeId、read_filtered=true |
-| ListDir | 読み取りビューから列挙。許可パスまでの祖先は移動可能で、範囲外の兄弟は返さない |
-| ReadFile | 許可パスの内容だけ。範囲外は PermissionDenied |
-| Diff | paths の省略時は許可パスで絞り込み、範囲外の本文は diff しない |
-| Log(path)／Diff(paths) | 明示した各パスが許可範囲内でなければ PermissionDenied |
-| Blame | 対象パスと返す全 origin が許可範囲内。copy／move の origin が範囲外なら要求全体を拒否 |
-| GetBlobMetadata | 同じ読み取り範囲で公開された Blob ID だけ |
-| ResolveRef／ListRefs／IsAncestor／MergeBase／FindChangesetByGitOid | 元の repo の ID・履歴の関係を維持 |
+| GetChangeset / Log | Changes under allowed paths only, raw_git_commit omitted, read_filtered=true |
+| GetRootTree | A canonical TreeId containing only allowed files and their ancestor directories, read_filtered=true |
+| ListDir | Enumerated from the read view. Ancestors up to allowed paths can be traversed; out-of-scope siblings are not returned |
+| ReadFile | Contents of allowed paths only. Out-of-scope paths get PermissionDenied |
+| Diff | When paths are omitted, filtered to allowed paths; out-of-scope contents are not diffed |
+| Log(path) / Diff(paths) | PermissionDenied unless each explicit path is within the allowed scope |
+| Blame | The target path and every returned origin must be in scope. If a copy / move origin is out of scope, the whole request is rejected |
+| GetBlobMetadata | Only Blob IDs published within the same read scope |
+| ResolveRef / ListRefs / IsAncestor / MergeBase / FindChangesetByGitOid | Keep the original repository's IDs and history relations |
 
-`GetChangeset.read_filtered` は、その応答が元オブジェクトの完全な表現ではないことを示します。
-`id` は元 Changeset の参照であり、フィルター済みの応答から元の canonical bytes を復元・検証してはいけません。
-元 Changeset と既存の ID／canonical codec は変更しません。
-`RootTreeResponse.id` はビュー自体の正しい内容 ID です。許可パスへの境界 node だけを作り直し、
-丸ごと許可された subtree は元の ID を共有します。範囲外だけの tree 更新ではビューの ID は変わりません。
+`GetChangeset.read_filtered` indicates that the response is not a complete representation of the original object.
+`id` references the original Changeset, and the original canonical bytes must not be reconstructed or verified from a filtered response.
+The original Changesets and the existing IDs / canonical codec are unchanged.
+`RootTreeResponse.id` is the correct content ID of the view itself. Only boundary nodes leading to allowed paths are rebuilt,
+and wholly allowed subtrees share their original IDs. Tree updates only outside the scope do not change the view's ID.
 
-HTTP JSON と gRPC は同じ処理を使います。追加した `read_filtered` は protobuf の追加 field で、
-無制限のアカウントと従来の応答では false です。
+HTTP JSON and gRPC use the same logic. The added `read_filtered` is an additional protobuf field,
+false for unrestricted accounts and in existing responses.
 
-## Objects RPC と取得の順序
+## Objects RPC and Fetch Order
 
-`ResolveRef` → `GetRootTree` → 必要な Tree／Blob、という既存の取得順序を使います。
-ReadFile と変更一覧が返す許可済み Blob、許可パス内の rewrite conflict の生成物も、その読み取り範囲へ登録します。
-Objects の要求・zstd frame は既存の形式のままです。
+The existing fetch order `ResolveRef` → `GetRootTree` → needed Trees / Blobs is used.
+Allowed Blobs returned by ReadFile and change lists, and rewrite conflict products within allowed paths, are also registered in that read scope.
+Objects requests and zstd frames keep their existing formats.
 
-権限索引は repo と正規化した読み取りパス集合ごとに分離します。
-別の利用者が repo 全体へ登録した Tree／Blob や、既知の元 root ID は、そのままでは取得できません。
-同一内容が許可パスにも存在する場合、その内容 ID は取得できます。
-バッチは全 ID を確認してから配信するため、拒否した ID を含むバッチから一部の frame は流しません。
+Permission indexes are separated per repository and normalized read path set.
+Trees / Blobs that another user registered for the whole repository, or known original root IDs, cannot be fetched as is.
+If identical content also exists under an allowed path, that content ID can be fetched.
+Batches check every ID before delivering, so no frames are streamed from a batch containing a rejected ID.
 
-索引とビュー root cache は不変の KV として保存します。
-親 node の登録を子の検証後、root cache の保存を索引作成後に行い、中断後も再計算できます。
-再起動や PAT の変更では同じパス集合を再利用できます。
-権限を狭めると別の名前空間になり、古い許可の ID は自動的には再利用されません。
-同じルールで過去の許可パスから既に公開された内容は、履歴として引き続き取得できます。
-クライアントが既にダウンロードした内容を消去する仕組みではありません。
+Indexes and the view root cache are stored as immutable KV.
+Parent nodes are registered after their children are verified, and the root cache is stored after the index is built, so everything can be recomputed after an interruption.
+The same path set can be reused across restarts and PAT changes.
+Narrowing permissions yields a different namespace, and IDs from old permissions are not reused automatically.
+Content already published under past allowed paths with the same rules can still be fetched as history.
+This is not a mechanism for erasing content a client has already downloaded.
 
-`KASU_OBJECT_TOKEN_FILE` を使う構成でも、範囲のある account は自分の PAT で server の
-Objects RPC に直接接続できます。各要求にはその scope を適用します。
-無制限の運用者／repository account PAT で hop token を置き換えることは引き続き拒否します。
-hop token は repo 全体を読み取る cache 用資格情報です。
+Even in configurations using `KASU_OBJECT_TOKEN_FILE`, a scoped account can connect directly to the server's
+Objects RPC with its own PAT. Each request is subject to that scope.
+Replacing the hop token with an unrestricted operator / repository account PAT is still rejected.
+The hop token is a cache credential that reads the whole repository.
 
-共有 cache／daemon の既存プロトコルは利用者の読み取り範囲を委譲しません。
-制限された利用者は Objects endpoint を権威 server に設定してください。
-cache 側の資格情報を渡すことは、その cache に設定した権限を渡すことになります。
-利用者別 scope を保つ共有 cache、永続索引の GC・容量上限、広大なパス集合の容量評価は残作業です。
+The existing shared cache / daemon protocol does not delegate a user's read scope.
+Restricted users should point their Objects endpoint at the authoritative server.
+Handing over cache credentials means handing over the permissions configured for that cache.
+A shared cache that preserves per-user scope, GC / capacity limits for durable indexes, and capacity evaluation for large path sets remain.
 
-## Writer と Git
+## Writer and Git
 
-読み取り範囲のある writer の実効パス範囲は、read_directories、アカウントの write policy、
-サーバー全体の write policy のすべてを満たす範囲です。
-CreateChangeset の明示的な変更は読み取り範囲内に限定し、Blob の参照にも scope の所属を要求します。
-これにより、推測した非公開 Blob ID を許可パスへ移して内容を読む要求を拒否します。
-UploadBlobs の既存確認も scope 内だけで行い、未許可の内容には実際の bytes と ID の一致を要求します。
+The effective path scope of a writer with a read scope is the range satisfying read_directories, the account's write policy,
+and the server-wide write policy all together.
+Explicit changes in CreateChangeset are limited to the read scope, and Blob references also require membership in the scope.
+This rejects requests that move a guessed unpublished Blob ID under an allowed path to read its contents.
+UploadBlobs existence checks also happen only within the scope, and unallowed content requires the actual bytes to match the ID.
 
-Merge／Rebase／Land の競合が範囲外に生じた場合、範囲外の entry や本文を返さず PermissionDenied になります。
-公開時の最終 tree ACL は従来どおり検査します。
-Land の冪等結果も読み取り範囲ごとに分離するため、権限を変えて古い競合応答を再取得することはありません。
-PAT の変更だけなら、アカウント名とパス集合を保つと既存の結果を再取得できます。
+When a Merge / Rebase / Land conflict occurs outside the scope, PermissionDenied is returned without out-of-scope entries or contents.
+The final-tree ACL at publication is checked as before.
+Land idempotent results are also separated per read scope, so changing permissions never refetches an old conflict response.
+If only the PAT changes, keeping the account name and path set allows refetching existing results.
 
-Git の通常 URL は repo 全体を含むため、この account では読み取りも push も拒否します。
-許可ディレクトリを root にする [Git パス射影](git-projection.md) の読み取りは利用できます。
-射影の push は拒否します。Git OID の内容を部分的に隠して同じ ID で返すことはしません。
+A normal Git URL contains the whole repository, so both reads and pushes are rejected for this account.
+Reading [Git path projections](git-projection.md) rooted at allowed directories is available.
+Pushes to projections are rejected. Git OID contents are never partially hidden and returned under the same ID.
 
 ```sh
 KASU_TOKEN=deploy-user-pat kasu checkout main deploy-work \
   --server http://127.0.0.1:50051 --repo demo
-# --sparse を指定しなくても、server が許可範囲だけの tree を返す。
+# Even without --sparse, the server returns a tree limited to the allowed scope.
 ```
 
-## 検証
+## Verification
 
-macOS arm64 と固定 Rust 1.90 Linux arm64 で実 Metadata／Writer／Objects RPC、HTTP JSON、CLI を検証しました。
-root／部分祖先／非 UTF-8 のフィルタリング、既知の元 Tree／Blob の拒否、バッチ全件の事前認可、
-非公開 Blob のコピー・アップロード確認の拒否、範囲外 conflict、権限変更時の索引分離を含みます。
-実 server 2プロセスと PAT 更新・再起動で、ビューと権限索引・Land の結果を再取得しました。
-実 CLI は sparse 指定なしで checkout→commit→Land を行い、非公開 Blob の無取得とサーバー上の内容保持を照合しました。
+Real Metadata / Writer / Objects RPC, HTTP JSON, and the CLI were verified on macOS arm64 and Linux arm64 with pinned Rust 1.90.
+This includes filtering at root / partial ancestors / non-UTF-8, rejecting known original Trees / Blobs, pre-authorizing every ID in a batch,
+rejecting copies and upload existence checks of unpublished Blobs, out-of-scope conflicts, and index separation on permission changes.
+With 2 real server processes, PAT updates, and restarts, views, permission indexes, and Land results were refetched.
+The real CLI did checkout→commit→Land without a sparse profile, confirming no unpublished Blobs were fetched and contents were preserved on the server.
 
 ```sh
 cargo test -p kasu-server --test accounts --locked
@@ -123,6 +125,6 @@ docker run --rm --network none --entrypoint /out/accounts-test kasu:read-acl-tes
 docker run --rm --network none --entrypoint /out/cli-e2e-test kasu:read-acl-test --skip virtual_mount
 ```
 
-[検証ログとソースハッシュ](../crates/kasu-git/tests/fixtures/clients/read-acl/) を保存しています。
-[Git SSH CI](../.github/workflows/ssh.yml) にも native CLI のテストを追加しています。GitHub 上での実行結果は未確認です。
-セキュリティ監査と、本番での権限設計・鍵管理の評価は今回の範囲に含めていません。
+The [verification logs and source hashes](../crates/kasu-git/tests/fixtures/clients/read-acl/) are stored.
+Native CLI tests have also been added to the [Git SSH CI](../.github/workflows/ssh.yml). Results of runs on GitHub are unconfirmed.
+A security audit and evaluation of production permission design and key management are outside the scope of this work.

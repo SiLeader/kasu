@@ -1,88 +1,90 @@
-# 分岐と合流を含む10万 Changeset の計測
+# Measuring 100,000 Changesets with Divergence and Merges
 
-このページは FirstParentSkip v1 時点の計測です。現在は [v2 の固定参照構造](first-parent-skip-v2.md) に
-変更し、同じ履歴・内容 ID での再計測を追加しています。以下の CSV は比較用に保持します。
+English | [日本語](divergent-history_ja.md)
 
-M1 の合成履歴を、実際に分岐する第二親へ拡張しました。
-macOS arm64（Rust 1.98.1）と固定 Rust 1.90.0 の Linux arm64 で、
-100,000 Changeset と10,000個の分岐合流 Changeset を作成しました。
-両 OS の最終 Changeset ID と Tree ID は一致しています。
+This page records measurements from the FirstParentSkip v1 era. It has since been changed to [v2's fixed-lookup structure](first-parent-skip-v2.md),
+with remeasurements on the same history and content IDs added. The CSVs below are kept for comparison.
 
-[既存の計測](README.md) は第二親が第一親チェーン上の祖先でした。
-今回は双方に異なる tree 変更を持つ tip を合流させます。
-また、確認中に見つけた MergeBase の不要な祖先走査も修正しました。
+The M1 synthetic history was extended with second parents that actually diverge.
+On macOS arm64 (Rust 1.98.1) and Linux arm64 with pinned Rust 1.90.0,
+100,000 Changesets including 10,000 divergent merge Changesets were created.
+The final Changeset ID and Tree ID match on both OSes.
 
-## ワークロードと計測範囲
+In the [existing measurement](README.md), the second parent was an ancestor on the first-parent chain.
+This time, tips with different tree changes on each side are merged.
+An unnecessary ancestor walk in MergeBase found during this work was also fixed.
 
-10 Changeset を1周期にして、8個の main（最初の周期は root を含む）、
-1個の side、1個の2-parent merge を作成します。
-side は main の3世代前から分岐し、`bench/side` を変更します。
-main は `bench/main` を更新します。merge は main を第一親、side を第二親にし、
-side の変更を第一親との差分として記録します。
-各 merge で、tip 同士が祖先でないこと、best merge-base が分岐点であること、
-第二親が merge の祖先であること、両方のファイル内容を保持することを確認します。
+## Workload and Measurement Scope
 
-計測対象は `Operations::create_changeset` の呼び出しです。
-親・blob の検証、Merkle tree の更新、Changeset の保存、RootTree／Generation／FirstParentSkip の
-eager 計算を含みます。入力構築、各種の結果照合、CSV 出力は時間とストア呼び出し回数から除外します。
-3-way merge 自体、ref CAS、ネットワーク、Git 変換は計測しません。
+Each cycle of 10 Changesets creates 8 main Changesets (the first cycle includes the root),
+1 side, and 1 two-parent merge.
+side branches from main 3 generations back and changes `bench/side`.
+main updates `bench/main`. The merge has main as first parent and side as second parent,
+recording side's change as the diff against the first parent.
+For each merge it checks that the tips are not ancestors of each other, that the best merge-base is the branch point,
+that the second parent is an ancestor of the merge, and that both files' contents are kept.
 
-ストアはファイル SQLite（WAL／synchronous=FULL）とローカル FS／zstd です。
-Tree は固定幅、blob 本文は2種類を再利用します。
-ストアを包むカウンターで MetaStore の get／put-if-absent と BlobStore の
-get-compressed／put-compressed 呼び出しを数えます。
-内部 SQL 文や OS の物理 I/O、実際に新規保存したオブジェクト数とは異なります。
-カウンターの atomic increment は計測時間に含まれます。
+What is measured is calls to `Operations::create_changeset`.
+It includes parent / blob validation, Merkle tree updates, Changeset storage, and eager computation of RootTree / Generation / FirstParentSkip.
+Input construction, result checks, and CSV output are excluded from time and store call counts.
+The 3-way merge itself, ref CAS, network, and Git conversion are not measured.
 
-## 2026-10-24 の結果
+The store is file SQLite (WAL / synchronous=FULL) and local FS / zstd.
+Trees are fixed-width, and blob bodies reuse 2 kinds.
+A counter wrapping the store counts MetaStore get / put-if-absent and BlobStore
+get-compressed / put-compressed calls.
+These differ from internal SQL statements, OS physical I/O, and the number of objects actually newly stored.
+The counters' atomic increments are included in the measured time.
 
-各 CSV 行は直前1,000件の平均です。下表はそれぞれ10行、10,000件分の平均です。
+## Results on 2026-10-24
 
-| 区間 | macOS 作成時間／件 | Linux 作成時間／件 | MetaStore get／件（両 OS） | 区間の最大 get／件 |
+Each CSV row is the average of the preceding 1,000 Changesets. The table below averages 10 rows (10,000 Changesets) each.
+
+| Range | macOS creation time / item | Linux creation time / item | MetaStore get / item (both OSes) | Max get / item in range |
 |---|---:|---:|---:|---:|
-| 1〜10,000 | 416.73 µs | 863.42 µs | 35.479 | 40 |
-| 45,001〜55,000 | 531.22 µs | 790.30 µs | 39.300 | 42 |
-| 90,001〜100,000 | 575.45 µs | 836.84 µs | 40.300 | 43 |
+| 1–10,000 | 416.73 µs | 863.42 µs | 35.479 | 40 |
+| 45,001–55,000 | 531.22 µs | 790.30 µs | 39.300 | 42 |
+| 90,001–100,000 | 575.45 µs | 836.84 µs | 40.300 | 43 |
 
-各行の MetaStore put は平均4.00回、BlobStore get／put は平均3.00回／2.00回でした。
-MetaStore get の全件最大は43回です。
-全履歴の線形走査に相当する呼び出し回数の増加は見られませんでした。
-一方、読み取りは履歴長とともに増えています。
-[FirstParentSkip の構築](../../crates/kasu-derived/src/types.rs:83) は各距離の祖先の skip table を読むため、
-当時は履歴長の対数に応じた処理と保存量がありました。SQLite の索引もサイズ依存です。
-M1 の「厳密に履歴長非依存」という条件を証明・達成した結果ではありません。
+MetaStore put averaged 4.00 per row, and BlobStore get / put averaged 3.00 / 2.00.
+The overall maximum MetaStore get was 43.
+No growth in call counts corresponding to a linear walk of the whole history was observed.
+On the other hand, reads grow with history length.
+[Building FirstParentSkip](../../crates/kasu-derived/src/types.rs:83) reads the skip table of the ancestor at each distance,
+so at the time there was processing and storage proportional to the logarithm of history length. SQLite indexes are also size-dependent.
+This result does not prove or achieve M1's condition of being "strictly independent of history length".
 
-作成時間は両環境で1回ずつの計測で、途中にビルド・他テストの実行もあります。
-Docker 内と macOS のストレージ条件が異なるため、OS 間の優劣や本番スループットの比較には使えません。
-このケースは同じ2種類の blob と小さな tree を再利用します。
-幅の広い tree、大量の変更、全て異なる大きな blob、多数の並行 writer は対象外です。
+Creation times were measured once in each environment, with builds and other tests running at times.
+Storage conditions differ between Docker and macOS, so they cannot be used to compare OSes or production throughput.
+This case reuses the same 2 kinds of blobs and a small tree.
+Wide trees, large numbers of changes, many distinct large blobs, and many concurrent writers are out of scope.
 
-[macOS CSV](divergent-history/macos.csv)、[Linux CSV](divergent-history/linux.csv)、
-[最終 ID・集計・ソースハッシュ](divergent-history/summary.json) を保存しています。
+The [macOS CSV](divergent-history/macos.csv), [Linux CSV](divergent-history/linux.csv), and
+[final IDs, aggregates, and source hashes](divergent-history/summary.json) are stored.
 
-## MergeBase の探索終了条件
+## MergeBase Search Termination
 
-従来は、最良の共通祖先を見つけた後も、その祖先を root まで走査していました。
-新しい実装は、今後 best base になり得る frontier の集合を追跡し、
-残る候補が全て既に見つかった base の祖先になった時点で終了します。
+Previously, even after finding the best common ancestors, the walk continued from those ancestors to the root.
+The new implementation tracks the set of frontiers that could still become best bases,
+and terminates when every remaining candidate has become an ancestor of an already found base.
 
-他の有効な frontier が残る間は、古い候補にも stale の印を祖先へ伝搬します。
-最初の共通祖先で打ち切る処理や、stale node を無条件に飛ばす処理にはしていません。
-これにより criss-cross の複数 best base を維持します。
+While other live frontiers remain, stale marks are propagated to ancestors even for old candidates.
+It does not stop at the first common ancestor, nor unconditionally skip stale nodes.
+This preserves multiple best bases in criss-cross merges.
 
-検証は次のとおりです。
+Verification:
 
-- 5 node の全1,024 DAG と全25,600 tip ペアを、推移閉包から列挙した全 best base と照合。
-- 長さ10／100／1,000／5,000の main 履歴上に短い分岐を作り、fresh engine と保存済み Generation を使用。
-  各 merge-base 問い合わせの MetaStore get が32回以下であることを検査。
-- 既存のランダム DAG、2個・3個の best base、複数 base の仮想統合、行 merge の Git 差分テストを含む kasu-ops の13テストが両 OS で通過。
-- macOS の実 Metadata／Writer／アカウント API の16回帰テストが通過。
+- All 1,024 5-node DAGs and all 25,600 tip pairs are checked against every best base enumerated from the transitive closure.
+- Short branches are created on main histories of length 10 / 100 / 1,000 / 5,000, using a fresh engine and stored Generation.
+  Each merge-base query is checked to make at most 32 MetaStore gets.
+- 13 kasu-ops tests pass on both OSes, including the existing random DAGs, 2 and 3 best bases, virtual combination of multiple bases, and line-merge diff tests against Git.
+- 16 regression tests for the real Metadata / Writer / account APIs pass on macOS.
 
-[macOS の演算テスト](divergent-history/macos-tests.log)、
-[Linux のビルド・テスト](divergent-history/linux-build.log)、
-[実 API の回帰テスト](divergent-history/server-tests.log) に記録しています。
+These are recorded in the [macOS operation tests](divergent-history/macos-tests.log),
+[Linux build and tests](divergent-history/linux-build.log), and
+[real API regression tests](divergent-history/server-tests.log).
 
-## 再実行
+## Rerunning
 
 ```sh
 KASU_BENCH_DIVERGENT_HISTORY=1 \
@@ -94,9 +96,9 @@ docker run --rm --network none kasu:history-benchmark \
   > /tmp/history-linux.csv 2> /tmp/history-linux.log
 ```
 
-`KASU_BENCH_HISTORY_COUNT` は10〜1,000,000の10の倍数を指定でき、既定100,000です。
-変数なしで通常の cargo test／bench に含まれる場合、このベンチ本体は実行しません。
-Docker イメージは計測用の有効化変数を設定済みです。
-タイミング閾値による合否は設定せず、結果の正しさと構造的な読み取り回数を検証します。
-[CI workflow](../../.github/workflows/history-benchmark.yml) は同じ10万件を実行して記録を保存します。
-GitHub 上での実行結果は未確認です。
+`KASU_BENCH_HISTORY_COUNT` accepts multiples of 10 from 10 to 1,000,000, default 100,000.
+When included in a normal cargo test / bench without the variable, the benchmark body does not run.
+The Docker image already sets the variable that enables measurement.
+There are no pass / fail timing thresholds; correctness of results and structural read counts are verified.
+The [CI workflow](../../.github/workflows/history-benchmark.yml) runs the same 100,000 and stores the records.
+Results of runs on GitHub are unconfirmed.

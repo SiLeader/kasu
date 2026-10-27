@@ -1,6 +1,8 @@
-# ネイティブ CLI と working copy
+# Native CLI and Working Copies
 
-`kasu-cli` は `kasu` コマンドを提供します。macOS／Linux の Unix filesystem を対象とします。
+English | [日本語](native-cli_ja.md)
+
+`kasu-cli` provides the `kasu` command. It targets Unix filesystems on macOS / Linux.
 
 ```sh
 cargo build -p kasu-cli --locked
@@ -19,111 +21,111 @@ cd work
 "$KASU_BIN" land
 ```
 
-バイナリを PATH に追加すると、以降は `kasu` として実行できます。
-接続先は gRPC URL です。HTTPS は WebPKI trust roots で検証します。
-トークンは環境変数または `--token` で渡し、working copy には保存しません。
-名前・メールは `--author-name`／`--author-email` でも指定できます。
-`-C <dir>` は実行する working copy を指定し、その配下からも実行できます。
-パス引数はリポジトリの root からの相対パスです。
+After adding the binary to PATH, it can be run as `kasu`.
+The server is a gRPC URL. HTTPS is verified with WebPKI trust roots.
+The token is passed through the environment variable or `--token` and is never stored in the working copy.
+Name and email can also be given with `--author-name` / `--author-email`.
+`-C <dir>` specifies the working copy to operate on, and commands can also run from anywhere beneath it.
+Path arguments are relative to the repository root.
 
-## コマンド
+## Commands
 
-| コマンド | 動作 |
+| Command | Behavior |
 |---|---|
-| `checkout <ref または Changeset ID> <新しい directory>` | 基底を解決し、必要な Tree／Blob だけ取得して作成 |
-| `clone <server> <repo> [directory]` | リポジトリの既定 branch を checkout。directory の既定は名前の最後のセグメント |
-| `repo list [--prefix P]`／`repo create <name> [--default-branch B]`／`repo show <name>` | [Admin API](multi-repository.md#admin-api) でリポジトリを一覧・作成・表示 |
-| `status`／`diff` | 起動時に実ファイルを比較。通常ファイル、実行ビット、symlink、削除・追加を検出 |
-| `status --watch` | notify の FSEvents／inotify で変更を監視し、全状態比較を再実行 |
-| `commit -m <message>` | Blob の存在確認／ストリーム upload と、サーバーでの Changeset 作成 |
-| `rebase --onto <ref または ID>` | draft があればサーバーで rebase。なければ基底を更新 |
-| `land [--ref <branch>]` | 永続キーを保存して Land。成功後に返された Changeset へ更新 |
-| `sparse add <path>`／`sparse remove <path>` | include／exclude を更新して実ファイルを更新 |
-| `log [--path <path>] [--limit N]` | サーバー上の履歴を問い合わせ |
-| `blame [--follow-moves] [--follow-copies] <path>` | rename 前のパスまで追跡した Blame を取得。移動、別ファイルからの全体／行断片 copy を明示的に追跡（[規則](blame-lineage.md)） |
-| `show [ref または ID] [path]` | Changeset の JSON、または指定ファイルの本文を取得 |
+| `checkout <ref or Changeset ID> <new directory>` | Resolves the base and creates the working copy, fetching only the needed Trees / Blobs |
+| `clone <server> <repo> [directory]` | Checks out the repository's default branch. The directory defaults to the last segment of the name |
+| `repo list [--prefix P]` / `repo create <name> [--default-branch B]` / `repo show <name>` | Lists, creates, and shows repositories via the [Admin API](multi-repository.md#admin-api) |
+| `status` / `diff` | Compares real files at startup. Detects regular files, executable bits, symlinks, deletions, and additions |
+| `status --watch` | Watches for changes with notify's FSEvents / inotify and reruns the full state comparison |
+| `commit -m <message>` | Checks Blob existence / streams uploads, and creates a Changeset on the server |
+| `rebase --onto <ref or ID>` | Rebases on the server if there is a draft; otherwise updates the base |
+| `land [--ref <branch>]` | Stores a durable key and Lands. After success, updates to the returned Changeset |
+| `sparse add <path>` / `sparse remove <path>` | Updates include / exclude and updates real files |
+| `log [--path <path>] [--limit N]` | Queries history on the server |
+| `blame [--follow-moves] [--follow-copies] <path>` | Gets Blame tracked back before renames. Explicitly tracks moves and whole / line-fragment copies from other files ([rules](blame-lineage.md)) |
+| `show [ref or ID] [path]` | Gets a Changeset as JSON, or the content of a given file |
 
-`--json` は status／diff／log／Land／ファイル show の構造化出力を指定します。
-パスのバイト列は JSON の数値配列で保持します。通常の status 出力は制御文字と
-非 ASCII バイトを escape して表示します。
+`--json` requests structured output for status / diff / log / Land / file show.
+Path bytes are kept as JSON numeric arrays. Normal status output escapes control characters and
+non-ASCII bytes for display.
 
-未着地の commit は1つの draft として更新します。2回目以降の commit は、
-元の親に対する累積差分をサーバーで問い合わせ、今回の変更と合わせた新 Changeset を作成します。
-先の commit の変更を保持しつつ、追加の取り消しにも対応します。ローカル履歴は計算・保存しません。
-作成した過去の Changeset はサーバーの不変ストアに残ります。
+Unlanded commits are updated as a single draft. From the second commit on,
+the cumulative diff against the original parent is queried on the server and a new Changeset combining it with the current changes is created.
+Changes from earlier commits are kept, and undoing additions is supported too. No local history is computed or stored.
+Past Changesets that were created remain in the server's immutable store.
 
-Changeset ID を指定した `rebase --onto` は、既存の Land 先を維持します。
-ID から新規に `checkout`／`mount` した場合は Land 先を持たないため、
-`land --ref <branch>` で明示してください。ref を指定した rebase は、その ref を Land 先にします。
+`rebase --onto` with a Changeset ID keeps the existing Land target.
+A working copy newly created by `checkout` / `mount` from an ID has no Land target,
+so specify it explicitly with `land --ref <branch>`. A rebase with a ref makes that ref the Land target.
 
-## スパースと保存形式
+## Sparse Profiles and Storage Format
 
-`--sparse` を省略すると全体を選択します。繰り返し指定すると、それらのパスだけを選択します。
-`sparse remove app/tests` は子 subtree を除外し、後から追加されたファイルにも適用します。
-その後 `sparse add app/tests/small` とすると、より具体的な include が除外を上書きします。
-`.` は root 全体です。
+Omitting `--sparse` selects everything. Repeating it selects only those paths.
+`sparse remove app/tests` excludes a child subtree, and this also applies to files added later.
+Afterwards, `sparse add app/tests/small` overrides the exclusion with a more specific include.
+`.` is the whole root.
 
-`.kasu/state.json` に現在の基底、draft 状態、ref、プロファイル、パスごとの entry と
-mtime／size／inode を保存します。検出漏れを避けるため、現実装の status は実内容も hash します。
-キャッシュ `.kasu/objects` は [Object RPC](object-api.md) の zstd frame を変換せず保存し、
-受信時にチャンク順序・終端・展開上限・BLAKE3 を検証します。
-プロファイル外の Tree／Blob はクライアントから要求しません。
+`.kasu/state.json` stores the current base, draft state, ref, profile, and per-path entries with
+mtime / size / inode. To avoid missed changes, the current status implementation also hashes actual contents.
+The cache `.kasu/objects` stores [Object RPC](object-api.md) zstd frames without conversion,
+verifying chunk order, termination, decompression limits, and BLAKE3 on receipt.
+The client never requests Trees / Blobs outside the profile.
 
-グローバル `--objects <URL>`／`KASU_OBJECTS_ENDPOINT` は Object RPC の接続先を指定します。
-checkout では選択した URL を保存し、以降は保存済み URL を今回の実行だけ上書きできます。
-`unix:///absolute/path/node.sock` で [daemon／cache 階層](cache-hierarchy.md) に接続できます。
-指定を省略した新規 checkout は server への直接接続を使います。
+The global `--objects <URL>` / `KASU_OBJECTS_ENDPOINT` specifies the Object RPC endpoint.
+checkout stores the chosen URL, and later runs can override the stored URL for that run only.
+`unix:///absolute/path/node.sock` connects to the [daemon / cache hierarchy](cache-hierarchy.md).
+A new checkout without this setting connects directly to the server.
 
-symlink はリンク先をたどらず、リンク先バイト列を保存します。
-既存 Gitlink は `<path>/.kasu-gitlink` に40桁 SHA を持つ directory として表し、
-SHA の編集を commit できます。submodule 本文の取得は行いません。
-macOS の filesystem が表現できない非 UTF-8 名はエラーになります。
-RPC と Linux working copy ではバイト列を保持します。
+Symlinks are not followed; their target bytes are stored.
+Existing Gitlinks are represented as a directory with a 40-character SHA in `<path>/.kasu-gitlink`,
+and edits to the SHA can be committed. Submodule contents are not fetched.
+Non-UTF-8 names that the macOS filesystem cannot represent are errors.
+RPC and Linux working copies preserve bytes.
 
-## ファイル保護・競合・再送
+## File Protection, Conflicts, and Resends
 
-checkout は既存の destination を上書きせず、一時 directory の完成後に公開します。
-更新は排他ロックを取得し、未 commit の変更や未追跡ファイルとの衝突を拒否します。
-親 directory は descriptor から `NOFOLLOW` でたどり、symlink を通じた書き込みを防ぎます。
-`.kasu` と `.git` は、Unicode を含む大文字・小文字違いや HFS+ が無視する不可視文字を挟んだ
-別表記も含めて全階層で予約します。
-リポジトリの内容から管理用の設定や Git フックを配置したり、ネストした
-working copy を偽装したりできないよう、checkout・更新時に拒否します。
-`.gitignore`、`.gitmodules`、`.kasu-gitlink` はこの予約には含みません。
+checkout never overwrites an existing destination and publishes only after a temporary directory is complete.
+Updates take an exclusive lock and refuse to conflict with uncommitted changes or untracked files.
+Parent directories are walked from descriptors with `NOFOLLOW`, preventing writes through symlinks.
+`.kasu` and `.git` are reserved at every level, including alternate spellings with case differences involving Unicode
+and invisible characters that HFS+ ignores.
+checkout and updates refuse repository content that would place administrative configuration or Git hooks,
+or impersonate a nested working copy.
+`.gitignore`, `.gitmodules`, and `.kasu-gitlink` are not part of this reservation.
 
-複数ファイルの更新は、staging／backup と fsync 済みジャーナルを使います。
-途中終了時は次の起動で旧状態へ戻し、状態ファイルの保存後なら新状態を確定します。
-中断後にユーザーが編集したファイルは上書きせず、元の backup とジャーナルを残してエラーにします。
-その場合は `.kasu/transaction/backup/` と現在のファイルを保全してから競合を解消してください。
+Multi-file updates use staging / backup and an fsynced journal.
+After an interrupted run, the next start rolls back to the old state, or commits the new state if the state file had been saved.
+Files the user edited after the interruption are not overwritten; the original backup and journal are kept and an error is reported.
+In that case, preserve `.kasu/transaction/backup/` and the current files before resolving the conflict.
 
-Rebase／Land の競合は `.kasu/conflicts.json` に保存し、現在のファイルと基底を保持します。
-内容を修正して commit し、rebase／land を再実行できます。
-Land の応答喪失時はキーを保持し、次の `land` で同じ要求を再送します。
-`Retry` も保存成功後の応答喪失を含み得るため、同じキーを保持して結果を確認します。
-結果が不明なまま別の commit／rebase を作ることは拒否します。
-応答待ちの間に編集した場合は、その編集を別の場所へ保全して working copy を clean に戻し、
-元の Land を再送してから編集を戻してください。
+Rebase / Land conflicts are saved to `.kasu/conflicts.json`, keeping the current files and base.
+Fix the contents, commit, and rerun rebase / land.
+On a lost Land response, the key is kept and the next `land` resends the same request.
+`Retry` may also include a lost response after a successful store, so the same key is kept to check the result.
+Creating another commit / rebase while the result is unknown is refused.
+If you edited while waiting for the response, save those edits elsewhere, restore the working copy to clean,
+resend the original Land, and then bring back the edits.
 
-## 検証
+## Verification
 
 ```sh
 cargo test -p kasu-cli --locked
 docker build -f tools/cli/Dockerfile -t kasu:cli-test .
 ```
 
-2026-10-23 に macOS arm64 と固定 Rust 1.90 の Linux arm64 コンテナで検証しました。
-実 CLI／gRPC で対象 Tree／Blob の集合を照合し、除外後に追加された subtree を要求しないこと、
-Blob upload、累積 commit、file／directory 変換、rebase、Land、競合・再送、
-通知、Gitlink、非 UTF-8 パス、未追跡ファイルと symlink 親の保護を検査します。
-中断時の rollback／確定後の cleanup と、その間のユーザー編集も検証します。
+Verified on 2026-10-23 on macOS arm64 and in a Linux arm64 container with pinned Rust 1.90.
+Over the real CLI / gRPC, the tests check the set of requested Trees / Blobs, that subtrees added after exclusion are not requested,
+Blob upload, cumulative commits, file / directory conversion, rebase, Land, conflicts and resends,
+notifications, Gitlinks, non-UTF-8 paths, and protection of untracked files and symlink parents.
+Rollback on interruption / cleanup after commit, and user edits in between, are also verified.
 
-Linux では [仮想 checkout](virtual-checkout.md) の `kasu mount` も利用できます。
-ファイル本文の遅延取得と OverlayFS の copy-on-write を使い、通常の CLI コマンドで編集・着地できます。
+On Linux, `kasu mount` for the [virtual checkout](virtual-checkout.md) is also available.
+It uses lazy fetching of file contents and OverlayFS copy-on-write, and can be edited and landed with the normal CLI commands.
 
-## 読み取り範囲のあるアカウント
+## Accounts with a Read Scope
 
-[read_directories](directory-read-acl.md) を持つ PAT は、sparse 指定なしでも server が許可範囲だけの Tree を返します。
-Metadata と Objects の endpoint を権威 server に向けて使用してください。
-commit／Land は元の Changeset を親とし、範囲外のファイルを server 上に保持します。
-許可外のファイル追加は拒否します。認証主体・読み取り範囲を変える場合は新しい working copy を用意してください。
-既にダウンロードしたローカル内容を権限変更で消去する機能はありません。
+For a PAT with [read_directories](directory-read-acl.md), the server returns Trees limited to the allowed scope even without a sparse profile.
+Point the Metadata and Objects endpoints at the authoritative server.
+commit / Land use the original Changeset as parent and keep out-of-scope files on the server.
+Adding files outside the allowed scope is rejected. When changing the authenticated principal or read scope, prepare a new working copy.
+There is no feature to erase already downloaded local content when permissions change.

@@ -1,59 +1,60 @@
-# マルチリポジトリ
+# Multiple Repositories
 
-1 つの kasu-server（同じ MetaStore / BlobStore を共有するクラスタ）で複数のリポジトリをホストします。
-設計は [06. マルチリポジトリ](plan/06-multi-repository.md) です。
-リポジトリ同士は権限・ref・Git OID 索引・設定・Webhook を共有しません。
-不変オブジェクト（Blob / Tree / Changeset / Derived Data）は content-addressed のままストレージ上で共有し、
-各リポジトリは自分の所属索引に載ったオブジェクトだけを扱えます。
+English | [日本語](multi-repository_ja.md)
 
-## 名前とキー
+One kasu-server (a cluster sharing the same MetaStore / BlobStore) hosts multiple repositories.
+The design is [06. Multiple repositories](plan/06-multi-repository.md).
+Repositories do not share permissions, refs, Git OID indexes, configuration, or webhooks.
+Immutable objects (Blob / Tree / Changeset / Derived Data) remain content-addressed and shared in storage,
+and each repository can handle only the objects in its own membership index.
 
-| 用語 | 内容 |
+## Names and Keys
+
+| Term | Contents |
 |---|---|
-| リポジトリ名 | `/` 区切り 1〜4 セグメント、各 `[A-Za-z0-9][A-Za-z0-9._-]{0,63}`、全体 256 バイト以内。`.git` 終端と先頭セグメント `-`・`admin`・`api`・`metrics`・`v1` は使えません。一意性は ASCII 小文字で判定し、表示は登録時の表記です |
-| `RepoKey` | 不変の内部識別子。新規リポジトリは `r1\0` + 16 バイト乱数で、再利用しません。refs、ref_log、Land 結果、webhook cursor、所属索引、Git OID 索引、読み取り scope 名前空間はすべてこのキーで保存します |
-| legacy キー | レジストリ導入前の単一リポジトリは、名前のバイト列をそのままキーとして登録します。既存のキーは書き換えません |
+| Repository name | 1–4 `/`-separated segments, each `[A-Za-z0-9][A-Za-z0-9._-]{0,63}`, at most 256 bytes in total. A `.git` suffix and the first segments `-`, `admin`, `api`, `metrics`, and `v1` are not allowed. Uniqueness is judged in ASCII lowercase; display uses the spelling at registration |
+| `RepoKey` | Immutable internal identifier. New repositories get `r1\0` + 16 random bytes, never reused. refs, ref_log, Land results, webhook cursors, membership indexes, Git OID indexes, and read-scope namespaces are all stored under this key |
+| legacy key | The single repository from before the registry is registered with its name bytes as the key. Existing keys are not rewritten |
 
-改名すると旧名は期限付き alias として残り、旧 URL・旧名の RPC は新しいリポジトリとして解決します。
-alias が生きている間は旧名で新規作成できません。期限は `KASU_REPOSITORY_ALIAS_TTL_SECS`（既定 30 日、`0` で alias なし）です。
+After a rename, the old name remains as an alias with an expiry, and old URLs and RPCs with the old name resolve to the renamed repository.
+While the alias is alive, the old name cannot be used to create a new repository. The expiry is `KASU_REPOSITORY_ALIAS_TTL_SECS` (default 30 days, `0` for no alias).
 
-レジストリは SQLite と PostgreSQL の `repository_records` / `repository_names` / `repository_log` に保存します。
-名前の一意性と record の更新は同じトランザクションで行い、すべての変更は `repository_log` に追記します。
-サーバーはレジストリを短い TTL（`KASU_REGISTRY_CACHE_MS`、既定 1000 ms）でキャッシュし、
-250 ms ごとに `repository_log` を追って変更を即時に無効化します。
-ref の CAS・Land の確定・Git push の公開は、同じトランザクション内でリポジトリの状態を再確認します。
-キャッシュが古くても、Active でないリポジトリへの書き込みは確定しません。
+The registry is stored in `repository_records` / `repository_names` / `repository_log` in SQLite and PostgreSQL.
+Name uniqueness and record updates happen in the same transaction, and every change is appended to `repository_log`.
+The server caches the registry with a short TTL (`KASU_REGISTRY_CACHE_MS`, default 1000 ms)
+and follows `repository_log` every 250 ms to invalidate changes immediately.
+Ref CAS, Land commits, and Git push publication recheck the repository state within the same transaction.
+Even with a stale cache, writes to a repository that is not Active never commit.
 
-## 起動と移行
+## Startup and Migration
 
 ```sh
-# 既存の単一リポジトリ環境を登録（冪等）。名前のバイト列が legacy キーになります。
+# Register an existing single-repository environment (idempotent). The name bytes become the legacy key.
 kasu-server migrate-registry /srv/kasu demo
 
-# すべての登録済みリポジトリを提供します。
+# Serve every registered repository.
 KASU_TOKEN_FILE=/etc/kasu/operator.pat kasu-server /srv/kasu [grpc-address] [http-address]
 
-# 従来の形式。demo を legacy リポジトリとして扱い、他の登録済みリポジトリも提供します。
+# Legacy form. Treats demo as the legacy repository and also serves other registered repositories.
 KASU_TOKEN_FILE=/etc/kasu/operator.pat kasu-server /srv/kasu demo
 ```
 
-従来形式でレジストリが空の場合は、引数の名前を legacy リポジトリとして自動登録します（1 リリースの互換モード）。
-レジストリが空でなく名前が未登録なら起動を中止します。
-リポジトリ名は `:` を含まないため、2 番目の引数がアドレスか名前かは曖昧になりません。
-legacy リポジトリは、`grants` を持たない旧形式のアカウント、`directories` だけの射影アカウント、
-`KASU_WEBHOOKS_FILE` の endpoint の対象です。
-移行後も既存の Git OID、Derived Data のキー、webhook cursor は変わりません。
-一度削除した legacy キーは `migrate-registry` で再登録できません。
+With the legacy form and an empty registry, the name in the arguments is automatically registered as the legacy repository (a compatibility mode for one release).
+If the registry is not empty and the name is unregistered, startup aborts.
+Repository names never contain `:`, so it is never ambiguous whether the second argument is an address or a name.
+The legacy repository is the target of old-format accounts without `grants`, projection accounts with only `directories`,
+and the endpoints in `KASU_WEBHOOKS_FILE`.
+Existing Git OIDs, Derived Data keys, and webhook cursors are unchanged after migration.
+A legacy key that has been deleted cannot be re-registered with `migrate-registry`.
 
-`kasu-git-ssh <kasu-directory> <credential-file>` は、クライアントのコマンド（`git-upload-pack 'team/app.git'`）から
-リポジトリを解決します。従来の `kasu-git-ssh <kasu-directory> <repository-name> <credential-file>` は、
-指定したリポジトリだけを提供します。
+`kasu-git-ssh <kasu-directory> <credential-file>` resolves the repository from the client's command (`git-upload-pack 'team/app.git'`).
+The legacy `kasu-git-ssh <kasu-directory> <repository-name> <credential-file>` serves only the given repository.
 
-## リポジトリ単位の設定
+## Per-repository Configuration
 
-`KASU_REPOSITORIES_FILE` でリポジトリと設定を宣言できます。起動時、SIGHUP、
-`KASU_REPOSITORIES_POLL_MS`（既定 30 秒）ごとにレジストリへ同期します。
-未登録のリポジトリは新しいキーで作成し、宣言にない登録済みリポジトリは警告するだけで削除しません。
+`KASU_REPOSITORIES_FILE` declares repositories and their configuration. It is synced to the registry at startup, on SIGHUP,
+and every `KASU_REPOSITORIES_POLL_MS` (default 30 seconds).
+Unregistered repositories are created with new keys; registered repositories missing from the declaration only produce a warning and are not deleted.
 
 ```json
 {
@@ -72,21 +73,21 @@ legacy リポジトリは、`grants` を持たない旧形式のアカウント�
 }
 ```
 
-| 設定 | 扱い |
+| Setting | Handling |
 |---|---|
-| `write_policy` | サーバー全体（`KASU_WRITE_POLICY_FILE`）∧ リポジトリ ∧ アカウントの grant。どれも他を拡大しません |
-| `webhooks` | このリポジトリの ref 変更を通知する endpoint。`secret_file` の相対パスはファイルの場所が基準です |
-| `limits` | このリポジトリの同時実行数・待機数。サーバー全体の `per_repository_*` が上限です |
-| `default_branch` | Git の HEAD symref と webhook の `default_branch` |
+| `write_policy` | Server-wide (`KASU_WRITE_POLICY_FILE`) ∧ repository ∧ account grant. None widens the others |
+| `webhooks` | Endpoints notified of this repository's ref changes. Relative `secret_file` paths are based on the file's location |
+| `limits` | This repository's concurrency and queue size. Capped by the server-wide `per_repository_*` |
+| `default_branch` | Git HEAD symref and the webhook `default_branch` |
 
-`KASU_REPOSITORIES_SOURCE=file`（既定）ではファイルが正で、Admin API による設定・既定 branch の変更は拒否します。
-`registry` ではファイルは未登録リポジトリの作成だけに使い、設定は Admin API で管理します。
-どちらも `config_version` の compare-and-swap で同時変更を検出します。
+With `KASU_REPOSITORIES_SOURCE=file` (the default), the file is authoritative, and changes to settings / default branch through the Admin API are rejected.
+With `registry`, the file is used only to create unregistered repositories, and settings are managed through the Admin API.
+Either way, concurrent changes are detected with a compare-and-swap on `config_version`.
 
-## 認証・認可
+## Authentication and Authorization
 
-アカウントは `grants` でリポジトリごとの権限を持ちます。旧形式の `write_policy` / `read_directories` は
-legacy リポジトリへの単一 grant として読み替えます。両方を同じアカウントに書くことはできません。
+Accounts hold per-repository permissions in `grants`. The old-format `write_policy` / `read_directories` are
+translated into a single grant on the legacy repository. Both cannot be written on the same account.
 
 ```json
 {
@@ -104,94 +105,94 @@ legacy リポジトリへの単一 grant として読み替えます。両方を
 }
 ```
 
-- `repositories` は大文字小文字を区別しない glob です。`*` は 1 セグメント内、`**` セグメントは 1 個以上のセグメントに一致します。
-- 一致する grant が複数ある場合は最も具体的な 1 件（ワイルドカードなし > 具体的なセグメント数 > 具体的な文字数 > `**` の少なさ、同順位は先の grant）を使います。権限の和にはしません。
-- grant は、リクエストで使った名前ではなく、解決後のリポジトリの現在名と過去の主名に照合します。改名しても権限は外れず、alias の文字列が照合に使われることはありません。
-- grant のないリポジトリは存在しないリポジトリと区別できない `NotFound`（Git HTTP は 404）になります。運用者 PAT はすべてのリポジトリと Admin API を使えます。
-- 射影専用アカウントは `"projections": [{"repository": "team-a/*", "directories": ["deploy"]}]` で `(リポジトリ, パス)` を指定します。旧形式の `directories` は legacy リポジトリの射影です。
-- cache → server の hop 資格情報は `KASU_OBJECT_REPOSITORIES`（カンマ区切りの glob、既定 `**`）のリポジトリだけを取得できます。
+- `repositories` are case-insensitive globs. `*` matches within one segment, and a `**` segment matches one or more segments.
+- When multiple grants match, the single most specific one is used (no wildcards > more literal segments > more literal characters > fewer `**`, ties go to the earlier grant). Permissions are never unioned.
+- Grants are matched against the resolved repository's current name and past primary names, not the name used in the request. Renaming does not drop permissions, and alias strings are never used for matching.
+- Repositories without a grant get `NotFound` (404 for Git HTTP), indistinguishable from nonexistent repositories. The operator PAT can use every repository and the Admin API.
+- Projection-only accounts specify `(repository, path)` with `"projections": [{"repository": "team-a/*", "directories": ["deploy"]}]`. The old-format `directories` are projections of the legacy repository.
+- The cache → server hop credential can fetch only repositories in `KASU_OBJECT_REPOSITORIES` (comma-separated globs, default `**`).
 
-## 状態と存在の秘匿
+## State and Hiding Existence
 
-| 状態 | 挙動 |
+| State | Behavior |
 |---|---|
-| `ACTIVE` | すべての操作が可能 |
-| `READ_ONLY` | 読み取りと webhook は継続。Writer RPC は `FailedPrecondition`（HTTP 412）、receive-pack は ref ごとに `ng ... repository is read-only` |
-| `ARCHIVED` | `READ_ONLY` に加えて webhook の配信を停止 |
-| `DELETING` | 名前と alias を即座に解放し、すべての RPC が `NotFound` |
+| `ACTIVE` | Every operation is available |
+| `READ_ONLY` | Reads and webhooks continue. Writer RPCs return `FailedPrecondition` (HTTP 412), and receive-pack returns `ng ... repository is read-only` per ref |
+| `ARCHIVED` | In addition to `READ_ONLY`, webhook delivery stops |
+| `DELETING` | The name and aliases are released immediately, and every RPC returns `NotFound` |
 
-他のリポジトリにだけあるオブジェクトは、存在しないオブジェクトと同じエラーになります。
-UploadBlobs の「既存はスキップ」は当該リポジトリの所属で判定するため、他リポジトリにある blob でも本文の送信が必要です。
-受信した本文のハッシュを検証してから所属だけを追加し、保存済みの frame は再利用します。
-CreateChangeset の親と blob、Merge / Rebase の入力、receive-pack の thin pack の delta 基底と接続性は、
-すべて当該リポジトリの所属だけで解決します。
+Objects that exist only in other repositories produce the same error as nonexistent objects.
+UploadBlobs' "skip existing" is decided by membership in the target repository, so even a blob that exists in another repository must have its body sent.
+After verifying the hash of the received body, only membership is added, and the stored frame is reused.
+CreateChangeset parents and blobs, Merge / Rebase inputs, and receive-pack thin pack delta bases and connectivity
+are all resolved only through membership in the target repository.
 
 ## Admin API
 
-`kasu.v1.Admin` を gRPC と HTTP JSON（`/v1/admin/<method>`）で提供します。
+`kasu.v1.Admin` is provided over gRPC and HTTP JSON (`/v1/admin/<method>`).
 
-| RPC | HTTP | 説明 |
+| RPC | HTTP | Description |
 |---|---|---|
-| `CreateRepository` | `/v1/admin/create-repository` | unborn HEAD で作成。`idempotency_key` を同じ内容で再送すると `replayed=true` |
-| `GetRepository` | `/v1/admin/get-repository` | 呼び出し元に見えるリポジトリだけ。`config_json` は運用者にだけ返します |
-| `ListRepositories` | `/v1/admin/list-repositories` | `prefix` と `cursor` でページング（既定 100 件、最大 1000 件） |
-| `UpdateRepository` | `/v1/admin/update-repository` | `expected_config_version` の CAS で `config_json`・`state`・`default_branch` を変更 |
-| `RenameRepository` | `/v1/admin/rename-repository` | `RepoKey` は不変。`keep_alias` で旧名を alias として残します |
-| `DeleteRepository` | `/v1/admin/delete-repository` | `DELETING` へ遷移。データの削除は非同期です |
-| `ForkRepository` | `/v1/admin/fork-repository` | 指定 ref から到達可能な履歴・tree・blob・raw Git オブジェクトの所属を新しいキーに追加（本文はコピーしません）。同じ冪等キーの再送で中断から再開します。フォーク元と同じ commit は同じ Git OID です |
-| `GetRepositoryUsage` | `/v1/admin/repository-usage` | ネイティブ ref から到達可能なオブジェクトの論理サイズ。ref の状態ごとにキャッシュします。共有オブジェクトは各リポジトリで全量を数えます |
+| `CreateRepository` | `/v1/admin/create-repository` | Creates with an unborn HEAD. Resending with the same `idempotency_key` and contents gives `replayed=true` |
+| `GetRepository` | `/v1/admin/get-repository` | Only repositories visible to the caller. `config_json` is returned only to operators |
+| `ListRepositories` | `/v1/admin/list-repositories` | Paging with `prefix` and `cursor` (default 100, max 1000) |
+| `UpdateRepository` | `/v1/admin/update-repository` | Changes `config_json`, `state`, and `default_branch` with a CAS on `expected_config_version` |
+| `RenameRepository` | `/v1/admin/rename-repository` | `RepoKey` is unchanged. `keep_alias` keeps the old name as an alias |
+| `DeleteRepository` | `/v1/admin/delete-repository` | Transitions to `DELETING`. Data deletion is asynchronous |
+| `ForkRepository` | `/v1/admin/fork-repository` | Adds membership of the history, trees, blobs, and raw Git objects reachable from the given ref to a new key (bodies are not copied). Resending with the same idempotency key resumes after interruption. Commits shared with the source have the same Git OIDs |
+| `GetRepositoryUsage` | `/v1/admin/repository-usage` | Logical size of objects reachable from native refs. Cached per ref state. Shared objects are counted in full for each repository |
 
-作成・更新・改名・削除・フォークは運用者の資格情報が必要です。
-衝突は `AlreadyExists` / `Aborted`（HTTP 409）で返します。
+Create, update, rename, delete, and fork require operator credentials.
+Conflicts return `AlreadyExists` / `Aborted` (HTTP 409).
 
-## 削除とストレージ回収
+## Deletion and Storage Reclamation
 
-削除は 2 段階です。`DeleteRepository` で `DELETING` に遷移し、全アクセスを止めて名前を解放します。
-バックグラウンドの purge（`KASU_PURGE_INTERVAL_MS`、既定 60 秒）は refs、Git refs、Land 結果、webhook 状態、
-所属索引、Git OID 索引、公開・到達索引を削除します。ref_log は監査用に
-`KASU_DELETED_REF_LOG_RETENTION_SECS`（既定 90 日）保持してから削除します。
-`RepoKey` は再利用しないため、同名で再作成しても旧データは見えません。
+Deletion has two phases. `DeleteRepository` transitions to `DELETING`, stopping all access and releasing the name.
+A background purge (`KASU_PURGE_INTERVAL_MS`, default 60 seconds) deletes refs, Git refs, Land results, webhook state,
+membership indexes, Git OID indexes, and publication / reachability indexes. The ref_log is kept for auditing for
+`KASU_DELETED_REF_LOG_RETENTION_SECS` (default 90 days) before deletion.
+`RepoKey`s are never reused, so recreating with the same name never shows old data.
 
-共有不変オブジェクト（blob / tree / changeset の本文と Derived Data）の物理回収は対象外です。
-キーで列挙できない索引（ディレクトリ読み取り scope の所属、読み取り root のキャッシュ、射影ごとの Derived Data）も
-残りますが、どのリポジトリからも参照されません。必要になった時点で、全リポジトリの所属索引を根とする
-オフライン mark-and-sweep を別ツールとして追加します。
+Physical reclamation of shared immutable objects (blob / tree / changeset bodies and Derived Data) is out of scope.
+Indexes that cannot be enumerated by key (directory read-scope membership, the read root cache, per-projection Derived Data)
+also remain, but no repository references them. When needed, an offline mark-and-sweep rooted at every repository's membership index
+will be added as a separate tool.
 
-## 多テナント運用
+## Multi-tenant Operation
 
-- **公平性**: admission はリポジトリごとに同時実行数（`ServerLimits.per_repository_active`、既定 `active` の半分）と待機数（`per_repository_pending`、既定 `pending` の 1/4）を制限します。混んでいるリポジトリで待つ要求は、待機中にサーバー全体の実行枠を返すため、他のリポジトリを飢餓させません。IP / PAT の制限とは積で適用します。
-- **メトリクス**: `kasu_server_repository_requests_total` / `_rejected_total` / `_active` は、`KASU_METRICS_REPOSITORIES`（カンマ区切りの名前、最大 256）のリポジトリだけを `repository` ラベルにし、それ以外は `other` に集約します。
-- **トレース**: サーバー span の `kasu.repository` 属性に `RepoKey`（`r1-<hex>` または `legacy-<name>`）を記録します。
+- **Fairness**: Admission limits concurrency per repository (`ServerLimits.per_repository_active`, default half of `active`) and queue size (`per_repository_pending`, default 1/4 of `pending`). Requests waiting on a busy repository give back the server-wide execution slot while waiting, so they do not starve other repositories. This is applied as an intersection with IP / PAT limits.
+- **Metrics**: `kasu_server_repository_requests_total` / `_rejected_total` / `_active` use the `repository` label only for repositories in `KASU_METRICS_REPOSITORIES` (comma-separated names, up to 256); everything else is aggregated into `other`.
+- **Tracing**: The server span's `kasu.repository` attribute records the `RepoKey` (`r1-<hex>` or `legacy-<name>`).
 
 ## Webhook
 
-`KASU_WEBHOOKS_FILE` は配信設定（ポーリング間隔、タイムアウト、再試行、本文上限）と `public_url` を与え、
-`endpoints` があれば legacy リポジトリの endpoint になります。リポジトリごとの endpoint は
-`KASU_REPOSITORIES_FILE` または Admin API の設定で指定します。
-supervisor が Active / ReadOnly のリポジトリごとに dispatcher を起動し、改名・設定・状態の変更時に作り直します。
-cursor はリポジトリのキーごとに保存するため、作り直しても再配信しません。
-payload の `repository.name` / `full_name` / `clone_url` は現在の名前から生成します
-（`team-a/infra` は `full_name="team-a/infra"`, `name="infra"`。1 セグメントの名前は従来どおり `kasu/<name>`）。
-`clone_url` は `KASU_PUBLIC_URL`（または `public_url`）+ `/<name>.git` です。
+`KASU_WEBHOOKS_FILE` provides delivery settings (polling interval, timeout, retries, body limit) and `public_url`,
+and its `endpoints`, if any, become endpoints of the legacy repository. Per-repository endpoints are specified in
+`KASU_REPOSITORIES_FILE` or through Admin API settings.
+A supervisor starts a dispatcher per Active / ReadOnly repository and recreates it on rename, configuration, or state changes.
+Cursors are stored per repository key, so recreation does not redeliver.
+The payload's `repository.name` / `full_name` / `clone_url` are generated from the current name
+(`team-a/infra` gives `full_name="team-a/infra"`, `name="infra"`; single-segment names remain `kasu/<name>` as before).
+`clone_url` is `KASU_PUBLIC_URL` (or `public_url`) + `/<name>.git`.
 
-## クライアント
+## Clients
 
-- `kasu clone <server> <repo> [destination]` は既定 branch（取得できなければ `main`）を checkout します。working copy はサーバー URL とリポジトリ名を記録します。
-- `kasu repo list [--prefix P]` / `kasu repo create <name> [--default-branch B]` / `kasu repo show <name>` は Admin API を使います（`--server` / `KASU_SERVER`）。
-- `kasu-ingest --create <git-repository> <kasu-directory> <name>` は未登録のリポジトリを作成してから取り込みます。`--create` なしで未登録の名前を指定するとエラーです（レジストリが空の場合だけ legacy として登録します）。リポジトリが異なる取り込みは並行実行できます。
-- `kasu-cache` / `kasu-daemon` は要求の `repo` ごとに扱います。`--repo` は省略可能・複数指定可能な許可リストで、それ以外の名前は `NotFound` です。frame は ID 単位で共有し、上位がそのリポジトリでの所属を一度確認した `(repo, id)` だけをヒットにします。所属は disk カタログと snapshot に保存し、サーバーが返すリポジトリ識別子（`x-kasu-repository`）が名前に対して変わると、その名前の所属を破棄します。`kasu-daemon snapshot --repo A --repo B` で対象リポジトリを選べます。単一リポジトリ時代のカタログと snapshot は、そのリポジトリの所属として読み込みます。
+- `kasu clone <server> <repo> [destination]` checks out the default branch (`main` if it cannot be obtained). The working copy records the server URL and repository name.
+- `kasu repo list [--prefix P]` / `kasu repo create <name> [--default-branch B]` / `kasu repo show <name>` use the Admin API (`--server` / `KASU_SERVER`).
+- `kasu-ingest --create <git-repository> <kasu-directory> <name>` creates an unregistered repository and then imports. Specifying an unregistered name without `--create` is an error (only with an empty registry is it registered as legacy). Imports into different repositories can run concurrently.
+- `kasu-cache` / `kasu-daemon` handle each request's `repo`. `--repo` is an optional allow list that can be repeated; other names get `NotFound`. Frames are shared by ID, and only `(repo, id)` pairs whose membership in that repository the upstream has confirmed once are hits. Membership is stored in the disk catalog and snapshots, and if the repository identifier returned by the server (`x-kasu-repository`) changes for a name, membership for that name is discarded. `kasu-daemon snapshot --repo A --repo B` selects target repositories. Catalogs and snapshots from the single-repository era are loaded as membership of that repository.
 
-## 検証
+## Verification
 
-| 種別 | テスト |
+| Kind | Tests |
 |---|---|
-| レジストリ | `kasu-store/tests/registry.rs`（メモリ・SQLite・PostgreSQL 共通の契約、状態の Tx 内再確認、範囲削除） |
-| 隔離（プロパティ） | `kasu-server/tests/isolation.rs`（ランダムなリポジトリ・共有 blob・フォークで Metadata / Objects / Git upload-pack） |
-| 存在オラクル | `kasu-server/tests/multi_repository.rs`（UploadBlobs、親、thin pack の delta 基底） |
-| ライフサイクル | `kasu-server/tests/admin.rs`、`kasu-sim/tests/repository_lifecycle.rs`（削除と並行する Land） |
-| 移行 | `migrating_a_single_repository_keeps_every_key_and_git_oid` |
-| 認可 | `grants_choose_the_most_specific_match_and_hide_other_repositories`、`accounts.rs` の単体テスト |
-| 公平性 | `admission.rs` の単体テスト、`kasu-sim/tests/repository_fairness.rs` |
-| cache / CLI / ingest | `kasu-cache/tests/repositories.rs`、`kasu-cli/tests/repositories.rs`、`kasu-ingest/tests/roundtrip.rs` |
-| プロセス | `kasu-server/tests/multi_repository_process.rs`（実 server バイナリ、宣言ファイル、署名付き webhook、`git clone`） |
-| E2E | `tools/gitops/multi_repository.py`（[kind 上の GitOps](gitops-e2e.md#複数リポジトリ)） |
+| Registry | `kasu-store/tests/registry.rs` (shared contract for memory, SQLite, and PostgreSQL; in-Tx state recheck; range deletion) |
+| Isolation (property) | `kasu-server/tests/isolation.rs` (Metadata / Objects / Git upload-pack with random repositories, shared blobs, and forks) |
+| Existence oracles | `kasu-server/tests/multi_repository.rs` (UploadBlobs, parents, thin pack delta bases) |
+| Lifecycle | `kasu-server/tests/admin.rs`, `kasu-sim/tests/repository_lifecycle.rs` (Land concurrent with deletion) |
+| Migration | `migrating_a_single_repository_keeps_every_key_and_git_oid` |
+| Authorization | `grants_choose_the_most_specific_match_and_hide_other_repositories`, unit tests in `accounts.rs` |
+| Fairness | Unit tests in `admission.rs`, `kasu-sim/tests/repository_fairness.rs` |
+| cache / CLI / ingest | `kasu-cache/tests/repositories.rs`, `kasu-cli/tests/repositories.rs`, `kasu-ingest/tests/roundtrip.rs` |
+| Process | `kasu-server/tests/multi_repository_process.rs` (real server binary, declaration file, signed webhooks, `git clone`) |
+| E2E | `tools/gitops/multi_repository.py` ([GitOps on kind](gitops-e2e.md#multiple-repositories)) |

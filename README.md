@@ -80,7 +80,7 @@ See [multiple repositories](docs/multi-repository.md) for naming, migration of e
 
 ## Documentation and status
 
-The implementation includes the native CLI, server APIs, Git gateway, cache hierarchy, and PostgreSQL/S3 backends. See [implementation status](docs/implementation-status.md) for completed work, verification scope, and remaining work, and the [plan audit](docs/plan-audit.json) for implementation and verification references. Most detailed documentation is currently in Japanese.
+The implementation includes the native CLI, server APIs, Git gateway, cache hierarchy, and PostgreSQL/S3 backends. See [implementation status](docs/implementation-status.md) for completed work, verification scope, and remaining work, and the [plan audit](docs/plan-audit.json) for implementation and verification references. Documentation is available in English and Japanese (`*_ja.md`), except for the design plan in `docs/plan`, which is in Japanese only.
 
 | Topic | Documentation |
 |---|---|

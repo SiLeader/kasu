@@ -1,116 +1,118 @@
-# 決定的 Land シミュレーション
+# Deterministic Land Simulation
 
-`land-1000-seed42.json` は 2026-10-23、macOS arm64／Rust 1.98.1 の release ビルドで実行した結果です。
-本番の `Backend::prepare_land`／`commit_land` と実 SQLite WAL／synchronous=FULL、FS／zstd を使っています。
+English | [日本語](README_ja.md)
+
+`land-1000-seed42.json` is the result of a release build run on 2026-10-23 on macOS arm64 / Rust 1.98.1.
+It uses the production `Backend::prepare_land` / `commit_land` with real SQLite WAL / synchronous=FULL and FS / zstd.
 
 ```sh
 cargo run --release --locked -p kasu-sim -- --seed 42 --clients 1000
 ```
 
-1,000クライアントは同じ ref と基底から開始します。全件の最初の prepare を済ませてから、
-commit を seed によって決めた順序で競合させます。
-各要求は最大3回の試行と決定的 jitter のバックオフを使います。
-保存前の失敗33件、永続化後の応答喪失23件、キャンセル27件を注入しました。
-イベントは仮想時刻で進み、スレッドの偶然の実行順に依存しません。
+1,000 clients start from the same ref and base. After every client's first prepare has completed,
+commits race in an order determined by the seed.
+Each request uses at most 3 attempts and backoff with deterministic jitter.
+33 pre-store failures, 23 lost responses after persistence, and 27 cancellations were injected.
+Events advance in virtual time and do not depend on incidental thread execution order.
 
-| 段階 | Landed | Conflict | Retry |
+| Stage | Landed | Conflict | Retry |
 |---|---:|---:|---:|
-| 最初の並行要求 | 9 | 0 | 991 |
-| Retry を同じキーで再送した後 | 991 | 9 | 0 |
+| First concurrent requests | 9 | 0 | 991 |
+| After resending Retries with the same key | 991 | 9 | 0 |
 
-最初の競合波は全要求が試行予算内で終了します。
-その後、Retry を返したクライアントが新しい有限予算で再送し、競合のないスケジュールで drain します。
-これにより、単に全件 Retry を返して内容検査を避けるテストにはなりません。
-100件に1件は同じ `shared.txt` を異なる内容にするため、最終的に9件が明示的な Conflict になります。
+In the first conflict wave, every request ends within its attempt budget.
+Afterwards, clients that got Retry resend with a new bounded budget and drain on a conflict-free schedule.
+This keeps the test from simply returning Retry for everything and avoiding content checks.
+One in every 100 requests writes different contents to the same `shared.txt`, so 9 end in explicit Conflicts.
 
-シミュレーターは結果を出す前に、次の条件を assert します。
+Before reporting results, the simulator asserts the following.
 
-- 受理した全991件の path／blob が最終 tree に残る。
-- 着地先 ID の重複がなく、ref_log は初期 ref 作成1件＋着地991件の992件。
-- 全確定結果が repo／key ごとに永続化され、返した結果と一致する。
-- 新しい SQLite 接続と Backend から全1,000件を再送し、元の結果が replay される。
-- replay 前後で ref_log は変わらない。
+- Every path / blob of all 991 accepted requests remains in the final tree.
+- No duplicate landed IDs, and ref_log has 992 entries: 1 for initial ref creation plus 991 landings.
+- Every final result is persisted per repo / key and matches the returned result.
+- Resending all 1,000 requests from a new SQLite connection and Backend replays the original results.
+- ref_log is unchanged before and after replay.
 
-仮想時間21 msはスケジューラーの時計です。OS 上の実時間や1,000 TCP接続の処理時間ではありません。
-小規模32クライアントでは同じ seed を2回実行し、結果 digest を含む全 summary の一致も検査します。
-実非同期処理の期限・キャンセル・future 破棄は `land_runtime` テストで別途検証しています。
-再実行・複数 seed 用の夜間 CI は [`land-sim.yml`](../../.github/workflows/land-sim.yml) です。
-GitHub 上での実行結果は未確認です。
+The 21 ms of virtual time is the scheduler's clock. It is not real OS time or processing time for 1,000 TCP connections.
+With a small 32-client run, the same seed is run twice and the entire summary, including the result digest, is checked for equality.
+Deadlines, cancellation, and dropped futures in real asynchronous processing are verified separately by the `land_runtime` test.
+The nightly CI for reruns and multiple seeds is [`land-sim.yml`](../../.github/workflows/land-sim.yml).
+Results of runs on GitHub are unconfirmed.
 
-## cache 階層の負荷試験
+## Cache Hierarchy Load Test
 
-`cache-1000.json` は実 Objects RPC による M9 の観測値です。
-1つの認可済み Blob を、2つのノード daemon に各500クライアントで同時要求します。
-両ノードは同じメモリ cache と権威 server に接続します。
-各 daemon で499要求が coalesce され、cache から server への取得は1回でした。
-別の信頼済み下位からの取得もメモリヒットになりました。
-cache の既存 HTTP/2 接続を含めて終了した後、各ノードの10要求はディスクヒットし、
-新しい Blob の cold miss は失敗しました。server の取得数は1回のままです。
+`cache-1000.json` contains M9 observations over the real Objects RPC.
+One authorized Blob is requested concurrently by 500 clients on each of two node daemons.
+Both nodes connect to the same memory cache and authoritative server.
+On each daemon 499 requests were coalesced, and the cache fetched from the server once.
+A fetch from another trusted downstream was also a memory hit.
+After the cache was shut down, including its existing HTTP/2 connections, 10 requests on each node were disk hits,
+and a cold miss for a new Blob failed. The server's fetch count stayed at 1.
 
 ```sh
 KASU_CACHE_CAPTURE="$PWD/docs/simulations/cache-1000.json" \
   cargo test -p kasu-cache --test layers thousand_clients --locked
 ```
 
-この記録は単一 repo・小さい1オブジェクトでの fan-in と障害時の経路を検証します。
-実 TCP 通信のスケジュールは OS に依存します。次節に、同じ Layer を使う決定的な cache 障害シミュレーションを追加しました。
-大きいオブジェクトや多数の cache インスタンスに対する容量・遅延の保証ではありません。
-別テストで異なる12 ID を25 QPS・同時 fill 2以下に制限し、
-上位障害時の遮断・復旧と stream／pending 上限も確認します。
+This record verifies fan-in and failure paths for a single repo and one small object.
+The scheduling of real TCP traffic depends on the OS. The next section adds a deterministic cache failure simulation using the same Layer.
+It is not a capacity or latency guarantee for large objects or many cache instances.
+A separate test limits 12 different IDs to 25 QPS with at most 2 concurrent fills,
+and also checks breaking / recovery on upstream failure and stream / pending limits.
 
-## 決定的な cache 階層障害
+## Deterministic Cache Hierarchy Failures
 
-`kasu-sim --scenario cache` は、本番の `Layer`、Objects client／handler、2つの実 DiskStore と
-1つの regional memory cache を使います。上位リンクは Tokio duplex 上の HTTP/2／gRPC です。
-client は2つの daemon Layer に要求し、上位の認証・role header・chunk・zstd／内容 hash の検証を通ります。
-権威のデータは実 SQLite／FS store に保存します。
+`kasu-sim --scenario cache` uses the production `Layer`, Objects client / handler, two real DiskStores, and
+one regional memory cache. Upstream links are HTTP/2 / gRPC over Tokio duplex.
+Clients send requests to two daemon Layers, passing upstream authentication, role headers, chunks, and zstd / content hash verification.
+Authoritative data is stored in a real SQLite / FS store.
 
-専用 current-thread runtime の Tokio 時計を pause し、スクリプトのイベントでだけ時刻を進めます。
-blocking worker の IO 完了を待つ間は executor を runnable に保ち、自動時刻進行を防ぎます。
-同じ clock で pacing・取得期限・回路遮断器の cooldown／probe を動かします。
-回路遮断器が OS 時計を使っていた問題は、仮想時刻だけでは cooldown が解除されない回帰テストで再現し、修正しました。
+The Tokio clock of a dedicated current-thread runtime is paused, and time advances only through scripted events.
+While waiting for blocking worker IO to complete, the executor is kept runnable to prevent automatic time advancement.
+Pacing, fetch deadlines, and the circuit breaker's cooldown / probe run on the same clock.
+A bug where the circuit breaker used the OS clock was reproduced with a regression test in which cooldown never released under virtual time alone, and fixed.
 
 ```sh
 cargo run --release --locked -p kasu-sim -- \
   --scenario cache --seed 42 --clients 1000
 ```
 
-seed は payload と client の投入順序を決めます。入力0／1は区別され、結果 digest は seed、要求数、
-投入順序、全 client の完了結果、イベント列と入力 ID を含みます。
-従来の引数だけの実行は `--scenario land` と同じ結果を返します。
+The seed determines the payload and the order in which clients are submitted. Inputs 0 / 1 are distinguished, and the result digest includes the seed, request count,
+submission order, every client's completion result, and the event sequence and input IDs.
+Running with only the old arguments returns the same result as `--scenario land`.
 
-2026-10-26、seed 0／1／42／2026 を各2回、macOS arm64／Rust 1.98.1 と
-固定 Rust 1.90 Linux arm64 で実行しました。計16回の1,000クライアントシナリオが同じ seed で byte 単位一致しました。
-初回は両 node の499要求ずつが coalesce され、regional cache では2要求を1回の権威取得へまとめました。
+On 2026-10-26, seeds 0 / 1 / 42 / 2026 were each run twice on macOS arm64 / Rust 1.98.1 and
+Linux arm64 with pinned Rust 1.90. All 16 runs of the 1,000-client scenario matched byte for byte for the same seed.
+Initially, 499 requests on each node were coalesced, and the regional cache combined 2 requests into 1 authoritative fetch.
 
-| フェーズ | 仮想時刻 ms | 累積権威 RPC |
+| Phase | Virtual time ms | Cumulative authoritative RPCs |
 |---|---:|---:|
-| 1,000要求の集約 | 5 | 1 |
-| cache 不通時の warm hit／cold miss | 9 | 1 |
-| 空の cache を再起動 | 18 | 2 |
-| 不完全な応答を拒否 | 20 | 3 |
-| 上位 RPC の期限切れ | 80 | 5 |
-| 保存失敗後の30要求を遮断 | 110 | 9 |
-| probe も保存失敗し、再遮断 | 140 | 10 |
-| 保存先復旧、全 tier が回復 | 170 | 11 |
-| daemon store 再オープンの warm hit | 170 | 11 |
+| Aggregating 1,000 requests | 5 | 1 |
+| Warm hit / cold miss while cache unreachable | 9 | 1 |
+| Restart with an empty cache | 18 | 2 |
+| Reject an incomplete response | 20 | 3 |
+| Upstream RPC deadline expires | 80 | 5 |
+| Break 30 requests after store failures | 110 | 9 |
+| Probe also fails to store; break again | 140 | 10 |
+| Store recovers; every tier recovers | 170 | 11 |
+| Warm hit after reopening the daemon store | 170 | 11 |
 
-途中で切れる応答は、実 handler が作った64 KiB chunk の後で失敗させます。未完了 frame は保存されません。
-取得が停止した場合は仮想50 msの上位期限で終了し、その後の再取得で回復します。
-保存失敗3回の後は30要求が追加の権威取得をせずに終了し、warm node hit は使えます。
-cooldown 後の1回の probe が保存にも失敗すると再遮断し、復旧後には取得・保存・cache hit に戻ります。
-cache 不通時と daemon DiskStore 再オープン時の追加権威取得は0回、全フェーズ末尾の pending は0です。
+A response cut midway is made to fail after a 64 KiB chunk produced by the real handler. Incomplete frames are not stored.
+A stalled fetch ends at the 50 ms virtual upstream deadline and recovers on a later refetch.
+After 3 store failures, 30 requests end without additional authoritative fetches, while warm node hits still work.
+If the single probe after cooldown also fails to store, the breaker trips again; after recovery it returns to fetch, store, and cache hits.
+Additional authoritative fetches while the cache is unreachable and when reopening the daemon DiskStore are 0, and pending is 0 at the end of every phase.
 
-170 msは仮想時計であり、実時間や性能の値ではありません。
-OS の packet loss／実プロセス SIGKILL、物理 ENOSPC／電源断、全 fault ordering の網羅を主張しません。
-RPC 不通・不完全 stream・応答停止と Store::put エラーを注入する試験です。
-既存の実 TCP の階層6テストも両 OS で通過しています。
-macOS の cache／daemon／CLI／sim 全50テストも通過し、実プロセスと Land runtime の回帰を確認しました。
+170 ms is virtual clock time, not real time or a performance figure.
+It does not claim coverage of OS packet loss / real process SIGKILL, physical ENOSPC / power loss, or every fault ordering.
+It is a test that injects RPC unavailability, incomplete streams, stalled responses, and Store::put errors.
+The existing 6 real-TCP hierarchy tests also pass on both OSes.
+All 50 cache / daemon / CLI / sim tests on macOS also pass, confirming no regressions in real processes or the Land runtime.
 
-[summary.json](cache-deterministic/summary.json)、[seed 42 の全イベント](cache-deterministic/seed-42.json)、
-[時計修正前の再現](cache-deterministic/clock-before.log)、[unit](cache-deterministic/unit.log)、
-[実 TCP](cache-deterministic/layers.log)、[Linux ビルド](cache-deterministic/linux-build.log) に結果を保存しています。
-`tools/cache-sim/record.py` は4 seed × 2回 × 2環境の一致、各フェーズの時刻・権威取得数・pending、source hash を照合します。
+Results are stored in [summary.json](cache-deterministic/summary.json), [all events for seed 42](cache-deterministic/seed-42.json),
+the [reproduction before the clock fix](cache-deterministic/clock-before.log), [unit](cache-deterministic/unit.log),
+[real TCP](cache-deterministic/layers.log), and the [Linux build](cache-deterministic/linux-build.log).
+`tools/cache-sim/record.py` checks agreement across 4 seeds × 2 runs × 2 environments, plus each phase's time, authoritative fetch count, pending, and source hashes.
 
 ```sh
 docker build -f tools/cache-sim/Dockerfile -t kasu:cache-sim .
@@ -121,49 +123,49 @@ docker run --rm --network none --user "$(id -u):$(id -g)" \
   kasu:cache-sim
 ```
 
-夜間の `land-sim.yml` に独立した cache job を追加しました。GitHub 上の実行結果は未確認です。
+A separate cache job has been added to the nightly `land-sim.yml`. Results of runs on GitHub are unconfirmed.
 
-## 共有ストレージの受け入れ試験
+## Shared Storage Acceptance Test
 
-`storage-host.json`／`storage-linux.json` は2026-10-23の実行結果です。
-`storage-linux-tests.log` に Linux の全ストレージ試験と2サーバー試験の出力を保存しています。
-PostgreSQL 18／SeaweedFS 4.45 は `tools/storage/compose.yml` の digest に固定しています。
-ホストは macOS arm64、Linux は固定 Rust 1.90 の arm64 コンテナです。
+`storage-host.json` / `storage-linux.json` are the results of runs on 2026-10-23.
+`storage-linux-tests.log` stores the output of all Linux storage tests and the two-server tests.
+PostgreSQL 18 / SeaweedFS 4.45 are pinned by digest in `tools/storage/compose.yml`.
+The host is macOS arm64, and Linux is an arm64 container with pinned Rust 1.90.
 
 ```sh
 python3 tools/storage/run.py --workdir /tmp/kasu-storage-host
 python3 tools/storage/run.py --linux --workdir /tmp/kasu-storage-linux
 ```
 
-16接続の mixed CAS／conditional PUT、8接続の同一 Land、SQL 障害と feed の順序、
-webhook の再送、TLS／認証拒否を含みます。実 ingest と2つの server プロセスで、
-Git atomic push／strict fsck、Metadata／Objects の共有、CAS の単一勝者、
-Land の別 server・再起動後の replay を検証します。
-時間はビルド・環境起動も含む受け入れ試験の実時間で、処理性能のベンチマークではありません。
-ローカルの S3 互換サービスでの検証範囲と運用手順は [PostgreSQL／S3](../production-storage.md) を参照してください。
+This covers mixed CAS / conditional PUT over 16 connections, the same Land over 8 connections, SQL failures and feed ordering,
+webhook resends, and TLS / authentication rejection. With real ingest and two server processes, it verifies
+Git atomic push / strict fsck, sharing of Metadata / Objects, a single CAS winner,
+and Land replay on another server and after restart.
+Times are real time for the acceptance test including builds and environment startup, not a processing performance benchmark.
+For verification scope with a local S3-compatible service and operational procedures, see [PostgreSQL / S3](../production-storage.md).
 
-## 権威サーバーの admission と計測
+## Authoritative Server Admission and Metrics
 
-[server-runtime/summary.json](server-runtime/summary.json) は、共有する HTTP／gRPC の IP／PAT 割当量、
-有限キュー、blocking worker と Objects／Git pack の切断、独立した有限 scrape 枠、CAS 結果と Derived Data の計測の検証記録です。
-macOS arm64 の全 feature ワークスペース試験・clippy と、固定 Rust 1.90 Linux arm64 の Git 互換コンテナを使います。
-各ログとソースの SHA-256 を記録します。実 TCP のスケジュールは OS に依存し、
-bucket の補充・回収は別の決定的な時計の unit test で検証します。
-これは分散 rate limiter や本番容量の保証ではありません。設定・計測の契約は [server-runtime.md](../server-runtime.md) にあります。
+[server-runtime/summary.json](server-runtime/summary.json) is the verification record for shared HTTP / gRPC IP / PAT quotas,
+bounded queues, disconnects of blocking workers and Objects / Git packs, independent bounded scrape slots, and CAS result and Derived Data metrics.
+It uses all-feature workspace tests and clippy on macOS arm64 and the Git compatibility container on Linux arm64 with pinned Rust 1.90.
+Each log and the source SHA-256 are recorded. Real TCP scheduling depends on the OS,
+and bucket refill / reclamation is verified separately by unit tests with a deterministic clock.
+This is not a guarantee of a distributed rate limiter or production capacity. The configuration and metrics contract is in [server-runtime.md](../server-runtime.md).
 
-## OpenTelemetry の実プロセス試験
+## OpenTelemetry Real-process Test
 
-[telemetry/summary.json](telemetry/summary.json) は、5つの実バイナリと OTLP HTTP 受信先による検証です。
-公式 protobuf decoder が保存 request を読み、cold checkout の CLI → daemon → cache → authority の全親子関係、
-warm hit、HTTP の外部親・認証失敗、sampling／無効化、秘匿値と baggage の不在、
-collector の遅延・redirect・停止でも有限に終了することを検査します。macOS と固定 Rust 1.90 Linux で実行し、
-ソースと各ログの hash を保存します。queue の飽和と scoped subscriber は unit test で別途検証します。
-設定と保証範囲は [telemetry.md](../telemetry.md) にあります。
+[telemetry/summary.json](telemetry/summary.json) is verification with five real binaries and an OTLP HTTP receiver.
+The official protobuf decoder reads stored requests and checks every parent-child relationship of a cold checkout CLI → daemon → cache → authority,
+warm hits, external HTTP parents and authentication failures, sampling / disabling, absence of secrets and baggage,
+and bounded termination even with collector delays / redirects / outages. It is run on macOS and Linux with pinned Rust 1.90,
+storing hashes of the source and each log. Queue saturation and scoped subscribers are verified separately in unit tests.
+Configuration and guarantees are in [telemetry.md](../telemetry.md).
 
-## daemon の容量管理と eviction 復旧
+## Daemon Capacity Management and Eviction Recovery
 
-[disk-lru/summary.json](disk-lru/summary.json) に、byte／索引数上限、永続 LRU、共有 Tree／Blob frame、
-並行 open と snapshot、単体過大 frame の非保存、snapshot の容量事前拒否・pin・世代数を検証した記録を保存します。
-SIGSTOP 後に file／SQLite の不一致を観測してから SIGKILL した試験と、実 daemon の Unix socket を通した
-eviction 後の再取得・再起動後の warm hit を含みます。fixture 子プロセスのテストは親から実行するため通常実行では ignore です。
-macOS／固定 Rust 1.90 Linux のログ・実測値・ソース hash を記録します。設定と範囲は [disk-cache.md](../disk-cache.md) にあります。
+[disk-lru/summary.json](disk-lru/summary.json) stores the record verifying byte / index-count limits, the durable LRU, shared Tree / Blob frames,
+concurrent open and snapshots, not storing a single oversized frame, and snapshot capacity pre-rejection, pinning, and generation counts.
+It includes a test that observes a file / SQLite mismatch after SIGSTOP and then SIGKILLs, and refetch after eviction / warm hits after restart
+through the real daemon's Unix socket. Tests using fixture child processes are run from a parent, so they are ignored in normal runs.
+Logs, measurements, and source hashes for macOS / Linux with pinned Rust 1.90 are recorded. Configuration and scope are in [disk-cache.md](../disk-cache.md).

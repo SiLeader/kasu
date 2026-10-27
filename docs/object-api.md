@@ -1,60 +1,62 @@
 # Object RPC
 
-`kasu.v1.Objects` は Metadata／Writer と同じ gRPC ポートに登録します。
-`GetTrees(ObjectRequest) -> stream TreeObject` と
-`GetBlobs(ObjectRequest) -> stream BlobChunk` を提供します。
-`ObjectRequest` は `repo` と取得する32バイト ID の `ids` を持ちます。
-認証は Metadata と共通の Basic／Bearer です。
+English | [日本語](object-api_ja.md)
 
-各チャンクは `id`、`offset`、`data`、`last` を持ちます。
-`data` はストアに保存した zstd frame の一部分で、最大64 KiBです。
-`offset` は圧縮済みバイト列内の位置です。同じオブジェクトのチャンクは連続し、
-最後のチャンクだけ `last: true` になります。要求順に配信します。
-Tree も大きい場合はチャンク化します。空のファイルも zstd frame として配信します。
+`kasu.v1.Objects` is registered on the same gRPC port as Metadata / Writer.
+It provides `GetTrees(ObjectRequest) -> stream TreeObject` and
+`GetBlobs(ObjectRequest) -> stream BlobChunk`.
+`ObjectRequest` has `repo` and `ids`, the 32-byte IDs to fetch.
+Authentication is the same Basic / Bearer as Metadata.
 
-クライアントはチャンクの ID／offset／終端を検査し、完全な frame を得てから
-展開上限、内容の BLAKE3、Tree の canonical codec を検証してください。
-成功した frame は変換せずディスクキャッシュに保存できます。
-サーバーはこの配信経路で再圧縮しません。
+Each chunk has `id`, `offset`, `data`, and `last`.
+`data` is a piece of the zstd frame stored in the store, at most 64 KiB.
+`offset` is the position within the compressed bytes. Chunks of the same object are contiguous,
+and only the last chunk has `last: true`. Objects are delivered in request order.
+Trees are chunked too when large. Empty files are also delivered as zstd frames.
 
-## 所属と取得順序
+Clients should check chunk IDs / offsets / termination, and after obtaining a complete frame
+verify the decompression limit, the content's BLAKE3, and the Tree's canonical codec.
+A successfully verified frame can be stored in a disk cache without conversion.
+The server does not recompress on this delivery path.
 
-`ResolveRef` → `GetRootTree` → 必要な子 Tree → 必要な Blob の順で取得します。
-`GetRootTree` は認可済み Changeset から Tree の repo 所属索引を登録します。
-この索引は親を最後に登録し、検証済みの共有 subtree を再走査しません。
-初回は全 Tree を検証し、以後は新しい Merkle node だけを処理します。
-Blob 本文は所属索引作成時に読みません。索引は SQLite 再オープン後も保持します。
-`ListDir` でも所属を登録し、Merge／Rebase／Land の競合応答で公開する Tree／Blob も登録します。
+## Membership and Fetch Order
 
-Object RPC 自体はパスやスパース設定を受け取りません。
-クライアントは root とプロファイルに必要な子 Tree だけをたどり、対象 Blob だけを要求します。
-まだ `GetRootTree` 等で所属登録していない Tree は、ID が既知でも取得できません。
-別 repo の ID を混ぜたバッチは、本文の送信前に拒否します。
+Fetch in the order `ResolveRef` → `GetRootTree` → needed child Trees → needed Blobs.
+`GetRootTree` registers repository membership indexes for Trees from an authorized Changeset.
+The index registers parents last and does not rescan verified shared subtrees.
+The first time, every Tree is verified; afterwards only new Merkle nodes are processed.
+Blob bodies are not read when building the membership index. The index persists across SQLite reopens.
+`ListDir` also registers membership, as do the Trees / Blobs exposed in Merge / Rebase / Land conflict responses.
 
-## 上限と停止
+The Object RPC itself does not take paths or sparse settings.
+Clients walk only the child Trees needed for the root and their profile, and request only the target Blobs.
+A Tree whose membership has not yet been registered through `GetRootTree` or similar cannot be fetched even if its ID is known.
+A batch mixing IDs from another repository is rejected before any body is sent.
 
-1要求は最大128 ID、protobuf 本文は最大16 KiBで、重複 ID を拒否します。
-空バッチは空ストリームです。
-展開済みオブジェクトの既存上限は256 MiB、圧縮 frame の配信上限は257 MiBです。
-バッチ全体をメモリに読み込まず、一度に1オブジェクトと最大2チャンクの送信キューを保持します。
-受信側が停止すると backpressure がかかり、切断後は次のオブジェクトを読みません。
-配信途中のエラーでは、受信済みの完全なオブジェクトは再利用できますが、
-終端のない部分オブジェクトは利用できません。
+## Limits and Stopping
+
+One request has at most 128 IDs, the protobuf body is at most 16 KiB, and duplicate IDs are rejected.
+An empty batch yields an empty stream.
+The existing limit for decompressed objects is 256 MiB, and the delivery limit for compressed frames is 257 MiB.
+The whole batch is not read into memory; one object and a send queue of at most 2 chunks are held at a time.
+When the receiver stalls, backpressure applies, and after a disconnect the next object is not read.
+On an error mid-delivery, complete objects already received can be reused,
+but partial objects without termination cannot.
 
 ```sh
 cargo test -p kasu-server --test objects --locked
 cargo test -p kasu-store --test tree_membership --locked
 ```
 
-実 gRPC でのスパース要求、保存 frame とのバイト一致、チャンク境界、認可・バッチ上限、
-切断、ストア破損／欠落、競合 Tree、再オープンと共有 subtree の省略を検証します。
-[working copy／CLI／notify](native-cli.md) の実通信 E2E も追加しました。
-共有 daemon／cache 階層は M9 の残作業です。
+These verify sparse requests over real gRPC, byte equality with stored frames, chunk boundaries, authorization and batch limits,
+disconnects, store corruption / missing data, conflicting Trees, reopening, and skipping shared subtrees.
+Real-network E2E for the [working copy / CLI / notify](native-cli.md) has also been added.
+The shared daemon / cache hierarchy is remaining work for M9.
 
-## ディレクトリ読み取り ACL
+## Directory Read ACLs
 
-[read_directories](directory-read-acl.md) のある account は、GetRootTree で取得した canonical な読み取りビューをたどります。
-Objects と GetBlobMetadata は、その repo／読み取りパス集合の索引に登録された ID だけを認可します。
-repo 全体の所属索引や別の scope の索引を流用しません。
-`KASU_OBJECT_TOKEN_FILE` が有効でも、範囲のある account は自身の PAT で server に直接接続でき、scope の検査を受けます。
-無制限の PAT で hop token を代替することは拒否します。利用者の scope を保つ共有 cache の委譲は未実装です。
+An account with [read_directories](directory-read-acl.md) walks the canonical read view obtained via GetRootTree.
+Objects and GetBlobMetadata authorize only IDs registered in the index for that repository / read path set.
+They never reuse the repository-wide membership index or another scope's index.
+Even when `KASU_OBJECT_TOKEN_FILE` is enabled, a scoped account can connect directly to the server with its own PAT and is subject to scope checks.
+Using an unrestricted PAT in place of a hop token is rejected. Delegation through a shared cache that preserves the user's scope is not implemented.

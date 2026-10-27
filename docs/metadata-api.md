@@ -1,56 +1,58 @@
 # Metadata API
 
-既存の Git リポジトリを取り込み、チェックアウトせずに問い合わせられます。
-ビルドには Rust stable、C コンパイラ、`protoc` が必要です。
+English | [日本語](metadata-api_ja.md)
+
+You can import an existing Git repository and query it without a checkout.
+Building requires Rust stable, a C compiler, and `protoc`.
 
 ```sh
 cargo run -p kasu-ingest -- /path/to/repo.git /path/to/kasu-data my-repo
 KASU_TOKEN=dev-token cargo run -p kasu-server -- /path/to/kasu-data my-repo
 ```
 
-既定の待ち受けは gRPC `127.0.0.1:50051`、HTTP `127.0.0.1:50080` です。
-任意のアドレスを第 3、第 4 引数に指定できます。`RUST_LOG` でログレベルを指定します。
-`KASU_TOKEN` が設定されている場合、両トランスポートで `Authorization: Bearer <token>` を要求します。
-未設定時は開発用の認証なし構成です。現在の認可単位は起動時に指定した 1 リポジトリです。
+The default listeners are gRPC `127.0.0.1:50051` and HTTP `127.0.0.1:50080`.
+Any addresses can be given as the third and fourth arguments. Use `RUST_LOG` to set the log level.
+When `KASU_TOKEN` is set, both transports require `Authorization: Bearer <token>`.
+When it is unset, the server runs in an unauthenticated development configuration. The current unit of authorization is the one repository specified at startup.
 
 ## gRPC
 
-正となる定義は [kasu.proto](../crates/kasu-proto/proto/kasu.proto) の `kasu.v1.Metadata` です。
-Rust クライアントは `kasu_proto::v1::metadata_client::MetadataClient` で接続できます。
-ID は BLAKE3 の 32 バイト、Git OID は SHA-1 の 20 バイトです。パス・署名・メッセージは bytes のまま扱います。
-同じ gRPC ポートの `kasu.v1.Writer` による作成・マージ・ref 更新は [Write API](write-api.md) を参照してください。
+The canonical definition is `kasu.v1.Metadata` in [kasu.proto](../crates/kasu-proto/proto/kasu.proto).
+Rust clients can connect with `kasu_proto::v1::metadata_client::MetadataClient`.
+IDs are 32-byte BLAKE3 and Git OIDs are 20-byte SHA-1. Paths, signatures, and messages stay as bytes.
+For creation, merging, and ref updates through `kasu.v1.Writer` on the same gRPC port, see the [Write API](write-api.md).
 
-| RPC | 動作 |
+| RPC | Behavior |
 |---|---|
-| `GetChangeset` / `GetRootTree` | Changeset 本体／ルート Merkle tree ID |
-| `ResolveRef` / `ListRefs` | ネイティブ ref の target と CAS version。取り込んだ branch 名は `refs/heads/main` 等 |
-| `Log` | 第一親ログ。path 指定時はそのパス／ディレクトリが第一親との差分で変わった Changeset だけを返す |
-| `IsAncestor` / `MergeBase` | 全親を対象に祖先判定／すべての best common ancestor を返す |
-| `Diff` | パス単位の before／after Entry。content=true で行単位の変更範囲も返す |
-| `Blame` | 各行の由来 Changeset、パス、元の 1-based 行番号。全親から変更されていない行を引き継ぐ |
-| `ReadFile` | File／Symlink の Entry と内容。gitlink の内容は取得しない |
-| `ListDir` | 直下の entry。空パスはルート。子 tree は ID で返す |
-| `FindChangesetByGitOid` | このリポジトリの Git OID 索引で commit を逆引き。見つからない場合は id なし |
+| `GetChangeset` / `GetRootTree` | Changeset body / root Merkle tree ID |
+| `ResolveRef` / `ListRefs` | Native ref target and CAS version. Imported branch names are `refs/heads/main` and so on |
+| `Log` | First-parent log. With a path, returns only Changesets where that path / directory changed in the diff against the first parent |
+| `IsAncestor` / `MergeBase` | Ancestry check over all parents / returns every best common ancestor |
+| `Diff` | Per-path before / after Entry. With content=true, also returns line-level change ranges |
+| `Blame` | Originating Changeset, path, and original 1-based line number of each line. Lines unchanged from all parents are inherited |
+| `ReadFile` | Entry and content of a File / Symlink. Gitlink contents are not fetched |
+| `ListDir` | Immediate entries. An empty path is the root. Child trees are returned by ID |
+| `FindChangesetByGitOid` | Reverse lookup of a commit through this repository's Git OID index. No id when not found |
 
-`Log.limit` は 1〜1000 です。次ページには同じ start／path と返された cursor を渡します。
-cursor は第一親チェーンと path の変更点にも照合します。ref が動いても ID を指定したページング結果は変わりません。
-終了時の cursor は空です。path の追跡は名前に基づきます。
+`Log.limit` is 1–1000. For the next page, pass the same start / path and the returned cursor.
+The cursor is also checked against the first-parent chain and the path's change points. Paging by ID is unaffected by ref movement.
+The cursor is empty at the end. Path tracking is name-based.
 
-Diff の paths は各パス自身とその配下を選びます。内容の変更範囲の start は 0-based、before／after は改行を
-含むバイト列のリストです。改行なしの末尾も保持します。NUL を含む内容は binary=true とし、行 diff は返しません。
-ファイルの mode のみが変わった場合は Entry の差分を返し、内容の変更範囲は空です。
+Diff paths select each path itself and everything under it. The start of a content change range is 0-based; before / after are lists of byte strings
+including line endings. A trailing line without a newline is preserved. Content containing NUL is binary=true and no line diff is returned.
+When only a file's mode changes, the Entry diff is returned and the content change ranges are empty.
 
-PathHistory と Blame はパスを SubKey とする Lazy Derived Data です。
-Blame は rename 元の親パスも必要に応じて計算します。`PathRequest.follow_moves=true` なら同一ファイル内の行移動を追跡し、
-`follow_copies=true` なら移動と別ファイルからの全体／断片 copy を追跡します。両方とも省略時は false です。
-[CopyDetect／PathIndex と行追跡](blame-lineage.md) に生成規則、Git 比較、対応範囲を記録しています。
+PathHistory and Blame are Lazy Derived Data with the path as SubKey.
+Blame also computes the parent's rename source path when needed. `PathRequest.follow_moves=true` tracks line moves within the same file, and
+`follow_copies=true` tracks moves plus whole / partial copies from other files. Both default to false.
+Generation rules, Git comparisons, and supported scope are recorded in [CopyDetect / PathIndex and line tracking](blame-lineage.md).
 
 ## HTTP/JSON
 
-同じメッセージを JSON として POST します。bytes は **0〜255 の整数配列**、oneof は kind オブジェクトです。
-フィールド名は protobuf と同じ snake_case です。省略したフィールドには既定値を使います。
+POST the same messages as JSON. bytes are **arrays of integers 0–255**, and oneofs are kind objects.
+Field names are snake_case as in protobuf. Omitted fields use their default values.
 
-| パス | リクエスト型 |
+| Path | Request type |
 |---|---|
 | `/v1/changeset` / `/v1/root-tree` | ChangesetRequest |
 | `/v1/resolve-ref` | RefRequest |
@@ -61,7 +63,7 @@ Blame は rename 元の親パスも必要に応じて計算します。`PathRequ
 | `/v1/blame` / `/v1/read-file` / `/v1/list-dir` | PathRequest |
 | `/v1/find-git-oid` | GitOidRequest |
 
-例: `my-repo` の ref 一覧。
+Example: list refs of `my-repo`.
 
 ```sh
 curl -s http://127.0.0.1:50080/v1/refs \
@@ -70,35 +72,35 @@ curl -s http://127.0.0.1:50080/v1/refs \
   --data '{"repo":[109,121,45,114,101,112,111],"prefix":[]}'
 ```
 
-入力値の不正は 400、未認証は 401、別リポジトリは 403、見つからない Changeset／ファイルは 404 を返します。
-ストレージ内部のエラー詳細はクライアントへ返さず、tracing に記録します。
-HTTP リクエストと gRPC の受信メッセージ上限は 16 MiB、gRPC 応答上限は 256 MiB です。
+Invalid input returns 400, unauthenticated 401, another repository 403, and a missing Changeset / file 404.
+Internal storage error details are not returned to clients; they are recorded in tracing.
+The limit for HTTP requests and received gRPC messages is 16 MiB, and for gRPC responses 256 MiB.
 
-## リポジトリ分離と検証
+## Repository Isolation and Verification
 
-Changeset はリポジトリ所属の不変レコードと照合します。別リポジトリの ID が同じストアに保存されていても、
-このリポジトリの問い合わせには使えません。取り込み時に所属を記録し、再取り込みでも補完します。
+Changesets are checked against immutable repository membership records. Even if another repository's ID is stored in the same store,
+it cannot be used in queries for this repository. Membership is recorded at import and filled in on reimport.
 
-テストでは生成した Git 履歴で `git log --first-parent -- <path>`、`git blame --line-porcelain`、
-`git merge-base --all`、`git diff --no-renames --unified=0` と比較します。
-削除・再追加・mode 変更・繰り返し行・二親マージ・criss-cross を含みます。
-[rename／copy と行断片](blame-lineage.md) は、純粋／編集 rename・ファイル全体／行断片の copy・行移動とその後の編集を3モード・24通りで比較しています。
-[固定した実在 OSS の Metadata 検証](metadata-oss.md) では、全21 commit のパス履歴189件・Blame 77件・merge-base 441組が macOS／Linux で一致しました。
-Git の全 rename／copy ヒューリスティクスや任意の OSS 全般の parity は残作業です。
-gRPC 実通信、HTTP JSON、サーバー実行ファイルと永続ストア、認証・所属・cursor の検証も行っています。
+Tests compare against `git log --first-parent -- <path>`, `git blame --line-porcelain`,
+`git merge-base --all`, and `git diff --no-renames --unified=0` on generated Git histories,
+including deletion, re-adding, mode changes, repeated lines, two-parent merges, and criss-cross merges.
+[Renames / copies and line fragments](blame-lineage.md) are compared in 3 modes × 24 cases covering pure / edited renames, whole-file / line-fragment copies, and line moves with later edits.
+In the [Metadata verification against a pinned real OSS repository](metadata-oss.md), all 189 path histories, 77 Blames, and 441 merge-base pairs across all 21 commits matched on macOS / Linux.
+Parity with every Git rename / copy heuristic and with arbitrary OSS repositories in general is remaining work.
+Real gRPC traffic, HTTP JSON, the server binary with a persistent store, and authentication / membership / cursors are also verified.
 
-[Git Smart HTTP の読み取り](git-read.md) は同じ HTTP ポートで提供します。
-[Write API](write-api.md)、[Git 書き込み](git-push.md)、[Object RPC](object-api.md)、[射影の読み取り ACL](projection-accounts.md) も実装しています。
-[native のディレクトリ ACL](directory-read-acl.md)、[telemetry](telemetry.md)、[権威サーバーの負荷制限](server-runtime.md) も実装しています。
+[Git Smart HTTP reads](git-read.md) are served on the same HTTP port.
+The [Write API](write-api.md), [Git writes](git-push.md), [Object RPC](object-api.md), and [projection read ACLs](projection-accounts.md) are also implemented,
+as are [native directory ACLs](directory-read-acl.md), [telemetry](telemetry.md), and [authoritative server load limits](server-runtime.md).
 
-`GetBlobMetadata(ObjectRequest)` と `/v1/blob-metadata` は、同一 repo に属する最大128個の blob ID について、
-サイズと Git blob OID を返します。本文の読み取りは行いません。[仮想 checkout](virtual-checkout.md) の属性問い合わせで利用します。
+`GetBlobMetadata(ObjectRequest)` and `/v1/blob-metadata` return the size and Git blob OID of up to 128 blob IDs belonging to the same repository.
+They do not read bodies. They are used for attribute queries by the [virtual checkout](virtual-checkout.md).
 
-## ディレクトリ別の読み取りビュー
+## Per-directory Read Views
 
-[read_directories](directory-read-acl.md) を持つ account の GetChangeset／Log は許可パスの changes だけを返し、
-raw Git provenance を省略して `read_filtered=true` とします。id は元 Changeset の参照です。
-この応答から元 Changeset の canonical bytes は再構成できません。
-GetRootTree は許可範囲だけで作った canonical TreeId と `read_filtered=true` を返します。
-ListDir／ReadFile／Diff／Blame／GetBlobMetadata にも同じ制限を適用します。
-元の Changeset／Tree の保存形式・ID は変更しません。無制限の account の flag は false です。
+For an account with [read_directories](directory-read-acl.md), GetChangeset / Log return only changes under allowed paths,
+omit raw Git provenance, and set `read_filtered=true`. The id references the original Changeset.
+The original Changeset's canonical bytes cannot be reconstructed from this response.
+GetRootTree returns a canonical TreeId built only from the allowed scope, with `read_filtered=true`.
+The same restrictions apply to ListDir / ReadFile / Diff / Blame / GetBlobMetadata.
+The storage format and IDs of the original Changesets / Trees are unchanged. For unrestricted accounts the flag is false.

@@ -1,76 +1,77 @@
-# ネイティブ Write API
+# Native Write API
 
-`kasu-server` は Metadata と同じ gRPC ポートで `kasu.v1.Writer` を提供します。
-HTTP JSON も同じ HTTP ポートで利用できます。
-`KASU_TOKEN` を指定した場合は Bearer または Basic のトークンが必要です。
-認可対象は起動時に指定した1 repo です。
+English | [日本語](write-api_ja.md)
 
-| RPC | HTTP POST | 動作 |
+`kasu-server` provides `kasu.v1.Writer` on the same gRPC port as Metadata.
+HTTP JSON is also available on the same HTTP port.
+When `KASU_TOKEN` is set, a Bearer or Basic token is required.
+Authorization targets the one repository specified at startup.
+
+| RPC | HTTP POST | Behavior |
 |---|---|---|
-| `UploadBlobs(stream BlobUpload)` | `/v1/upload-blobs` | raw blob の分割アップロード、既存 blob の省略 |
-| `CreateChangeset` | `/v1/create-changeset` | 親と blob の所属、変更パス、内容を検証して作成 |
-| `Merge` | `/v1/merge` | 全 best merge-base を使う3-way merge |
-| `Rebase` | `/v1/rebase` | 1 Changeset の第一親との差分を onto へ再適用 |
-| `UpdateRef` | `/v1/update-ref` | ref ポリシーと fast-forward を検証して CAS |
-| `Land` | `/v1/land` | 永続的な冪等キー、上限・バックオフ・キャンセルを持つ rebase + CAS |
+| `UploadBlobs(stream BlobUpload)` | `/v1/upload-blobs` | Chunked upload of raw blobs; existing blobs can be skipped |
+| `CreateChangeset` | `/v1/create-changeset` | Creates after validating parent and blob membership, changed paths, and contents |
+| `Merge` | `/v1/merge` | 3-way merge using every best merge-base |
+| `Rebase` | `/v1/rebase` | Reapplies one Changeset's diff against its first parent onto `onto` |
+| `UpdateRef` | `/v1/update-ref` | CAS after validating ref policy and fast-forward |
+| `Land` | `/v1/land` | rebase + CAS with a durable idempotency key, limits, backoff, and cancellation |
 
-スキーマは [`kasu.proto`](../crates/kasu-proto/proto/kasu.proto) です。
-既存 Metadata API と同じく、バイト列は protobuf の `bytes`、HTTP JSON では数値配列です。
-author／committer／message、パス、競合内容を UTF-8 へ変換しません。
-`CreateChangeset` の変更はパス順・一意である必要があります。
-Git provenance をクライアントから指定するフィールドは提供しません。
+The schema is [`kasu.proto`](../crates/kasu-proto/proto/kasu.proto).
+As with the existing Metadata API, byte strings are protobuf `bytes` and numeric arrays in HTTP JSON.
+author / committer / message, paths, and conflict contents are not converted to UTF-8.
+Changes in `CreateChangeset` must be sorted by path and unique.
+There is no field for clients to specify Git provenance.
 
-## blob のアップロード
+## Uploading Blobs
 
-`BlobUpload` の `repo`、期待する raw BLAKE3 `id`、`offset`、`data`、`last` を送ります。
-同じ blob のチャンクを連続して送り、offset は0から送信済みデータ長ずつ進めます。
-最終チャンクでハッシュを検証して保存します。空 blob は空 data・offset=0・last=true です。
-途中終了、offset 不一致、ID の切り替え、ハッシュ不一致はエラーです。
-既に完了した blob は、後の blob に失敗しても不変オブジェクトとして残ります。
+Send `BlobUpload` with `repo`, the expected raw BLAKE3 `id`, `offset`, `data`, and `last`.
+Send the chunks of one blob consecutively; offset starts at 0 and advances by the length of data sent.
+The hash is verified and the blob stored on the final chunk. An empty blob is empty data, offset=0, last=true.
+Early termination, offset mismatches, switching IDs, and hash mismatches are errors.
+Blobs already completed remain as immutable objects even if a later blob fails.
 
-同じ repo で保存済みの blob は、空 data・offset=0・last=true で存在確認して送信を省けます。
-結果の `BlobReceipt` は ID、実サイズ、`existing` を返します。
-別 repo にだけ存在する blob は省略できず、内容をアップロードしてハッシュを証明する必要があります。
-親 Changeset と各 Set の blob は repo 所属を検査します。
-Git 取り込みも blob の所属を記録します。以前の DB で所属記録がない blob は、再取り込みまたはアップロードしてください。
+A blob already stored in the same repository can be existence-checked with empty data, offset=0, last=true to skip sending it.
+The resulting `BlobReceipt` returns the ID, actual size, and `existing`.
+A blob that exists only in another repository cannot be skipped; its content must be uploaded to prove the hash.
+Parent Changesets and the blob of each Set are checked for repository membership.
+Git import also records blob membership. For blobs without membership records in older databases, reimport or upload them.
 
-gRPC は1メッセージ16 MiB、1 blob 256 MiB、1ストリームの送信データ512 MiB、
-最大4,096 blob／65,536チャンクです。サーバーは同時に1 blob を組み立てます。
-HTTP では `{ "chunks": [...] }` を送り、JSON リクエスト全体の上限は16 MiBです。
+gRPC limits are 16 MiB per message, 256 MiB per blob, 512 MiB of data per stream,
+and at most 4,096 blobs / 65,536 chunks. The server assembles one blob at a time.
+Over HTTP, send `{ "chunks": [...] }`; the whole JSON request is limited to 16 MiB.
 
-## Merge／Rebase と競合
+## Merge / Rebase and Conflicts
 
-`RewriteResponse.id` があれば成功です。fast-forward の Merge は既存 ID を返します。
-競合時は ID がなく、`stage`、`bases`、`conflicts` に基底または最終 tree の競合を返します。
-競合エントリーには path、種類、base／ours／theirs、行単位の範囲と内容があります。
-成功した Merge／Rebase も ref を移動しません。
-[マージの意味論とテスト](native-merge.md) を参照してください。
+A `RewriteResponse.id` means success. A fast-forward Merge returns the existing ID.
+On conflict there is no ID, and `stage`, `bases`, and `conflicts` return the conflicts of the base or the final tree.
+Conflict entries have the path, kind, base / ours / theirs, and line ranges and contents.
+Successful Merge / Rebase does not move refs either.
+See [merge semantics and tests](native-merge.md).
 
-## ref の更新
+## Updating Refs
 
-`UpdateRefRequest` には name、必須の expected Ref（name・target・version）、新 target を指定します。
-新規 ref は target なし・version=0 が初期状態です。
-CAS 不一致はエラーではなく、`applied=false` と実際の状態を返します。
-削除後も version は単調増加し、削除・再作成による ABA を拒否します。
-成功した CAS と ref_log の追記は同じトランザクションです。
+`UpdateRefRequest` specifies the name, the required expected Ref (name, target, version), and the new target.
+A new ref starts with no target and version=0.
+A CAS mismatch is not an error; it returns `applied=false` and the actual state.
+The version keeps increasing monotonically after deletion, rejecting ABA through delete and recreate.
+A successful CAS and the ref_log append are in the same transaction.
 
-デフォルトは `refs/heads/` の作成と fast-forward のみです。
-force と削除は無効です。サーバー組み込み時の `Backend::with_write_policy` で、
-書き込み可能な接頭辞、force 可能な接頭辞、作成／削除の可否を設定できます。
-非 fast-forward は、リクエストの `force=true` とサーバー側の force 許可の両方が必要です。
-CLI は `KASU_WRITE_POLICY_FILE` で JSON 設定を読み込めます。
-ref の `*`／`?` パターン、バイト列パスの境界、Git と共通の最終 tree ACL は
-[Git 書き込み](git-push.md) を参照してください。
+By default only creating and fast-forwarding `refs/heads/` is allowed.
+Force and deletion are disabled. When embedding the server, `Backend::with_write_policy` configures
+writable prefixes, force-allowed prefixes, and whether creation / deletion is allowed.
+A non-fast-forward requires both `force=true` in the request and force permission on the server.
+The CLI can load JSON settings from `KASU_WRITE_POLICY_FILE`.
+See [Git writes](git-push.md) for `*` / `?` ref patterns, byte-string path boundaries, and the final-tree ACL shared with Git.
 
-Git branch の可変状態はネイティブ ref のみです。
-CAS の前に不変 Git commit 射影を準備し、Git に表現できない署名などを拒否します。
-CAS 後の Git 広告は更新したネイティブ ref を参照します。
+The only mutable state of a Git branch is the native ref.
+The immutable Git commit projection is prepared before the CAS, rejecting signatures and other values Git cannot represent.
+Git advertisements after the CAS reference the updated native ref.
 
-検証は gRPC ストリームと HTTP JSON、認証・repo 分離、CAS／ABA／force／削除ポリシー、
-API で作成した履歴の Git clone と `fsck --strict` を含みます。
+Verification covers gRPC streams and HTTP JSON, authentication and repository isolation, CAS / ABA / force / delete policies,
+and Git clone plus `fsck --strict` of history created through the API.
 
 ```sh
 cargo test -p kasu-server --test write --locked
 ```
 
-Land の要求・確定結果・再送・キャンセルは [Land](land.md) を参照してください。
+See [Land](land.md) for Land requests, final results, resends, and cancellation.

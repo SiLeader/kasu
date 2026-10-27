@@ -1,82 +1,84 @@
-# Git Smart HTTP 書き込み
+# Git Smart HTTP Writes
 
-Metadata／upload-pack と同じ HTTP ポートで `git-receive-pack` を提供します。
-Basic（任意ユーザー名＋トークン）または Bearer で認証し、repo 単位で認可します。
-認証は ref 広告と要求解析の前に行います。
+English | [日本語](git-push_ja.md)
+
+`git-receive-pack` is served on the same HTTP port as Metadata / upload-pack.
+Authentication uses Basic (any user name + token) or Bearer, and authorization is per repository.
+Authentication happens before ref advertisement and request parsing.
 
 ```sh
 git -c http.extraHeader='Authorization: Bearer dev-token' \
   push http://127.0.0.1:50080/my-repo.git main
 ```
 
-Git 2.54.0／go-git v5.19.3 で初回・増分 push、通常／depth=1 の clone→commit→push を検証しました。
-annotated tag、多段 tag、blob を指す tag、削除、force の許可／拒否、複数 ref の一部拒否も検証しています。
-サーバーは Git コマンドを起動せず、Git リポジトリや受信 pack を常設しません。
-メモリ上の pack を検証し、raw オブジェクトとネイティブ Changeset へ変換します。
+Initial and incremental pushes, and clone→commit→push with normal / depth=1 clones, were verified with Git 2.54.0 / go-git v5.19.3.
+Annotated tags, nested tags, tags pointing to blobs, deletion, allowing / denying force, and partial rejection across multiple refs are also verified.
+The server does not run Git commands and does not keep Git repositories or received packs around.
+It validates the pack in memory and converts it to raw objects and native Changesets.
 
-## プロトコルと検証
+## Protocol and Validation
 
-受信の広告は v0 形式で、`report-status`、`side-band-64k`、`delete-refs`、`ofs-delta`、
-`object-format=sha1`、agent を提供します。push の protocol v2 拡張は提供しません。
-`report-status-v2`、push options は広告せず、要求されても拒否します。
-`atomic` は branch と Git-only ref を同じ CAS／ログトランザクションで保存できる
-バックエンドで広告します。SQLite は対応しています。
-`--atomic` を指定しない複数 ref は個別 CAS です。
-正しい pack に対するポリシー拒否や CAS 競合では、他の ref は成功できます。
-pack／接続性エラーでは全 ref を拒否し、`unpack` と各 ref の `ng` を返します。
+The receive advertisement is in v0 format and offers `report-status`, `side-band-64k`, `delete-refs`, `ofs-delta`,
+`object-format=sha1`, and agent. Protocol v2 extensions for push are not provided.
+`report-status-v2` and push options are not advertised and are rejected if requested.
+`atomic` is advertised on backends that can store branches and Git-only refs in the same CAS / log transaction.
+SQLite supports it.
+Multiple refs without `--atomic` are individual CASes.
+For policy rejections or CAS conflicts on a valid pack, other refs can still succeed.
+Pack / connectivity errors reject every ref, returning `unpack` and `ng` for each ref.
 
 ```sh
 git -c http.extraHeader='Authorization: Bearer dev-token' \
   push --atomic http://127.0.0.1:50080/my-repo.git main refs/tags/v1
 ```
 
-[Git の atomic capability](https://git-scm.com/docs/protocol-capabilities#_atomic) に従い、
-要求時は全コマンドの old OID、ポリシー、最終 tree ACL を検査した後、
-branch／tag の作成・更新・削除と両種のログ追記を1トランザクションで保存します。
-1つでも拒否、競合、検査後の ref version の変化があれば全コマンドを `ng` にします。
-不変オブジェクトの取り込みは先に行うため、失敗した要求のオブジェクトが残る場合はあります。
-ref が同じ OID に戻る ABA 競合も、検査時に取得した version を使って拒否します。
+Following [Git's atomic capability](https://git-scm.com/docs/protocol-capabilities#_atomic),
+when requested, the old OIDs, policies, and final-tree ACLs of every command are checked, and then
+creation / update / deletion of branches / tags and the log appends for both kinds are stored in one transaction.
+If any command is rejected, conflicts, or sees its ref version change after the check, every command gets `ng`.
+Immutable objects are imported first, so objects from a failed request may remain.
+ABA races where a ref returns to the same OID are also rejected using the version obtained at check time.
 
-組み込み用 `GitRefStore::supports_atomic_publication()` は既定で false です。
-対応するバックエンドだけが true を返し、`compare_native_and_git` の原子性を保証します。
-非対応時は広告せず、クライアントが直接送った atomic 要求も保存前に拒否します。
-push の原子性は保存トランザクションに対する保証です。
-独立した複数の読み取り RPC が同じ snapshot を共有する機能は提供しません。
+The embedding API `GitRefStore::supports_atomic_publication()` is false by default.
+Only supporting backends return true and guarantee the atomicity of `compare_native_and_git`.
+Without support, it is not advertised, and atomic requests sent directly by clients are rejected before storing.
+Push atomicity is a guarantee about the storage transaction.
+There is no feature for multiple independent read RPCs to share the same snapshot.
 
-`gix-pack` で entry と delta を解析し、SHA-1 trailer、zlib の実展開長、型、
-ofs-delta の entry 境界、ref-delta の基底、最終オブジェクトサイズを検査します。
-forward ref-delta と、既存の公開オブジェクトを基底にした thin pack に対応します。
-薄い pack の基底と省略された依存は、この repo の公開 ref から到達できるオブジェクトに限ります。
-未公開索引の OID を知っているだけでは、pack を省略して ref を作成できません。
+`gix-pack` parses entries and deltas, checking the SHA-1 trailer, actual zlib inflated length, types,
+ofs-delta entry boundaries, ref-delta bases, and final object sizes.
+Forward ref-deltas and thin packs based on existing published objects are supported.
+Thin pack bases and omitted dependencies are limited to objects reachable from this repository's published refs.
+Merely knowing an OID in the unpublished index does not allow creating a ref while omitting it from the pack.
 
-| 既定上限 | 値 |
+| Default limit | Value |
 |---|---:|
 | pack | 128 MiB |
-| オブジェクト数 | 100,000 |
-| 1 entry／最終オブジェクト | 64 MiB |
-| 展開量（delta 命令・結果・外部基底を含む） | 512 MiB |
-| delta 深さ | 64 |
-| ref コマンド／shallow 宣言 | 各1,024 |
+| Object count | 100,000 |
+| Per entry / final object | 64 MiB |
+| Expansion (including delta instructions, results, and external bases) | 512 MiB |
+| Delta depth | 64 |
+| Ref commands / shallow declarations | 1,024 each |
 
-HTTP 本文は pack 上限＋コマンド領域2 MiBまでです。受信 HTTP の gzip Content-Encoding は未対応です。
-組み込み時は `Backend::with_receive_limits` で上限を設定できます。
-shallow 宣言は既存の公開 commit に限り受理し、新 ref まで完全な接続性を検証します。
-欠落した親を持つ shallow リポジトリをサーバー側に作成する機能はありません。
+The HTTP body is limited to the pack limit plus 2 MiB for commands. gzip Content-Encoding on received HTTP is not supported.
+When embedding, limits can be set with `Backend::with_receive_limits`.
+Shallow declarations are accepted only for existing published commits, and full connectivity up to the new refs is verified.
+There is no feature for creating a shallow repository with missing parents on the server side.
 
-接続性・型の検証が終わるまで ref を動かしません。
-親が先となる順序で取り込み、第一親との差分と raw Git commit／tree／tag を保存し、元の OID を保持します。
-ref の old OID を確認した後、その時点のネイティブ ref version を使って CAS します。
-各成功と ref_log／git_ref_log は同じトランザクションです。
-拒否した要求の不変オブジェクトが残る場合はありますが、Git の want では公開 ref からの到達性を検査します。
+Refs are not moved until connectivity and type validation finish.
+Objects are imported parents first, storing the diff against the first parent and the raw Git commits / trees / tags, preserving the original OIDs.
+After checking the ref's old OID, the CAS uses the native ref version at that point.
+Each success and its ref_log / git_ref_log are in the same transaction.
+Immutable objects from rejected requests may remain, but Git wants are checked for reachability from published refs.
 
-## ref ポリシーと最終 tree ACL
+## Ref Policy and Final-tree ACL
 
-デフォルトは branch／tag の作成、branch の fast-forward、全パスへの変更を許可します。
-ref の削除、branch の non-fast-forward、既存 tag の置き換えは禁止です。
-書き込み可能な名前空間は `refs/heads/` と `refs/tags/` に限ります。
+By default, creating branches / tags, fast-forwarding branches, and changing every path are allowed.
+Deleting refs, non-fast-forward branch updates, and replacing existing tags are forbidden.
+Writable namespaces are limited to `refs/heads/` and `refs/tags/`.
 
-CLI は `KASU_WRITE_POLICY_FILE=/path/to/policy.json` を指定して起動します。
-例:
+Start the CLI with `KASU_WRITE_POLICY_FILE=/path/to/policy.json`.
+Example:
 
 ```json
 {
@@ -88,20 +90,20 @@ CLI は `KASU_WRITE_POLICY_FILE=/path/to/policy.json` を指定して起動し�
 }
 ```
 
-`*` は `/` を含む任意のバイト列、`?` は1バイトに一致します。
-pattern のリストを指定すると、対応する従来の `allowed_prefixes`／`force_prefixes` より優先します。
-pattern が空なら prefix のリストを使います。全 ref を拒否する場合は `allowed_prefixes: []` を指定します。
-各ルールは UTF-8 文字列またはバイト値の配列で指定でき、未知の設定キーは起動エラーになります。
+`*` matches any bytes including `/`, and `?` matches one byte.
+When a pattern list is given, it takes precedence over the corresponding legacy `allowed_prefixes` / `force_prefixes`.
+If the patterns are empty, the prefix lists are used. To reject every ref, specify `allowed_prefixes: []`.
+Each rule can be a UTF-8 string or an array of byte values, and unknown configuration keys are startup errors.
 
-パスはコンポーネント境界で判定し、`app` は `app/config` を許可して `application/config` を許可しません。
-空文字列のパス prefix は全パス、空のリストは変更可能なパスなしです。
-新規 ref は空 tree、削除は新 tree が空として判定します。
-commit／tree tag も検査し、パス制限中の blob tag は拒否します。
-検査対象は旧 ref の tree と新 ref の tree の最終差分であり、merge の第二親経由の変更やモード変更も含みます。
-force 許可でもパス ACL は迂回できません。
-ネイティブ UpdateRef／Land も同じ最終 tree ACL を使用します。
+Paths are matched at component boundaries: `app` allows `app/config` but not `application/config`.
+An empty path prefix means every path, and an empty list means no paths may be changed.
+New refs are evaluated against an empty tree, and deletions as a new empty tree.
+Commit / tree tags are checked too, and blob tags are rejected while path restrictions apply.
+What is checked is the final diff between the old ref's tree and the new ref's tree, including changes via a merge's second parent and mode changes.
+Force permission cannot bypass path ACLs.
+Native UpdateRef / Land use the same final-tree ACL.
 
-## 再実行と現在の残作業
+## Rerunning and Remaining Work
 
 ```sh
 cargo test -p kasu-git --test pack_input --test receive --locked
@@ -112,18 +114,18 @@ KASU_GO_GIT_PUSH_CLIENT=/tmp/kasu-go-git-compat \
   cargo test -p kasu-server --test push --locked -- --include-ignored
 ```
 
-`KASU_CAPTURE_DIR` を設定すると pkt-line を保存します。Git の時刻／PID と Go の sideband 本文を省き、
-HTTP 認証ヘッダーを記録しません。
-[互換性マトリクス](../crates/kasu-git/tests/fixtures/clients/matrix.json) に実測した版と fixture を記録しています。
-clone した Git ディレクトリを `fsck --strict` し、サーバーの ref OID とネイティブ内容も比較します。
-欠落オブジェクト、未公開 OID、古い ref、認証エラー、パケット／pack の任意バイト列も検査します。
-atomic push は macOS の Git 2.54.0 と固定 Rust 1.90 の Linux コンテナで検証します。
-branch／tag の混合成功、拒否時の全件・全ログ不変、ACL、保存直前に別 SQLite 接続が起こす
-branch／tag の ABA 競合、非対応バックエンドの広告と拒否を含みます。
-ストレージでは16個の独立接続による混合 CAS の単一勝者とログ一致を検査し、
-最後の Git ログ書き込みに SQL エラーを注入して両種の ref／ログが rollback されることも検証します。
+Setting `KASU_CAPTURE_DIR` saves pkt-lines. Git timestamps / PIDs and Go sideband bodies are omitted,
+and HTTP authentication headers are not recorded.
+The measured versions and fixtures are recorded in the [compatibility matrix](../crates/kasu-git/tests/fixtures/clients/matrix.json).
+The cloned Git directory is checked with `fsck --strict`, and server ref OIDs and native contents are compared.
+Missing objects, unpublished OIDs, stale refs, authentication errors, and arbitrary packet / pack bytes are also tested.
+Atomic push is verified with Git 2.54.0 on macOS and in a Linux container with pinned Rust 1.90,
+including mixed branch / tag success, all refs and logs unchanged on rejection, ACLs, branch / tag ABA races
+caused by a separate SQLite connection just before storing, and advertisement and rejection on unsupported backends.
+In storage, a single winner and consistent logs for mixed CAS over 16 independent connections are checked,
+and injecting an SQL error into the last Git log write verifies that both kinds of refs / logs roll back.
 
-[ref_log からの永続 webhook](webhooks.md) を実装しています。
-[kind E2E](gitops-e2e.md) で Image Updater v1.4.0／Flux Image Automation v1.2.5 の
-実 commit・push、webhook による Deployment 更新、ネイティブ内容一致と strict fsck が通過しました。
-M7 の受け入れ条件を検証済みです。夜間 CI は追加済みですが、GitHub 上での結果は未確認です。
+[Durable webhooks from ref_log](webhooks.md) are implemented.
+In the [kind E2E](gitops-e2e.md), real commits and pushes by Image Updater v1.4.0 / Flux Image Automation v1.2.5,
+Deployment updates via webhook, matching native content, and strict fsck passed.
+The M7 acceptance criteria are verified. A nightly CI job has been added, but results on GitHub are unconfirmed.

@@ -1,7 +1,9 @@
-# パス射影の読み取りアカウント
+# Read Accounts for Path Projections
 
-`KASU_PROJECTION_ACCOUNTS_FILE` で PAT ごとに読み取り可能なディレクトリを設定します。
-このアカウントは Git の [パス射影](git-projection.md) 専用です。
+English | [日本語](projection-accounts_ja.md)
+
+`KASU_PROJECTION_ACCOUNTS_FILE` configures, per PAT, which directories can be read.
+These accounts are only for Git [path projections](git-projection.md).
 
 ```json
 {
@@ -16,9 +18,9 @@
 }
 ```
 
-`token_file` は設定ファイルからの相対パス、または絶対パスです。末尾の CR／LF を除いた PAT を読みます。
-秘密値は JSON 本体に書かず、所有者だけが読めるファイルに保存してください。
-`directories_hex` は非 UTF-8 パスのためのバイト列指定です。たとえば `ff` は `0xff` のディレクトリを許可します。
+`token_file` is a path relative to the configuration file, or an absolute path. The PAT is read with trailing CR / LF removed.
+Do not put secrets in the JSON itself; store them in files readable only by the owner.
+`directories_hex` specifies byte strings for non-UTF-8 paths. For example, `ff` allows the directory `0xff`.
 
 ```sh
 KASU_PROJECTION_ACCOUNTS_FILE=/path/to/accounts.json \
@@ -28,63 +30,63 @@ git clone --filter=blob:none \
   http://any-user:reader-pat@127.0.0.1:50080/my-repo/-/path/deploy.git
 ```
 
-Basic の username は任意です。Bearer も使えます。`name` は設定上の識別名で、Basic username とは照合しません。
-従来の `KASU_TOKEN` を併用すると、その PAT は通常の repo／Metadata／Writer API を使う運用者の資格情報になります。
-併用しない場合、射影アカウントだけの読み取りサーバーとして起動できます。
-この設定があると、`KASU_TOKEN` がなくても匿名アクセスは拒否します。
+The Basic username is arbitrary. Bearer also works. `name` is an identifier in the configuration and is not matched against the Basic username.
+When combined with the existing `KASU_TOKEN`, that PAT becomes the operator credential for the normal repo / Metadata / Writer APIs.
+Without it, the server can run as a read server for projection accounts only.
+When this configuration is present, anonymous access is rejected even without `KASU_TOKEN`.
 
-複数リポジトリでは、`directories` の代わりに
-`"projections": [{"repository": "team-a/*", "directories": ["deploy"], "directories_hex": []}]` で
-リポジトリ名 glob とディレクトリの組を指定します。`directories` だけの形式は legacy リポジトリの射影です。
-一致しないリポジトリは存在しないものと同じ `NotFound` です。
+With multiple repositories, instead of `directories`, use
+`"projections": [{"repository": "team-a/*", "directories": ["deploy"], "directories_hex": []}]` to specify
+pairs of repository name globs and directories. The `directories`-only form applies to projections of the legacy repository.
+Non-matching repositories return `NotFound`, the same as nonexistent ones.
 
-## 許可範囲
+## Allowed Scope
 
-| 操作 | 射影専用 PAT |
+| Operation | Projection-only PAT |
 |---|---|
-| 許可ディレクトリそのものの Git 射影 | 読み取り可能 |
-| 許可ディレクトリ内の、さらに深いディレクトリの射影 | 読み取り可能 |
-| v0／v1／v2、shallow／partial clone、後続 promisor fetch | 同じ範囲で利用可能 |
-| 許可パスの親、兄弟、通常の repo URL | 拒否 |
-| receive-pack 広告／push | 拒否 |
-| Metadata／Writer の gRPC・HTTP JSON | 拒否 |
-| Objects gRPC | 拒否。共有 cache 用の hop 資格情報を流用できない |
+| Git projection of an allowed directory itself | Readable |
+| Projection of a deeper directory inside an allowed directory | Readable |
+| v0 / v1 / v2, shallow / partial clone, follow-up promisor fetch | Available within the same scope |
+| Parents or siblings of allowed paths, the normal repo URL | Rejected |
+| receive-pack advertisement / push | Rejected |
+| Metadata / Writer gRPC and HTTP JSON | Rejected |
+| Objects gRPC | Rejected. Cannot be reused as the hop credential for a shared cache |
 
-パス境界で照合するため、`deploy` の許可で `deploy-other` は読めません。
-literal と hex の URL は同じバイト列パスへ正規化してから照合します。
-複数ディレクトリを許可しても、通常 repo 全体を取得する権限にはなりません。
-want の到達可能性と OID 索引も引き続き射影ごとに検査します。
+Matching uses path boundaries, so allowing `deploy` does not allow reading `deploy-other`.
+Literal and hex URLs are normalized to the same byte-string path before matching.
+Allowing multiple directories never grants permission to fetch the whole normal repository.
+Want reachability and the OID index are still checked per projection.
 
-認証は Git の URL 解釈・ref 導出・pack 生成より前、パス認可は ref 導出より前に実行します。
-未認証・誤った PAT は 401、認証済みだが範囲外の操作は 403 を返します。
-ネイティブ API に渡した射影専用 PAT は、ID の所属や内容を調べる前に拒否します。
-専用の Objects hop token が有効な場合、Objects はその hop token を要求します。
+Authentication runs before Git URL interpretation, ref derivation, and pack generation; path authorization runs before ref derivation.
+Unauthenticated requests and wrong PATs get 401; authenticated but out-of-scope operations get 403.
+A projection-only PAT passed to a native API is rejected before any ID membership or content is examined.
+When a dedicated Objects hop token is enabled, Objects requires that hop token.
 
-## 設定と制約
+## Configuration and Constraints
 
-- account 数は 1〜256、名前は重複不可、1〜128 UTF-8 bytes。
-- 各 account は 1〜128 個のディレクトリを持ち、各パスは最大 4096 bytes。
-- PAT は最大 4096 bytes。アカウント間、運用者 PAT、Objects hop token との重複を拒否します。
-- JSON は最大 1 MiB。未知の field、不正なパス・hex、空の account 一覧、欠落した秘密ファイルは起動失敗にします。
-- 設定・秘密ファイルの変更や失効にはサーバー再起動が必要です。複数 server には同じ設定を配布してください。
+- 1–256 accounts; names must be unique, 1–128 UTF-8 bytes.
+- Each account has 1–128 directories, each path at most 4096 bytes.
+- PATs are at most 4096 bytes. Duplicates across accounts, with the operator PAT, or with the Objects hop token are rejected.
+- JSON is at most 1 MiB. Unknown fields, invalid paths / hex, an empty account list, and missing secret files fail startup.
+- Changing or revoking configuration / secret files requires a server restart. Distribute the same configuration to multiple servers.
 
-元の author／committer／message と ref 名は射影でも残ります。メッセージ内の文字列をパスに応じて除去する機能はありません。
-[アカウントごとの書き込み ACL](repository-accounts.md) は別の repository account 設定で利用できます。
-[ネイティブのディレクトリ読み取り](directory-read-acl.md) は repository account の read_directories で利用できます。
-OIDC、動的な失効・拒否監査ログは残作業です。
-既存の書き込み用 `allowed_paths` は運用者 PAT にも適用され、最終 tree 差分を検査します。
+The original author / committer / message and ref names remain in projections. There is no feature to strip strings from messages by path.
+[Per-account write ACLs](repository-accounts.md) are available through the separate repository account configuration.
+[Native directory reads](directory-read-acl.md) are available through repository accounts' read_directories.
+OIDC, dynamic revocation, and denial audit logs remain to be done.
+The existing write `allowed_paths` also applies to the operator PAT and checks the final tree diff.
 
-## 検証
+## Verification
 
-macOS arm64 と固定 Rust 1.90／Linux arm64 で、次のテストが通過しています。
+The following tests pass on macOS arm64 and Linux arm64 with pinned Rust 1.90.
 
-- 実 Git の v0／v1／v2 で、任意の Basic username と専用 PAT による partial clone／後続 blob 取得。
-- 許可された descendant の受け入れと、通常 repo／兄弟ディレクトリ／別の hex パス／push の拒否。
-- HTTP JSON と実 gRPC の Metadata／Writer／Objects に同じ PAT を渡した場合の拒否。
-- 実 `kasu-server` バイナリの相対 token file 読み込み、運用者 PAT なしの匿名拒否、設定不備の起動失敗。
-- PAT 重複、Objects hop token の設定順序を変えた衝突、unknown field、invalid path／hex、秘密値を含まないエラー。
+- Partial clone / follow-up blob fetches with real Git v0 / v1 / v2, an arbitrary Basic username, and a dedicated PAT.
+- Accepting allowed descendants and rejecting the normal repo / sibling directories / other hex paths / push.
+- Rejection when the same PAT is passed to Metadata / Writer / Objects over HTTP JSON and real gRPC.
+- The real `kasu-server` binary reading a relative token file, rejecting anonymous access without an operator PAT, and failing startup on bad configuration.
+- Duplicate PATs, collisions with the Objects hop token in either configuration order, unknown fields, invalid paths / hex, and errors that do not contain secret values.
 
-[検証記録](../crates/kasu-git/tests/fixtures/clients/projection-auth-summary.json) にソースのハッシュと実行範囲を保存しています。
+The [verification record](../crates/kasu-git/tests/fixtures/clients/projection-auth-summary.json) stores source hashes and the scope of the run.
 
 ```sh
 cargo test -p kasu-server --lib --test projection_accounts --locked

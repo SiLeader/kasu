@@ -1,7 +1,9 @@
-# Git パス射影
+# Git Path Projections
 
-指定ディレクトリを root とする読み取り用の Git リポジトリを、同じネイティブストアから配信します。
-サーバーで `git subtree` や `git upload-pack` は起動しません。
+English | [日本語](git-projection_ja.md)
+
+A read-only Git repository rooted at a given directory is served from the same native store.
+The server never runs `git subtree` or `git upload-pack`.
 
 ```sh
 git clone http://git:dev-token@127.0.0.1:50080/my-repo/-/path/deploy.git
@@ -9,86 +11,86 @@ git clone --depth=1 http://git:dev-token@127.0.0.1:50080/my-repo/-/path/deploy.g
 git clone --filter=blob:none http://git:dev-token@127.0.0.1:50080/my-repo/-/path/deploy.git
 ```
 
-この例では `deploy/manifest.yaml` が clone 先の `manifest.yaml` になります。
-source の同じ branch 名を使い、ディレクトリ外だけの更新では射影 branch の OID は変わりません。
-`my-repo.git/-/path/deploy.git` の形式も使えます。
-非 UTF-8 のパスはバイト列の hex で指定します。たとえば `0xff` のディレクトリは
-`my-repo/-/path-hex/ff.git`、`deploy` は `my-repo/-/path-hex/6465706c6f79.git` です。
-どちらの指定方法でも、同じ repo／パスは同じ射影になります。空・絶対・dot component・NUL のパスは拒否します。
+In this example, `deploy/manifest.yaml` becomes `manifest.yaml` in the clone.
+The source's branch names are used, and updates only outside the directory do not change the projected branch's OID.
+The form `my-repo.git/-/path/deploy.git` also works.
+Non-UTF-8 paths are specified as hex bytes. For example, the directory `0xff` is
+`my-repo/-/path-hex/ff.git`, and `deploy` is `my-repo/-/path-hex/6465706c6f79.git`.
+Either way, the same repo / path yields the same projection. Empty, absolute, dot-component, and NUL paths are rejected.
 
-URL 末尾の `.git` は省略可能なサフィックスで、ディレクトリ名には含みません。
-`app.git` ディレクトリは `my-repo/-/path/app.git.git`、または
-`my-repo/-/path-hex/6170702e676974.git` と指定してください。HTTP／SSH とも同じ規則です。
+The trailing `.git` in the URL is an optional suffix and is not part of the directory name.
+For a directory named `app.git`, use `my-repo/-/path/app.git.git` or
+`my-repo/-/path-hex/6170702e676974.git`. The same rule applies to HTTP and SSH.
 
-## 履歴の生成規則 v1
+## History Generation Rules v1
 
-`ProjectionId` は repo とバイト列パスを持ち、Derived Data の SubKey と Git OID 索引の namespace に使います。
-通常リポジトリの既存キー形式は変えず、パス射影には別の型タグを使います。
-元の commit をそのままコピーせず、次の規則で `PathCommit` を反復導出します。
+`ProjectionId` holds the repo and a byte-string path, and is used as the Derived Data SubKey and as the Git OID index namespace.
+The existing key format for normal repositories is unchanged; path projections use a different type tag.
+Original commits are not copied; `PathCommit` is derived iteratively by the following rules.
 
-1. 各 source Changeset の RootTree から指定した subtree を取り出し、Git tree を合成します。
-   パスがない場合や途中・末端が file／symlink／gitlink の場合は空 tree とします。
-2. 全 source 親を射影した先端を、source の親順に列挙します。履歴がまだない親を除き、重複を除きます。
-3. 別の射影親の祖先になっている親を除きます。判定には射影 Git DAG を使います。
-4. 親がなく tree も空なら、射影 commit は作りません。
-5. 親が一つで、その tree と同じなら、その親を現在の射影先端とします。
-6. それ以外は新しい commit を作ります。独立した複数の射影親を結ぶ merge は、第一親と tree が同じでも保持します。
-7. ディレクトリ削除は空 tree の commit として残します。再作成時にはその削除 commit が親になります。
+1. Extract the given subtree from each source Changeset's RootTree and synthesize a Git tree.
+   If the path does not exist, or an intermediate or final component is a file / symlink / gitlink, the tree is empty.
+2. List the projected tips of all source parents in the source's parent order, excluding parents with no history yet and removing duplicates.
+3. Remove parents that are ancestors of another projected parent, using the projected Git DAG.
+4. If there are no parents and the tree is empty, no projected commit is created.
+5. If there is one parent with the same tree, that parent becomes the current projected tip.
+6. Otherwise, create a new commit. A merge joining multiple independent projected parents is kept even if its tree equals the first parent's.
+7. Deleting the directory is kept as a commit with an empty tree. When it is recreated, that deletion commit becomes the parent.
 
-author／committer／message は source Changeset の値を使い、`kasu-changeset` と
-`kasu-projection-v1` ヘッダーを含めます。時刻や接続先に依存しません。
-tree はネイティブの File／Symlink／Gitlink から合成し、元の非正規 Git mode や tree の並びは射影では正規化します。
-元 commit の追加ヘッダーや署名は継承しません。メッセージはパスに応じて編集しません。
+author / committer / message come from the source Changeset, and the `kasu-changeset` and
+`kasu-projection-v1` headers are included. Nothing depends on time or the connecting client.
+Trees are synthesized from native File / Symlink / Gitlink entries, so non-canonical Git modes or tree ordering in the original are normalized in projections.
+Extra headers and signatures of original commits are not inherited. Messages are not edited by path.
 
-この設計は [Git subtree split](https://raw.githubusercontent.com/git/git/v2.54.0/contrib/subtree/git-subtree.adoc)
-の目的に沿うものですが、OID や merge の選択を Git subtree と同一にする仕様ではありません。
-上の v1 規則とゴールデン OID を固定します。
+This design follows the purpose of [Git subtree split](https://raw.githubusercontent.com/git/git/v2.54.0/contrib/subtree/git-subtree.adoc),
+but it is not specified to produce the same OIDs or merge choices as Git subtree.
+The v1 rules above and golden OIDs are fixed.
 
-## Ref と tag
+## Refs and Tags
 
-| source の ref 先 | 射影先 |
+| Source ref target | Projection |
 |---|---|
-| commit | その commit の射影先端。該当パスの履歴がなければ ref を省略 |
-| tree | その tree の指定 subtree。ディレクトリがなければ ref を省略 |
-| blob | ディレクトリへの射影がないため ref を省略 |
-| annotated tag／tag の連鎖 | 上記の先端へ object 行を付け替え、tag の連鎖を再構成 |
-| symbolic ref | source の target 名を維持。未生成の HEAD は unborn として扱う |
+| commit | The projected tip for that commit. The ref is omitted if the path has no history |
+| tree | The given subtree of that tree. The ref is omitted if the directory does not exist |
+| blob | The ref is omitted, as there is no directory to project |
+| annotated tag / tag chain | The object line is retargeted to the tip above and the tag chain is rebuilt |
+| symbolic ref | The source's target name is kept. An unborn HEAD is treated as unborn |
 
-書き換えた annotated tag の元署名は有効ではないため、Git が認識する PGP／SSH／X.509 の署名開始行から後を除去します。
-開始形式は [Git 2.54.0 の実装](https://raw.githubusercontent.com/git/git/v2.54.0/gpg-interface.c) を参照しています。
-元の署名の検証や、新しい署名の付与は行いません。
+The original signature of a rewritten annotated tag is no longer valid, so everything from the PGP / SSH / X.509 signature start line recognized by Git onward is removed.
+The start formats follow [Git 2.54.0's implementation](https://raw.githubusercontent.com/git/git/v2.54.0/gpg-interface.c).
+Original signatures are not verified, and no new signature is added.
 
-## 認可と通信
+## Authorization and Transport
 
-Basic／Bearer による既存の repo 単位認可を、ref 広告や射影導出より前に実行します。
-want／have の索引と到達可能性は射影ごとに分離します。元の commit、パス外の blob、別の射影の commit は、
-元 repo に存在するだけでは want できません。同じ内容の blob／tree が複数の射影で同じ Git OID を持つことはあります。
+The existing per-repo Basic / Bearer authorization runs before ref advertisement and projection derivation.
+The want / have index and reachability are separated per projection. Original commits, blobs outside the path, and commits of another projection
+cannot be wanted merely because they exist in the source repo. Blobs / trees with the same content may have the same Git OID across projections.
 
-v0／v1／v2 の clone／fetch、shallow、`blob:none` と後続 promisor fetch は同じ upload-pack を使います。
-receive-pack の広告・push は HTTP 405 で拒否します。書き込みは元リポジトリを使います。
+v0 / v1 / v2 clone / fetch, shallow, and `blob:none` with follow-up promisor fetches use the same upload-pack.
+receive-pack advertisements and pushes are rejected with HTTP 405. Writes go through the source repository.
 
-[射影専用アカウント](projection-accounts.md) は、許可したディレクトリの射影だけを読み取り可能にします。
-通常の運用者 PAT は元 repo 全体の権限を持ちます。source の author／message／ref 名を隠す仕組みではありません。
-ネイティブ API のディレクトリ単位読み取りや、アカウントごとの書き込み ACL は別の残作業です。
-初回導出は source の全親履歴を処理し、結果は不変キーで再利用します。大規模 repo の初回時間・複数射影の容量評価は未実施です。
+[Projection-only accounts](projection-accounts.md) can read only projections of allowed directories.
+A normal operator PAT has permission for the whole source repo. This is not a mechanism for hiding source authors, messages, or ref names.
+Per-directory reads through the native API and per-account write ACLs are separate work.
+The first derivation processes the source's full all-parent history, and results are reused under immutable keys. Initial time on large repositories and capacity for many projections have not been evaluated.
 
-## 検証
+## Verification
 
-macOS arm64 の Git 2.54.0 と、固定 Rust 1.90／Linux arm64 の Git 2.39.5 で検証しています。
+Verified with Git 2.54.0 on macOS arm64 and Git 2.39.5 on Linux arm64 with pinned Rust 1.90.
 
-- v0／v1／v2、それぞれ全履歴・depth=1・partial clone、strict fsck。
-- パス外だけの更新で OID が変わらず、パス内更新の fetch で内容が更新されること。
-- annotated／nested tag の付け替え、tree tag、blob tag の省略、元署名 suffix の除去。
-- 元の commit／パス外 blob／別射影の commit の want 拒否、push 拒否、非 UTF-8 のパスの HTTP clone。
-- 単体 DAG で、独立した merge の保持、祖先親の除去、削除・再作成、file への置換、キャッシュ再利用。
-- 生成 pack の `git index-pack --strict`／`git fsck --strict` と、決定的 OID のゴールデン。
+- v0 / v1 / v2, each with full history, depth=1, and partial clone, plus strict fsck.
+- OIDs do not change for updates only outside the path, and fetching an update inside the path updates the content.
+- Retargeting annotated / nested tags, tree tags, omitting blob tags, and stripping original signature suffixes.
+- Rejecting wants for original commits / blobs outside the path / commits of another projection, rejecting push, and HTTP clone of non-UTF-8 paths.
+- Unit DAG tests for keeping independent merges, removing ancestor parents, deletion and recreation, replacement by a file, and cache reuse.
+- `git index-pack --strict` / `git fsck --strict` on generated packs, and golden deterministic OIDs.
 
-実通信の記録は [互換性マトリクス](../crates/kasu-git/tests/fixtures/clients/matrix.json)、
-ソース・通信のハッシュと範囲は [検証結果](../crates/kasu-git/tests/fixtures/clients/path-projection-summary.json) を参照してください。
-ArgoCD v3.5.6／Flux v2.9.6 にパス射影 URL を設定した [kind E2E](gitops-e2e.md#パス射影-url) も通過しました。
-初回・射影外のみの更新・射影内更新の3段階で、両者の SHA／ConfigMap、refresh の受理、
-実 clone／fetch の subtree 一致と strict fsck を確認しています。
-[通信と同期結果](../crates/kasu-git/tests/fixtures/clients/path-projection-kind/gitops-kind-summary.json) を保存しています。
+See the [compatibility matrix](../crates/kasu-git/tests/fixtures/clients/matrix.json) for traffic records,
+and the [verification results](../crates/kasu-git/tests/fixtures/clients/path-projection-summary.json) for source / traffic hashes and scope.
+The [kind E2E](gitops-e2e.md#path-projection-urls) with path projection URLs configured in ArgoCD v3.5.6 / Flux v2.9.6 also passed.
+Across three stages — initial, updates only outside the projection, and updates inside it — both tools' SHAs / ConfigMaps, refresh acceptance,
+and subtree equality / strict fsck of real clones / fetches were confirmed.
+The [traffic and sync results](../crates/kasu-git/tests/fixtures/clients/path-projection-kind/gitops-kind-summary.json) are stored.
 
 ```sh
 cargo test -p kasu-git --test path_projection --locked

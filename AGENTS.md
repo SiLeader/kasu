@@ -30,6 +30,10 @@ Use Rust's test harness, Tokio tests for asynchronous behavior, and existing `pr
 
 Existing commits use short, plain subjects such as `update readme`; no enforced prefix convention is evident. Write specific, action-oriented subjects. PRs should explain the problem, resulting behavior, and validation performed; link relevant issues and update affected documentation.
 
+## Documentation Languages
+
+Write documentation in both English and Japanese. The English version uses the plain file name (for example, `docs/land.md`), and the Japanese version adds a `_ja` suffix (`docs/land_ja.md`). Keep the two in sync when editing either one, start each with a language switcher line (`English | [日本語](land_ja.md)` / `[English](land.md) | 日本語`), and point links in Japanese documents at the `_ja` versions. The design plan in `docs/plan/` is Japanese only and is not translated.
+
 ## Agent & Configuration Instructions
 
 Always clear `RUSTC_WRAPPER` for sandboxed Cargo commands to disable inherited sccache settings. Do not modify or remove `.cargo/config.toml` to bypass sandbox restrictions. Keep credentials out of commits; README tokens are local examples.

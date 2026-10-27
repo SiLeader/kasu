@@ -1,13 +1,15 @@
-# リポジトリアカウントと書き込み ACL
+# Repository Accounts and Write ACLs
 
-`KASU_ACCOUNTS_FILE` に PAT ごとの書き込み範囲を設定します。
-Git Smart HTTP／SSH と native Writer の gRPC／HTTP JSON に共通して適用します。
-既定ではアカウントにリポジトリ全体の読み取り権限があります。
-`read_directories` で [native の読み取り範囲](directory-read-acl.md) を限定できます。
-読み取りをディレクトリに限定する Git 接続には、既存の [射影専用アカウント](projection-accounts.md) を使います。
-範囲のあるアカウントは Git の許可されたパス射影を読み取れ、通常の Git URL の read／push は拒否します。
+English | [日本語](repository-accounts_ja.md)
 
-## 設定
+`KASU_ACCOUNTS_FILE` configures the write scope per PAT.
+It applies equally to Git Smart HTTP / SSH and to native Writer gRPC / HTTP JSON.
+By default, accounts can read the whole repository.
+`read_directories` limits the [native read scope](directory-read-acl.md).
+For Git connections with reads limited to directories, use the existing [projection-only accounts](projection-accounts.md).
+Scoped accounts can read allowed Git path projections, while reads / pushes on the normal Git URL are rejected.
+
+## Configuration
 
 ```json
 {
@@ -38,95 +40,95 @@ KASU_WRITE_POLICY_FILE=/etc/kasu/write-policy.json \
   kasu-server /srv/kasu demo
 ```
 
-`token_file` は JSON の場所からの相対パス、または絶対パスです。
-`KASU_TOKEN`／`KASU_TOKEN_FILE` は引き続き運用者の資格情報になります。
-運用者 PAT を省略してアカウントだけで稼働することもできます。設定されたアカウントがある場合、匿名アクセスは拒否します。
-PAT は Basic の password または Bearer として渡します。Basic の username はアカウント名とは照合しません。
+`token_file` is a path relative to the JSON's location, or an absolute path.
+`KASU_TOKEN` / `KASU_TOKEN_FILE` remain the operator credential.
+The server can also run with accounts only, omitting the operator PAT. When accounts are configured, anonymous access is rejected.
+PATs are passed as the Basic password or as Bearer. The Basic username is not matched against the account name.
 
-`write_policy` を省略するか `null` にすると読み取り専用です。
-明示的な `{}` は既定の WritePolicy、つまり branch／tag の作成・fast-forward、全パスの変更を許可します。
-force と削除は既定で許可しません。書き込み範囲を限定する場合は、上記のように policy を明記します。
-`allowed_path_prefixes` は UTF-8 文字列と byte 配列の両方を受け付け、たとえば `[255]` は `0xff` のパスです。
-空文字列は全パス、空の配列は変更可能なパスなしを表します。
-パス境界を照合するため、`deploy` の許可で `deployment` は変更できません。
+Omitting `write_policy` or setting it to `null` makes the account read-only.
+An explicit `{}` is the default WritePolicy, i.e. creating / fast-forwarding branches / tags and changing every path are allowed.
+Force and deletion are not allowed by default. To limit the write scope, spell out the policy as above.
+`allowed_path_prefixes` accepts both UTF-8 strings and byte arrays; for example, `[255]` is the path `0xff`.
+An empty string means every path, and an empty array means no paths may be changed.
+Matching is at path boundaries, so allowing `deploy` does not allow changing `deployment`.
 
-## リポジトリ単位の grant
+## Per-repository Grants
 
-複数リポジトリを提供する場合は、アカウントに `grants` を設定します。
-`repositories` のリポジトリ名 glob ごとに `write_policy` と `read_directories` を指定し、
-最も具体的に一致する 1 件だけを使います。grant のないリポジトリは存在しないものと同じ `NotFound` です。
-上記の `grants` なしの形式は、起動引数または `migrate-registry` で登録した legacy リポジトリへの単一 grant として扱います。
-照合の規則と例は [マルチリポジトリ](multi-repository.md#認証認可) を参照してください。
+When serving multiple repositories, set `grants` on the account.
+For each repository name glob in `repositories`, specify `write_policy` and `read_directories`;
+only the single most specific match is used. Repositories without a grant return `NotFound`, the same as nonexistent ones.
+The form above without `grants` is treated as a single grant on the legacy repository registered by the startup arguments or `migrate-registry`.
+See [multiple repositories](multi-repository.md#authentication-and-authorization) for matching rules and examples.
 
-## サーバー全体の policy との関係
+## Relation to the Server-wide Policy
 
-実効権限は、[サーバー全体の WritePolicy](git-push.md)、[リポジトリの policy](multi-repository.md#リポジトリ単位の設定)、アカウントの policy のすべてが許す範囲です。
-アカウント設定はサーバー全体の制限を拡大しません。
+Effective permissions are the range allowed by all of the [server-wide WritePolicy](git-push.md), the [repository policy](multi-repository.md#per-repository-configuration), and the account policy.
+Account settings never widen server-wide restrictions.
 
-| 操作 | 判定 |
+| Operation | Decision |
 |---|---|
-| ref の更新先 | 両 policy がその ref を許可 |
-| 新規 ref | 両 policy が作成を許可 |
-| ref の削除 | 両 policy が削除を許可し、最終 tree 差分も許可範囲内 |
-| force／tag の置換 | 両 policy がその ref の force を許可 |
-| 変更パス | 最終 tree の各変更が両 policy のパス範囲内 |
-| Git atomic push | 全 ref の判定が通過した場合だけ一括 CAS |
-| 読み取り専用 PAT | Metadata／Git fetch は許可、Objects は既存の hop 認可にも従う。全 Writer RPC と push は拒否 |
+| Ref update target | Both policies allow that ref |
+| New ref | Both policies allow creation |
+| Ref deletion | Both policies allow deletion, and the final tree diff is within the allowed scope |
+| Force / tag replacement | Both policies allow force for that ref |
+| Changed paths | Each change in the final tree is within both policies' path scope |
+| Git atomic push | A batched CAS only if every ref passes |
+| Read-only PAT | Metadata / Git fetch allowed; Objects also follows the existing hop authorization. All Writer RPCs and push are rejected |
 
-サーバー全体の force 設定が空の場合、アカウント側に force 設定があっても force はできません。
-新しい ref のパス検査は空 tree との比較なので、許可範囲外の既存ファイルを含む branch の新規公開も拒否します。
-既存 branch の変更では、その branch の更新前 tree と更新後 tree を比較します。
-これにより、既存の範囲外ファイルを保持したまま、許可されたディレクトリだけを更新できます。
+If the server-wide force setting is empty, force is not possible even if the account has a force setting.
+Path checks for new refs compare against an empty tree, so publishing a new branch containing existing files outside the allowed scope is also rejected.
+Changes to an existing branch compare that branch's tree before and after the update.
+This allows updating only allowed directories while keeping existing out-of-scope files.
 
-native の UploadBlobs／CreateChangeset／Merge／Rebase は、書き込み可能なアカウントなら draft を作成できます。
-パス ACL は UpdateRef と Land の公開時、Git は receive-pack の公開時に最終 tree 差分を検査します。
-個々の Changeset の変更リストだけでは判定しないため、merge の別親を経由する範囲外の変更も検査対象です。
-Land は rebase 後の候補を各試行と確定直前に検査します。
-読み取り範囲を省略したアカウントはリポジトリ全体を読み取れるので、draft の作成をパス別に秘匿する機能ではありません。
+Native UploadBlobs / CreateChangeset / Merge / Rebase can create drafts for writable accounts.
+Path ACLs check the final tree diff when UpdateRef and Land publish, and Git when receive-pack publishes.
+Decisions are not based only on individual Changesets' change lists, so out-of-scope changes through another merge parent are also checked.
+Land checks the post-rebase candidate on each attempt and right before committing.
+Accounts without a read scope can read the whole repository, so this is not a feature for hiding draft creation per path.
 
-## Land の再送と ref log
+## Land Resends and Ref Logs
 
-Land の永続的な冪等結果は、設定上のアカウント名とクライアントの冪等キーを組み合わせて識別します。
-別のアカウントが同じキーを使っても、それぞれの要求として処理します。
-同じアカウント・同じキーで要求内容を変えるとエラーになります。
-運用者 PAT の既存のキー・fingerprint 形式は維持します。
+Durable idempotent Land results are identified by combining the configured account name with the client's idempotency key.
+If different accounts use the same key, each is processed as its own request.
+Changing the request contents with the same account and key is an error.
+The existing key / fingerprint format for the operator PAT is preserved.
 
-PAT の更新や設定内の並べ替えでは、アカウント名を維持すると同じ結果を再取得できます。
-アカウント名を変えると別の再送名前空間になります。
-設定と秘密ファイルはプロセスの起動時に読みます。変更・失効には全 server／SSH worker への設定反映が必要です。
-SSH worker は接続ごとに起動するため、次の接続から更新を読みます。
-既に開始した要求はその開始時点の policy を保持します。
+When updating PATs or reordering the configuration, keeping the account name allows refetching the same result.
+Changing the account name gives a different resend namespace.
+Configuration and secret files are read at process startup. Changes and revocations require deploying the configuration to every server / SSH worker.
+SSH workers start per connection, so updates are read from the next connection.
+Requests already started keep the policy from their start time.
 
-確定した native／Git 更新の ref log の actor には設定上のアカウント名を使います。
-運用者の従来の `api`／`git-push` actor は維持します。
-拒否した要求の永続監査ログや、OIDC の認証・動的な失効は未実装です。
+The configured account name is used as the actor in the ref log of finalized native / Git updates.
+The operator's existing `api` / `git-push` actors are preserved.
+Durable audit logs of rejected requests, OIDC authentication, and dynamic revocation are not implemented.
 
-## SSH での対応付け
+## Mapping over SSH
 
-[Git SSH](git-ssh.md) の `authorized_keys` の forced command の最後の引数を、対象アカウントの PAT ファイルにします。
-管理者が設定する sshd の `SetEnv` に `KASU_ACCOUNTS_FILE=/etc/kasu/accounts.json` も含めます。
-クライアントからアカウント設定や policy の環境変数を受け付ける必要はありません。
+Make the last argument of the forced command in [Git SSH](git-ssh.md) `authorized_keys` the target account's PAT file.
+Also include `KASU_ACCOUNTS_FILE=/etc/kasu/accounts.json` in the administrator-configured sshd `SetEnv`.
+There is no need to accept account configuration or policy environment variables from clients.
 
 ```text
 restrict,command="/opt/kasu/kasu-git-ssh /srv/kasu demo /etc/kasu/secrets/deploy-bot.pat" ssh-ed25519 AAAA... deploy-bot
 ```
 
-## 設定の上限
+## Configuration Limits
 
-- accounts は1〜256件。名前は1〜128 bytes で、設定内・射影アカウント間で重複不可。
-- PAT は運用者、他アカウント、射影アカウント、Objects hop token と重複不可。
-- JSON は最大1 MiB。未知の field、欠落した秘密ファイル、不正な byte パスは起動失敗。
-- 各 policy の各ルール配列は最大128件、各ルールは最大4096 bytes。
-- PAT の読み込み上限・末尾改行の扱いは既存の token file と同じ。
+- 1–256 accounts. Names are 1–128 bytes and must be unique within the configuration and across projection accounts.
+- PATs must not duplicate the operator, other accounts, projection accounts, or the Objects hop token.
+- JSON is at most 1 MiB. Unknown fields, missing secret files, and invalid byte paths fail startup.
+- Each rule array in each policy has at most 128 entries, each rule at most 4096 bytes.
+- PAT read limits and trailing newline handling are the same as existing token files.
 
-## 検証
+## Verification
 
-macOS arm64 の実 gRPC／HTTP JSON、Git 2.54.0 の実 HTTP と SSH stdio、
-固定 Rust 1.90 Linux arm64 の実 OpenSSH／Git 2.39.5 で検証しました。
-アカウント別の path／ref、両 policy の積、read-only、atomic rollback、非 UTF-8、
-64要求の並行 HTTP、native Land の最終差分・再送、2つの実 server でのアカウント順序差、
-PAT 更新と再起動後の再送・ref log をテストしました。
-テストは認可機能の動作検証で、セキュリティ監査は今回の範囲に含めていません。
+Verified with real gRPC / HTTP JSON on macOS arm64, real HTTP and SSH stdio with Git 2.54.0,
+and real OpenSSH / Git 2.39.5 on Linux arm64 with pinned Rust 1.90.
+Tests covered per-account paths / refs, the intersection of both policies, read-only, atomic rollback, non-UTF-8,
+64 concurrent HTTP requests, native Land final diffs and resends, differing account order across 2 real servers,
+and resends / ref logs after PAT updates and restarts.
+The tests verify the authorization feature's behavior; a security audit is outside the scope of this work.
 
 ```sh
 cargo test -p kasu-server --lib accounts --locked
@@ -136,6 +138,6 @@ docker run --rm --network none --entrypoint /out/accounts-test kasu:ssh-test
 docker run --rm --network none kasu:ssh-test
 ```
 
-[検証結果とハッシュ](../crates/kasu-git/tests/fixtures/clients/accounts/) と
-[SSH の通信記録](../crates/kasu-git/tests/fixtures/clients/ssh/) を保存しています。
-[Git SSH CI](../.github/workflows/ssh.yml) にも同じテストを追加しています。GitHub 上での実行結果は未確認です。
+The [verification results and hashes](../crates/kasu-git/tests/fixtures/clients/accounts/) and
+[SSH traffic records](../crates/kasu-git/tests/fixtures/clients/ssh/) are stored.
+The same tests have also been added to the [Git SSH CI](../.github/workflows/ssh.yml). Results of runs on GitHub are unconfirmed.

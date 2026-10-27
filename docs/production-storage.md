@@ -1,8 +1,10 @@
-# PostgreSQL／S3 と複数 server
+# PostgreSQL / S3 and Multiple Servers
 
-`kasu-store` の `production` feature は PostgreSQL の MetaStore／RefStore／GitRefStore／
-WebhookStore と S3 の BlobStore を有効にします。
-`kasu-server`／`kasu-ingest` の同じ feature から利用できます。
+English | [日本語](production-storage_ja.md)
+
+The `production` feature of `kasu-store` enables the PostgreSQL MetaStore / RefStore / GitRefStore /
+WebhookStore and the S3 BlobStore.
+It is available through the same feature on `kasu-server` / `kasu-ingest`.
 
 ```sh
 cargo build -p kasu-server -p kasu-ingest --features production --bins --locked
@@ -17,124 +19,124 @@ target/debug/kasu-ingest /path/to/repository.git /path/to/local-fallback my-repo
 target/debug/kasu-server /path/to/local-fallback my-repo 127.0.0.1:50051 127.0.0.1:50080
 ```
 
-DSN ファイルは、たとえば `host=db.example port=5432 dbname=kasu user=kasu sslmode=require` などの
-PostgreSQL 接続設定です。パスワードが必要なら同ファイルに含めて保護してください。
-最大64 KiB、UTF-8、末尾の CR／LF は除去します。空の接続設定は拒否します。
-TLS は WebPKI roots とホスト名で検証し、プライベート CA は PEM ファイルの
-`KASU_POSTGRES_CA_FILE` で追加できます。
-TLS の `prefer` は `require` に引き上げ、暗号化できない接続へ自動で切り替えません。
+The DSN file contains PostgreSQL connection settings such as
+`host=db.example port=5432 dbname=kasu user=kasu sslmode=require`. If a password is needed, include it in the same file and protect it.
+It is at most 64 KiB, UTF-8, with trailing CR / LF removed. Empty connection settings are rejected.
+TLS is verified with WebPKI roots and the host name, and a private CA can be added as a PEM file with
+`KASU_POSTGRES_CA_FILE`.
+TLS `prefer` is upgraded to `require`, and it never falls back automatically to an unencrypted connection.
 
-S3 の認証情報は [object_store の AWS 設定](https://docs.rs/object_store/0.14.2/object_store/aws/struct.AmazonS3Builder.html#method.from_env)
-に従います。環境変数の access key／secret／session token、web identity、ECS／EC2 の資格情報供給元を利用できます。
-キーの値を CLI 引数や working copy に保存しません。
-bucket は事前に作成してください。同じ bucket／prefix を利用する server／ingest に、
-必要な GetObject／PutObject 権限を付与します。ストアはオブジェクトを削除しません。
-既存オブジェクトを保持する bucket policy と資格情報の管理は運用側で行ってください。
+S3 credentials follow [object_store's AWS configuration](https://docs.rs/object_store/0.14.2/object_store/aws/struct.AmazonS3Builder.html#method.from_env).
+Access key / secret / session token from environment variables, web identity, and ECS / EC2 credential providers are available.
+Key values are never stored in CLI arguments or the working copy.
+Create the bucket beforehand. Grant the server / ingest processes using the same bucket / prefix
+the required GetObject / PutObject permissions. The store never deletes objects.
+Bucket policies that retain existing objects and credential management are the operator's responsibility.
 
-| 環境変数 | 動作 |
+| Environment variable | Behavior |
 |---|---|
-| `KASU_POSTGRES_DSN_FILE` | 設定時は PostgreSQL、未設定時はローカル SQLite |
-| `KASU_POSTGRES_CA_FILE` | PostgreSQL 用の追加 CA 証明書 |
-| `KASU_S3_BUCKET` | 設定時は S3、未設定時はローカル FS |
-| `KASU_S3_PREFIX` | 圧縮オブジェクトの prefix。既定 `kasu/objects/v1` |
-| `KASU_S3_REGION` | AWS region の明示指定。省略時は AWS 設定を利用 |
-| `KASU_S3_ENDPOINT` | S3 互換サービスの URL。既定は AWS の endpoint |
-| `KASU_S3_PATH_STYLE` | `true`／`1` で path style。既定 false |
-| `KASU_POSTGRES_ALLOW_PLAINTEXT` | `true`／`1` と DSN の `sslmode=disable` を併用して平文を明示許可 |
-| `KASU_S3_ALLOW_PLAINTEXT` | `true`／`1` で HTTP endpoint を明示許可 |
+| `KASU_POSTGRES_DSN_FILE` | PostgreSQL when set; local SQLite when unset |
+| `KASU_POSTGRES_CA_FILE` | Additional CA certificates for PostgreSQL |
+| `KASU_S3_BUCKET` | S3 when set; local FS when unset |
+| `KASU_S3_PREFIX` | Prefix for compressed objects. Default `kasu/objects/v1` |
+| `KASU_S3_REGION` | Explicit AWS region. Uses the AWS configuration when omitted |
+| `KASU_S3_ENDPOINT` | URL of an S3-compatible service. Defaults to the AWS endpoint |
+| `KASU_S3_PATH_STYLE` | `true` / `1` for path style. Default false |
+| `KASU_POSTGRES_ALLOW_PLAINTEXT` | `true` / `1` combined with `sslmode=disable` in the DSN explicitly allows plaintext |
+| `KASU_S3_ALLOW_PLAINTEXT` | `true` / `1` explicitly allows an HTTP endpoint |
 
-外部ストアを指定したときの設定・接続エラーは起動または要求を失敗させます。
-ローカルストアへ切り替えて別の状態を書き込むことはありません。
-feature なしのバイナリも、指定された PostgreSQL／S3 設定を無視せず起動エラーにします。
-両方の外部ストアを指定した場合は、位置引数のローカル directory を作成・利用しません。
-複数 server では必ず同じ PostgreSQL と S3 bucket／prefix を共有してください。
-片方だけの外部化もできますが、その場合もう片方のローカルデータの共有は運用側で必要です。
+When an external store is specified, configuration and connection errors fail startup or the request.
+It never switches to a local store and writes separate state.
+Binaries without the feature also refuse to start rather than ignoring specified PostgreSQL / S3 settings.
+When both external stores are specified, the local directory in the positional argument is neither created nor used.
+Multiple servers must always share the same PostgreSQL and S3 bucket / prefix.
+Externalizing only one of them is possible, but then sharing the other's local data is the operator's responsibility.
 
-## PostgreSQL の保存契約
+## PostgreSQL Storage Contract
 
-起動時に専用の `kasu` schema と version 1 のテーブルを作成します。
-初期化の DDL だけに advisory lock を使います。schema の削除や既存 SQLite からの
-自動移行は行いません。未対応の schema version は拒否します。
-初期化と通常の保存に必要な権限を持つ専用 DB ロールを用意してください。
+At startup, a dedicated `kasu` schema and version 1 tables are created.
+An advisory lock is used only for the initialization DDL. Schemas are never dropped, and there is no
+automatic migration from existing SQLite. Unsupported schema versions are rejected.
+Prepare a dedicated DB role with the permissions needed for initialization and normal storage.
 
-不変 KV は BLAKE3 のキー索引と元のキー・値を保持します。
-`INSERT ... ON CONFLICT DO NOTHING` の後に一致を検査し、別の値への上書きを拒否します。
-長いパスや非 UTF-8 のキーを PostgreSQL の B-tree の行サイズ上限に依存せず保存できます。
-repo と ref の索引も固定長 hash と元バイト列を照合します。
+The immutable KV keeps a BLAKE3 key index plus the original key and value.
+After `INSERT ... ON CONFLICT DO NOTHING`, equality is checked and overwrites with a different value are rejected.
+Long paths and non-UTF-8 keys can be stored without depending on PostgreSQL's B-tree row size limit.
+Repo and ref indexes also check fixed-length hashes against the original bytes.
 
-可変 ref は repo／型／名前ごとの行をロックしてから、target と version の両方を比較します。
-複数 ref のロック順を固定し、全件一致時のみ ref とログを同じトランザクションで更新します。
-削除は version を保持した tombstone です。branch と Git-only ref の混合 transaction と
-[Git atomic push](git-push.md) に対応します。
+Mutable refs lock the row per repo / type / name and then compare both target and version.
+The lock order for multiple refs is fixed, and refs and logs are updated in the same transaction only when every ref matches.
+Deletion is a tombstone that keeps the version. Mixed transactions of branches and Git-only refs and
+[Git atomic push](git-push.md) are supported.
 
-ログの番号には `SERIAL`／`nextval` を使いません。
-[PostgreSQL の sequence](https://www.postgresql.org/docs/18/functions-sequence.html) はトランザクションと独立して進むため、
-発行順と commit 順が逆転すると cursor 配信が遅い transaction のログを取りこぼす可能性があります。
-repo／stream ごとの行カウンターをログ追記と同じ transaction で増やし、
-後続番号が先に commit することを防ぎます。この短い区間は同じ repo／stream で直列化します。
-無関係な repo のカウンターは共有しません。
+Log numbers do not use `SERIAL` / `nextval`.
+[PostgreSQL sequences](https://www.postgresql.org/docs/18/functions-sequence.html) advance independently of transactions,
+so if issue order and commit order invert, cursor delivery could miss logs from a slow transaction.
+A per-repo / per-stream row counter is incremented in the same transaction as the log append,
+preventing a later number from committing first. This short section is serialized for the same repo / stream.
+Unrelated repos do not share counters.
 
-Land は repo／冪等キーの claim、結果の fingerprint、応答 bytes を共有します。
-claim、ref CAS、ログ、結果の保存は同じ transaction に入り、キャンセル時は rollback します。
-同じキーへの別接続の要求は元の結果を返し、違う fingerprint は拒否します。
-webhook も endpoint／stream ごとの cursor・確定済み本文・試行数・次回時刻を PostgreSQL に保持します。
-別 server が再送しても本文が変わらず、古い worker は cursor を巻き戻せません。
-外部 HTTP 配信は at-least-once です。
+Land shares the repo / idempotency key claim, the result fingerprint, and the response bytes.
+The claim, ref CAS, logs, and result storage are in the same transaction and roll back on cancellation.
+Requests for the same key from another connection return the original result, and a different fingerprint is rejected.
+Webhooks also keep per-endpoint / per-stream cursors, finalized bodies, attempt counts, and next-attempt times in PostgreSQL.
+Bodies do not change even if another server resends, and stale workers cannot rewind cursors.
+External HTTP delivery is at-least-once.
 
-各 `PostgresStore` は1つの同期接続を再利用し、インスタンス内では直列化します。
-SQL 実行のためにトランザクションを不変 KV 全体へ広げることはありません。
-既定の接続期限5秒、SQL statement 期限10秒、ロック待ち期限5秒、idle transaction 期限30秒、
-`synchronous_commit=on` を設定します。
-接続が閉じた後は次の要求で再接続します。失敗した SQL／commit を内部で自動再実行しません。
-応答喪失時の Land は元のキーで再送できます。通常の CAS は最新の ref を確認してください。
-大規模運用向けの接続 pool と容量評価は今後の作業です。
+Each `PostgresStore` reuses one synchronous connection and serializes within the instance.
+Transactions are never widened across the whole immutable KV to run SQL.
+Defaults are a 5-second connection deadline, 10-second SQL statement deadline, 5-second lock wait deadline, 30-second idle transaction deadline,
+and `synchronous_commit=on`.
+After a connection closes, the next request reconnects. Failed SQL / commits are never automatically retried internally.
+A Land with a lost response can be resent with the original key. For normal CAS, check the latest ref.
+Connection pooling and capacity evaluation for large-scale operation are future work.
 
-## S3 の保存契約
+## S3 Storage Contract
 
-キーは `<prefix>/<先頭2桁>/<残り62桁>`、内容は保存済み zstd frame です。
-[S3 の conditional write](https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html) を利用し、
-`If-None-Match: *` で作成します。
-既存時は展開後の内容を照合し、同じ raw bytes の異なる圧縮 frame が来ても最初の frame を保持します。
-conditional write 非対応を通常の上書き PUT に置き換える fallback はありません。
-S3 互換サービスにも、conditional create と read-after-write の整合性が必要です。
+Keys are `<prefix>/<first 2 hex digits>/<remaining 62 hex digits>`, and contents are the stored zstd frames.
+Objects are created with `If-None-Match: *` using
+[S3 conditional writes](https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html).
+If an object exists, its decompressed contents are checked, and even if a differently compressed frame of the same raw bytes arrives, the first frame is kept.
+There is no fallback that replaces an unsupported conditional write with a normal overwriting PUT.
+S3-compatible services also need conditional create and read-after-write consistency.
 
-読み取りと書き込みで、展開上限256 MiB と BLAKE3 を検証します。
-圧縮 bytes は最大257 MiB、受信ストリームも上限と Content-Length を検査します。
-破損した既存オブジェクトはエラーになり、通常の put で修復・上書きしません。
-オブジェクトの frame は転送・取得時に再圧縮しません。
-S3 GET／PUT と PostgreSQL の保存は分散 transaction にせず、
-不変オブジェクトを先に保存してから ref を公開します。失敗した要求の未参照オブジェクトが残る場合があります。
+Reads and writes verify the 256 MiB decompression limit and BLAKE3.
+Compressed bytes are at most 257 MiB, and received streams are also checked against the limit and Content-Length.
+Corrupt existing objects are errors and are never repaired or overwritten by a normal put.
+Object frames are not recompressed on transfer or retrieval.
+S3 GET / PUT and PostgreSQL storage are not a distributed transaction;
+immutable objects are stored first and refs are published afterwards. Unreferenced objects from failed requests may remain.
 
-S3 の処理全体は既定15秒、接続は5秒、最大2回の内部再試行です。
-再試行も15秒の処理全体期限に含めます。
-プロバイダーのエラーから SQL パラメーター、接続 DSN、署名付き URL、資格情報を応答に露出させません。
-データの削除・保持世代・バックアップと復元は別の運用手順で管理してください。
+S3 operations have a 15-second overall deadline by default, a 5-second connection timeout, and at most 2 internal retries.
+Retries are included in the 15-second overall deadline.
+SQL parameters, connection DSNs, signed URLs, and credentials from provider errors are never exposed in responses.
+Manage data deletion, retention generations, and backup and restore with separate operational procedures.
 
-## 実通信の検証
+## Verification Against Real Services
 
 ```sh
 python3 tools/storage/run.py --workdir /tmp/kasu-storage-host
 python3 tools/storage/run.py --linux --workdir /tmp/kasu-storage-linux
 ```
 
-Docker Compose の固定 PostgreSQL 18／SeaweedFS 4.45 を localhost の専用ポートへ起動します。
-既定ポート55432／58333を変える場合は `KASU_TEST_PG_PORT`／`KASU_TEST_S3_PORT` を指定します。
-検証用資格情報は `tools/storage/s3.json` の公開されたテスト値だけを使い、クラウドアカウントは不要です。
-短期テスト CA を生成し、未信頼 CA の拒否と明示 CA の TLS 接続、匿名 S3 の拒否も確認します。
-終了時にこの実行の Compose project と volume を削除します。`--keep` で調査用に保持できます。
-作業 directory にログ、公開 CA 証明書、成功時の `summary.json` を保存します。
+Pinned PostgreSQL 18 / SeaweedFS 4.45 are started with Docker Compose on dedicated localhost ports.
+To change the default ports 55432 / 58333, set `KASU_TEST_PG_PORT` / `KASU_TEST_S3_PORT`.
+Test credentials use only the public test values in `tools/storage/s3.json`; no cloud account is needed.
+A short-lived test CA is generated, and rejection of untrusted CAs, TLS with an explicit CA, and rejection of anonymous S3 are also confirmed.
+At exit, this run's Compose project and volumes are deleted. `--keep` keeps them for investigation.
+Logs, the public CA certificate, and `summary.json` on success are saved in the working directory.
 
-- 16接続の混合 CAS で単一勝者、ref と両種ログの一致、ABA／stale の拒否。
-- SQL 障害時の ref／ログ／カウンター rollback、未 commit の小さい番号を後続ログが追い越さないこと。
-- 8接続の同一 Land キー、再接続とキャンセル、webhook 本文の競合と stale worker。
-- S3 の16並行 writer、異なる圧縮 frame の不変保存、再オープン、破損の拒否。
-- 実 ingest バイナリと2つの server プロセスによる Git atomic push／strict fsck、
-  Metadata／Objects の即時共有、native CAS の単一勝者、別 server・再起動後の Land replay。
-- 誤った S3 資格情報による取得失敗と、資格情報の非露出・ローカル fallback なし。
+- A single winner for mixed CAS over 16 connections, agreement between refs and both kinds of logs, and rejection of ABA / stale.
+- Rollback of refs / logs / counters on SQL failures, and later logs never overtaking uncommitted smaller numbers.
+- The same Land key over 8 connections, reconnection and cancellation, webhook body races and stale workers.
+- 16 concurrent S3 writers, immutable storage of differently compressed frames, reopening, and rejection of corruption.
+- Git atomic push / strict fsck with the real ingest binary and two server processes,
+  immediate sharing of Metadata / Objects, a single winner for native CAS, and Land replay on another server and after restart.
+- Fetch failures with wrong S3 credentials, without exposing credentials and without local fallback.
 
-この検証はローカルの S3 互換 API を対象とします。実 AWS の IAM／KMS／ネットワーク障害、
-地理的に離れた配置での容量・遅延・災害復旧までを検証したものではありません。
-2026-10-23 の [macOS／Linux の実行記録](simulations/README.md#共有ストレージの受け入れ試験) を保存しています。
-[TiKV の初期評価](benchmarks/kv-evaluation.md) では複数 region の transaction、replica／PD 障害、
-全再起動後の全件照合を実施しました。既定の共有ストレージは PostgreSQL／S3 を継続します。
-TiKV の製品用 Rust adapter、同等 HA 構成・大規模負荷・災害復旧の評価は今後の作業です。
+This verification targets a local S3-compatible API. It does not cover real AWS IAM / KMS / network failures,
+or capacity, latency, and disaster recovery for geographically distributed deployments.
+The [macOS / Linux run records](simulations/README.md#shared-storage-acceptance-test) from 2026-10-23 are stored.
+The [initial TiKV evaluation](benchmarks/kv-evaluation.md) covered multi-region transactions, replica / PD failures,
+and full checks after a complete restart. The default shared storage remains PostgreSQL / S3.
+A production Rust adapter for TiKV and evaluation of equivalent HA, large-scale load, and disaster recovery are future work.

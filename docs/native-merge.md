@@ -1,55 +1,57 @@
-# ネイティブ3-wayマージの基盤
+# Native 3-way Merge Foundation
 
-`kasu-ops::merge_text(base, ours, theirs)` と `merge_trees(repo, base, ours, theirs)` は
-M6 の基盤です。tree 演算は呼び出し元が明示した共通基底を使用します。
-Changeset 単位の `Operations::merge`／`rebase` と [Write API](write-api.md) からも使用します。
-[Land](land.md) の再適用にも使用します。
+English | [日本語](native-merge_ja.md)
 
-`merge_text` は改行を保持するバイト列の行で差分を計算します。
-UTF-8 への変換を行わず、末尾改行の有無も保持します。
-双方が同じ変更をした場合と片側だけの変更は、その内容を採用します。
-離れた行の変更は統合し、重なる編集や同じ境界に接する編集をまとめて比較します。
-競合時は、基底の0始まり半開行範囲と両側のバイト列を全競合箇所について返します。
-インラインの競合マーカーは保存しません。双方が異なる変更をした NUL を含む内容は binary conflict です。
+`kasu-ops::merge_text(base, ours, theirs)` and `merge_trees(repo, base, ours, theirs)` are
+the foundation of M6. The tree operation uses the common base explicitly provided by the caller.
+They are also used by the Changeset-level `Operations::merge` / `rebase` and the [Write API](write-api.md),
+and by reapplication in [Land](land.md).
 
-`merge_trees` は明示スタックで tree をたどり、変更されないサブツリーの ID を保持します。
-同じパスの通常ファイルは内容と実行権限をそれぞれ3-wayで処理します。
-双方が別の子ファイルを追加したディレクトリは統合します。
-片側による最後の旧ファイルの削除も、反対側の独立した新ファイル追加と統合できます。
-symlink と gitlink の内容は不透明な値として扱い、双方の異なる変更は競合にします。
-rename／copy の推測は行いません。
+`merge_text` computes diffs over byte-string lines that keep their line endings.
+It does not convert to UTF-8 and preserves whether there is a trailing newline.
+When both sides make the same change, or only one side changes, that content is adopted.
+Changes to separate lines are combined; overlapping edits and edits touching the same boundary are compared together.
+On conflict, it returns the base's 0-based half-open line range and both sides' bytes for every conflict.
+Inline conflict markers are not stored. Content containing NUL that both sides changed differently is a binary conflict.
 
-`TreeConflict` はバイト列パス、競合の種類、base／ours／theirs の `TreeEntry`、
-内容競合の行範囲を保持します。種類は content、binary、add/add、delete/modify、
-file/directory、type change、symlink、gitlink です。
-競合が1件でもあれば `TreeMerge.tree` は `None` となります。
-tree 演算中の不変 blob／tree は保存できますが、Changeset や ref は公開しません。
+`merge_trees` walks trees with an explicit stack and keeps the IDs of unchanged subtrees.
+Regular files at the same path have their content and executable bit merged 3-way independently.
+Directories where both sides added different child files are combined.
+A deletion of the last old file by one side can also be combined with an independent new file added by the other side.
+Symlink and gitlink contents are treated as opaque values, and different changes on both sides conflict.
+No rename / copy inference is done.
 
-## Changeset 単位の演算
+`TreeConflict` holds the byte-string path, the conflict kind, the base / ours / theirs `TreeEntry`,
+and the line ranges of content conflicts. Kinds are content, binary, add/add, delete/modify,
+file/directory, type change, symlink, and gitlink.
+If there is even one conflict, `TreeMerge.tree` is `None`.
+Immutable blobs / trees from the tree operation may be stored, but no Changeset or ref is published.
 
-`merge(a, b, metadata)` は、片側が祖先なら子孫を返します。
-分岐していれば共通基底と両先端を3-way merge し、両親を `[a, b]` とする Changeset を作成します。
-共通祖先がなければ空 tree が基底です。
-複数の best merge-base は ID 順に、共通基底の計算を伴う仮想マージで統合します。
-この処理も明示スタックを使い、仮想 Changeset を最終結果の親へ追加しません。
-基底の統合自体に競合があれば、`MergeBases` stage と元の best base 一覧を返します。
-競合を含む仮想基底へマーカーを埋めて後続演算を続ける方式は採用していません。
+## Changeset-level Operations
 
-`rebase(cs, onto, committer)` は1 Changeset の第一親との差分を `onto` へ再適用します。
-author と message を保持し、committer を置き換え、親を `[onto]` にします。
-ルート Changeset は空 tree との差分、merge Changeset は第一親との差分として扱い、後者は親を1つにします。
-履歴全体をまとめて付け替える API ではありません。
-いずれも ref の更新は行いません。API は成功した Changeset を指定 repo に所属させます。
+`merge(a, b, metadata)` returns the descendant if one side is an ancestor.
+If they diverge, it 3-way merges the common base and both tips, and creates a Changeset with parents `[a, b]`.
+If there is no common ancestor, the empty tree is the base.
+Multiple best merge-bases are combined in ID order through virtual merges, each of which computes its own common base.
+This also uses an explicit stack, and virtual Changesets are not added as parents of the final result.
+If combining the bases itself conflicts, the `MergeBases` stage and the original list of best bases are returned.
+Embedding markers into a conflicted virtual base and continuing with later operations is not adopted.
 
-検証:
+`rebase(cs, onto, committer)` reapplies one Changeset's diff against its first parent onto `onto`.
+It keeps the author and message, replaces the committer, and sets the parents to `[onto]`.
+A root Changeset is treated as a diff against the empty tree and a merge Changeset as a diff against its first parent; the latter ends up with one parent.
+It is not an API for transplanting an entire history at once.
+Neither operation updates refs. The API makes successful Changesets members of the given repository.
+
+Verification:
 
 ```sh
 cargo test -p kasu-ops --test merge --locked
 cargo test -p kasu-ops --test rewrite --locked
 ```
 
-挿入・削除・置換の位置境界144通りと追加 fixture を Git の `merge-file` と比較しています。
-同値・片側変更・左右対称性を proptest で検査し、独立した内容／モード変更、削除と追加、
-file/directory、symlink、gitlink、binary、type change、全競合箇所の保持を個別に検証します。
-Changeset の親・署名・message、fast-forward、root／merge Changeset の再適用、
-criss-cross の2個／3個の best base と基底自体の競合も検証します。
+144 positional boundary combinations of insertions, deletions, and replacements plus extra fixtures are compared against Git's `merge-file`.
+Identity, one-sided changes, and left/right symmetry are checked with proptest; independent content / mode changes, delete vs. add,
+file/directory, symlink, gitlink, binary, type change, and retention of every conflict are verified individually.
+Changeset parents, signatures, and messages, fast-forward, reapplying root / merge Changesets,
+criss-cross merges with 2 / 3 best bases, and conflicts within the bases themselves are also verified.

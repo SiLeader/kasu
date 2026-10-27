@@ -1,20 +1,22 @@
-# オブジェクトの cache／daemon 階層
+# Object Cache / Daemon Hierarchy
 
-`kasu-cache` はリージョンのメモリ LRU、`kasu-daemon` はノードの永続ディスクを提供します。
-どちらも [Objects RPC](object-api.md) の GetTrees／GetBlobs だけを提供し、
-Metadata／Writer は CLI から権威サーバーへ接続します。
+English | [日本語](cache-hierarchy_ja.md)
+
+`kasu-cache` provides a regional memory LRU, and `kasu-daemon` a node's durable disk.
+Both provide only GetTrees / GetBlobs of the [Objects RPC](object-api.md);
+for Metadata / Writer, the CLI connects to the authoritative server.
 
 ```text
 kasu CLI ─ Unix socket ─ daemon ─ gRPC ─ cache ─ gRPC ─ server
                          disk            memory       authority
 ```
 
-各インスタンスは1つの repo と1つの下位トークンに固定します。
-daemon の Unix socket は所有者だけが接続できる mode 600 です。
-ノード上の同じ UID のジョブで共有します。socket の親は同じ UID 所有の mode 700 など、
-group／other に権限のない directory が必要です。
+Each instance is fixed to one repo and one downstream token.
+The daemon's Unix socket is mode 600, connectable only by its owner.
+It is shared by jobs running as the same UID on the node. The socket's parent must be a directory with no group / other permissions,
+such as mode 700 owned by the same UID.
 
-## 起動
+## Startup
 
 ```sh
 cargo build -p kasu-server -p kasu-cache -p kasu-daemon -p kasu-cli --locked
@@ -28,8 +30,8 @@ openssl rand -hex 32 > "$KASU_LAYER_RUN/daemon-hop"
 printf '%s' "$KASU_TOKEN" > "$KASU_LAYER_RUN/user-token"
 ```
 
-同じ環境変数を設定した別々の端末で各プロセスを起動します。
-server のデータは [Git 取り込み](git-import.md) などで準備します。
+Start each process in a separate terminal with the same environment variables.
+Prepare the server's data with [Git import](git-import.md) or similar.
 
 ```sh
 KASU_OBJECT_TOKEN_FILE="$KASU_LAYER_RUN/server-hop" \
@@ -50,62 +52,62 @@ KASU_OBJECTS_ENDPOINT="unix://$KASU_LAYER_RUN/node.sock" \
   kasu checkout main work --sparse app
 ```
 
-上の各起動コマンドは foreground で動きます。SIGINT で終了できます。
-トークンは起動時にファイルから読み込み、末尾の CR／LF を除去します。
-ファイルは改行込みで最大4096 byte、空値は拒否します。
-`--token-file`／`--upstream-token-file` は `KASU_LAYER_TOKEN_FILE`／
-`KASU_UPSTREAM_TOKEN_FILE` でも指定できます。トークンを working copy やログに保存しません。
-cache の TCP 待受は平文です。別ホストへの公開は TLS 終端を用意し、
-上位への HTTPS 接続では WebPKI roots を使用します。
+Each startup command above runs in the foreground and can be stopped with SIGINT.
+Tokens are read from files at startup, with trailing CR / LF removed.
+Files are at most 4096 bytes including newlines, and empty values are rejected.
+`--token-file` / `--upstream-token-file` can also be set with `KASU_LAYER_TOKEN_FILE` /
+`KASU_UPSTREAM_TOKEN_FILE`. Tokens are never stored in working copies or logs.
+The cache's TCP listener is plaintext. For exposure to other hosts, provide TLS termination;
+HTTPS connections to the upstream use WebPKI roots.
 
-`KASU_OBJECT_TOKEN_FILE` を設定した server は、通常のユーザー PAT での Objects RPC を拒否します。
-cache は daemon 用トークン、daemon はユーザートークンを受け取り、隣接する2つのトークンの
-同一値を拒否します。上位応答の `x-kasu-object-layer` も照合します。
-この設定と資格情報の分離で階層のスキップを防ぎます。
-server の同変数を省略した場合は従来の直接 Objects 接続を許可します。
+A server with `KASU_OBJECT_TOKEN_FILE` set rejects Objects RPCs with normal user PATs.
+The cache receives the daemon token and the daemon receives the user token, and identical values for two adjacent tokens
+are rejected. The upstream response's `x-kasu-object-layer` is also checked.
+This configuration and credential separation prevent skipping tiers.
+If the server omits this variable, the existing direct Objects connection is allowed.
 
-CLI のグローバル `--objects <URL>`／`KASU_OBJECTS_ENDPOINT` は Objects だけの接続先です。
-checkout では選択した URL を保存し、それ以降のコマンドでは今回の実行だけ上書きします。
-既存 working copy の移行にも使えます。Unix socket では応答の daemon role も検査します。
-daemon／cache の障害時に他の上位や server へ接続し直す fallback はありません。
+The CLI's global `--objects <URL>` / `KASU_OBJECTS_ENDPOINT` is the endpoint for Objects only.
+checkout stores the chosen URL, and later commands can override it for that run only.
+It can also be used to migrate existing working copies. Over Unix sockets, the response's daemon role is also checked.
+There is no fallback that reconnects to another upstream or the server when the daemon / cache fails.
 
-`--repo` は省略可能で、複数指定できる許可リストです。省略するとすべてのリポジトリを扱います。
-frame はリポジトリ間で共有しますが、上位がそのリポジトリでの所属を確認した `(repo, id)` だけを
-ヒットにします（[マルチリポジトリ](multi-repository.md#クライアント)）。
+`--repo` is an optional allow list that can be repeated. When omitted, every repository is handled.
+Frames are shared across repositories, but only `(repo, id)` pairs whose membership in that repository the upstream has confirmed
+are hits ([multiple repositories](multi-repository.md#clients)).
 
-## 負荷の上限
+## Load Limits
 
-各プロセスで次の既定値を使います。全下位接続の合計に適用します。
+Each process uses the following defaults, applied to the total of all downstream connections.
 
-| オプション | 既定値 | 対象 |
+| Option | Default | Applies to |
 |---|---:|---|
-| `--streams` | 16 | 同時 Objects RPC。超過は即時拒否 |
-| `--fills` | 2 | ディスク取得・上位取得・検証・保存を行う同時 fill |
-| `--pending` | 128 | 異なる未完了オブジェクト。超過は即時拒否 |
-| `--qps` | 20 | 上位への取得開始を一定間隔に制限 |
-| `--queue-timeout-ms` | 1000 | fill 枠の待機期限 |
-| `--upstream-timeout-ms` | 5000 | 上位の1オブジェクト取得期限 |
-| `--cooldown-ms` | 1000 | 上位取得または取得後の保存が3回連続失敗した後の遮断時間 |
-| cache の `--memory-bytes` | 67108864 | LRU に保持する圧縮 frame の合計 |
+| `--streams` | 16 | Concurrent Objects RPCs. Excess is rejected immediately |
+| `--fills` | 2 | Concurrent fills doing disk fetch, upstream fetch, verification, and storage |
+| `--pending` | 128 | Distinct incomplete objects. Excess is rejected immediately |
+| `--qps` | 20 | Paces upstream fetch starts at fixed intervals |
+| `--queue-timeout-ms` | 1000 | Deadline for waiting for a fill slot |
+| `--upstream-timeout-ms` | 5000 | Deadline for fetching one object from the upstream |
+| `--cooldown-ms` | 1000 | Breaker time after 3 consecutive failures of upstream fetch or post-fetch storage |
+| cache `--memory-bytes` | 67108864 | Total compressed frames kept in the LRU |
 
-同じ kind／ID の未完了要求は singleflight で1回にまとめます。
-最初の要求者が切断しても、他の要求者と cache 保存のために有界な fill を継続します。
-遮断時間後は1回の probe だけを許可し、復旧していれば再開します。自動再試行はしません。
-cache が停止すると daemon の既存ディスクヒットは使えますが、cold miss は失敗します。
-レート制限はプロセス単位です。cache 台数を増やす場合はその合計を server の容量に合わせます。
+Incomplete requests for the same kind / ID are combined into one with singleflight.
+Even if the first requester disconnects, the bounded fill continues for other requesters and for cache storage.
+After the breaker time, only one probe is allowed, and processing resumes if it has recovered. There is no automatic retry.
+When the cache stops, the daemon's existing disk hits still work, but cold misses fail.
+Rate limits are per process. When adding cache instances, match their total to the server's capacity.
 
-LRU の予算は保持する圧縮 bytes を数えます。配信中の frame、RPC バッファ、検証時の展開メモリは
-別途必要です。オブジェクトは core の展開上限256 MiB と共通の圧縮 frame 上限で検証します。
-RPC は最大128個の重複しない ID、64 KiB 以下の chunk、有界な送信キューを使用します。
-ストレージへの blocking IO の時間自体には期限がないため、遅いディスクは fill 枠を占有します。
+The LRU budget counts retained compressed bytes. Frames being delivered, RPC buffers, and decompression memory during verification
+are needed in addition. Objects are verified against core's 256 MiB decompression limit and the shared compressed frame limit.
+RPCs use at most 128 distinct IDs, chunks of at most 64 KiB, and bounded send queues.
+Blocking IO time to storage itself has no deadline, so a slow disk occupies fill slots.
 
-保存済み zstd frame を再圧縮せず転送します。
-miss とディスクヒットでは展開・hash・Tree の canonical 検証を行い、メモリヒットは検証済み frame を使います。
-Tree／Blob は別の型付き索引を持ち、未索引データは配信しません。
-圧縮 frame の破損はエラーとして扱い、自動削除・上位からの再取得は行いません。
-中断した公開・eviction の復旧と未公開データの回収は [ディスク容量管理](disk-cache.md) を参照してください。
+Stored zstd frames are forwarded without recompression.
+Misses and disk hits decompress, hash, and do canonical Tree verification; memory hits use already verified frames.
+Trees / Blobs have separate typed indexes, and unindexed data is never served.
+Corrupt compressed frames are treated as errors, and are neither deleted automatically nor refetched from the upstream.
+For recovery of interrupted publication / eviction and reclamation of unpublished data, see [disk capacity management](disk-cache.md).
 
-## snapshot とディスクの管理
+## Snapshots and Disk Management
 
 ```sh
 kasu-daemon snapshot --data "$KASU_LAYER_RUN/store" --repo "$KASU_REPO" /path/to/node.tar
@@ -117,48 +119,48 @@ kasu-daemon serve --repo "$KASU_REPO" --upstream http://127.0.0.1:50091 \
   --snapshot /path/to/node.tar
 ```
 
-手動 export は既存ファイルを上書きしません。起動中のデータも export できます。
-serve は既定で3600秒ごとに `data/snapshots/kasu-snapshot-v1-<timestamp>.tar` を保存します。
-`--snapshot-interval-secs 0` で定期保存を無効にできます。
-daemon は既定で zstd payload 8 GiB・型付き索引10万件の永続 LRU と、定期 snapshot 2世代の保持を使います。
-`--disk-bytes`／`--disk-entries`／`--snapshot-keep` で変更できます。
-共有 frame の計算、起動時の移行・復旧、容量に含まないデータ、旧 archive の扱いは [ディスク容量管理](disk-cache.md) を参照してください。
+Manual export never overwrites existing files. Data in use by a running daemon can also be exported.
+serve saves `data/snapshots/kasu-snapshot-v1-<timestamp>.tar` every 3600 seconds by default.
+`--snapshot-interval-secs 0` disables periodic saving.
+By default the daemon uses a durable LRU of 8 GiB of zstd payload and 100,000 typed index entries, and keeps 2 generations of periodic snapshots.
+These can be changed with `--disk-bytes` / `--disk-entries` / `--snapshot-keep`.
+For accounting of shared frames, migration and recovery at startup, data not counted toward capacity, and handling of old archives, see [disk capacity management](disk-cache.md).
 
-形式は先頭の `manifest.json` と `objects/<kind>/<id>.zst` の tar です。
-repo・型・ID・サイズ・hash を検査し、リンクや別パス、同型キーの重複、過大な manifest を拒否します。
-最大10万オブジェクト、manifest は最大16 MiB、起動時の frame 合計は既定8 GiBです。
-後者は `--snapshot-max-bytes` で指定できます。archive 自体にも追加64 MiB の上限があります。
-tar を filesystem に直接展開せず、一時ストアで全件を検証してから型付き索引を公開します。
-不正な snapshot の一部だけが配信可能になることはありません。
-検証後の公開中に IO 障害が起きた場合は、検証済みの一部が残る可能性があります。
-snapshot は信頼した運用者が配布するものとし、認可と repo の対応を維持してください。
+The format is a tar with a leading `manifest.json` and `objects/<kind>/<id>.zst`.
+Repo, type, ID, size, and hash are checked, and links, other paths, duplicate keys of the same type, and oversized manifests are rejected.
+At most 100,000 objects, a manifest of at most 16 MiB, and by default 8 GiB of frames in total at startup.
+The latter can be set with `--snapshot-max-bytes`. The archive itself also has an extra 64 MiB allowance.
+The tar is never extracted directly to the filesystem; every entry is verified in a temporary store before the typed indexes are published.
+Only part of an invalid snapshot never becomes servable.
+If an IO failure occurs during publication after verification, part of the verified data may remain.
+Snapshots are assumed to be distributed by trusted operators; keep authorization and the repo mapping intact.
 
-ディスクの repo は `scope.json` に固定され、違う repo での再利用を拒否します。
-同じデータ directory と socket の二重起動をロックで拒否します。
-強制終了後は所有者が一致する停止済み socket のみ再作成し、通常終了時は自身の socket を削除します。
+The repo of a disk is fixed in `scope.json`, and reuse for a different repo is rejected.
+Double starts with the same data directory and socket are rejected with a lock.
+After a forced kill, only a stopped socket with a matching owner is recreated, and on normal exit the daemon removes its own socket.
 
-## 観測と検証
+## Observability and Verification
 
-`--metrics <address>` を指定すると HTTP `/metrics` に Prometheus text を公開します。
-既定では metrics ポートを開きません。認証のない運用 endpoint なので待受先を管理してください。
-`kasu_object_*{layer="cache|daemon"}` に hits／misses／coalesced／rejected／upstream／errors、
-pending、保持数・bytes、遮断回数を出します。
-active／max_active は上位呼び出し開始から検証・保存完了までの fill 数です。
-requests は認可済みオブジェクト lookup の数で、拒否されたすべての RPC を含みません。
-hit 率と coalesced 数を併せて見て、cold burst の singleflight 効果を判断できます。
+`--metrics <address>` publishes Prometheus text at HTTP `/metrics`.
+No metrics port is opened by default. It is an unauthenticated operations endpoint, so control where it listens.
+`kasu_object_*{layer="cache|daemon"}` exposes hits / misses / coalesced / rejected / upstream / errors,
+pending, retained count / bytes, and breaker trips.
+active / max_active are the number of fills from the start of the upstream call until verification and storage complete.
+requests counts authorized object lookups and does not include every rejected RPC.
+Looking at the hit rate together with the coalesced count shows how effective singleflight is for cold bursts.
 
 ```sh
 cargo test -p kasu-cache -p kasu-daemon -p kasu-cli --locked
 docker build -f tools/cache/Dockerfile -t kasu:cache-test .
 ```
 
-実 TCP／Unix socket で1,000クライアント、異なる ID の pacing、fill／pending／stream 上限、
-回路遮断と復旧、切断、snapshot の破損・リンク・サイズ拒否、実バイナリの再起動、CLI を検証します。
-負荷試験の範囲と観測値は [記録](simulations/README.md#cache-階層の負荷試験) を参照してください。
+Over real TCP / Unix sockets, this verifies 1,000 clients, pacing across different IDs, fill / pending / stream limits,
+circuit breaking and recovery, disconnects, rejection of corrupt / linked / oversized snapshots, restarting real binaries, and the CLI.
+For the scope of the load test and observed values, see the [record](simulations/README.md#cache-hierarchy-load-test).
 
-## 決定的な障害シミュレーション
+## Deterministic Failure Simulation
 
-[仮想時計の cache シナリオ](simulations/README.md#決定的な-cache-階層障害) は本番 Layer と Objects を使い、
-2 node の集約、cache 不通、途中で切れる stream、取得期限、保存失敗と cooldown／probe、ディスク再オープンを検証します。
-pacing・取得期限・回路遮断器は同じ Tokio 時計を使います。通常の runtime では実時間、pause した試験 runtime では仮想時間です。
-4 seed を各2回、macOS／固定 Rust 1.90 Linux で実行し、1,000クライアントの全イベントと結果 digest が一致しました。
+The [virtual-clock cache scenario](simulations/README.md#deterministic-cache-hierarchy-failures) uses the production Layer and Objects
+to verify aggregation across 2 nodes, an unreachable cache, streams cut midway, fetch deadlines, store failures with cooldown / probe, and disk reopening.
+Pacing, fetch deadlines, and the circuit breaker use the same Tokio clock: real time in the normal runtime and virtual time in the paused test runtime.
+4 seeds were each run twice on macOS / Linux with pinned Rust 1.90, and every event and result digest for 1,000 clients matched.

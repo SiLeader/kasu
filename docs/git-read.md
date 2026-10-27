@@ -1,6 +1,8 @@
-# Git Smart HTTP 読み取り
+# Git Smart HTTP Reads
 
-Metadata API と同じ `kasu-server` の HTTP ポートで Git を配信します。
+English | [日本語](git-read_ja.md)
+
+Git is served on the same `kasu-server` HTTP port as the Metadata API.
 
 ```sh
 cargo run -p kasu-ingest -- /path/to/source.git /path/to/kasu-data my-repo
@@ -11,52 +13,52 @@ git -c http.extraHeader='Authorization: Bearer dev-token' \
 git clone --depth=1 http://git:dev-token@127.0.0.1:50080/my-repo.git
 ```
 
-Basic のユーザー名は任意、パスワードは PAT として扱います。Bearer も使えます。
-認証を設定した場合は ref 広告より前に検査し、Basic challenge を返します。運用者 PAT の認可は起動時に指定した repo 単位です。
-[射影専用 PAT](projection-accounts.md) では、許可したディレクトリの射影だけを読み取れます。
+The Basic user name is arbitrary and the password is treated as a PAT. Bearer also works.
+When authentication is configured, it is checked before ref advertisement and a Basic challenge is returned. Operator PAT authorization is per the repository specified at startup.
+A [projection-only PAT](projection-accounts.md) can read only projections of allowed directories.
 
-## 対応する通信
+## Supported Traffic
 
-- Smart HTTP の `info/refs?service=git-upload-pack` と `git-upload-pack`。
-- protocol v0／v1 の ref 広告・ACK、v2 の独立した capability 広告・`ls-refs`・`fetch`。
-- HEAD の symref、v2 の unborn、tag の peeled OID、ref-prefix。
-- 通常 clone、depth=1、増分 fetch、deepen／unshallow、時刻と ref による shallow 境界。
-- 複数 want、全親方向の履歴、途中の commit だけが参照する tree／blob、include-tag。
-- 接続先 repo の公開 ref から到達可能な SHA 指定 want。明示公開した ref なし commit も取得可能。
-- `filter blob:none` の partial clone、promisor の後続 blob fetch、sparse checkout、増分 fetch、unshallow。
-- ディレクトリを root にする [パス射影 URL](git-projection.md)。読み取り専用、射影ごとの履歴と OID 索引。
-- pkt-line の長さ・特殊マーカー・要求個数の検証。未知の capability と未対応の引数は拒否。
-- gzip リクエスト。圧縮前後とも 16 MiB の要求サイズ上限。
+- Smart HTTP `info/refs?service=git-upload-pack` and `git-upload-pack`.
+- Protocol v0 / v1 ref advertisement and ACKs; v2's separate capability advertisement, `ls-refs`, and `fetch`.
+- HEAD symref, v2 unborn, peeled OIDs for tags, ref-prefix.
+- Normal clone, depth=1, incremental fetch, deepen / unshallow, shallow boundaries by time and ref.
+- Multiple wants, history along all parents, trees / blobs referenced only by intermediate commits, include-tag.
+- Wants by SHA reachable from the repository's published refs. Explicitly published ref-less commits can also be fetched.
+- Partial clone with `filter blob:none`, follow-up promisor blob fetches, sparse checkout, incremental fetch, unshallow.
+- [Path projection URLs](git-projection.md) rooted at a directory. Read-only, with per-projection history and OID index.
+- Validation of pkt-line lengths, special markers, and request counts. Unknown capabilities and unsupported arguments are rejected.
+- gzip requests. A 16 MiB request size limit both before and after decompression.
 
-`filter` は `blob:none` だけを提供し、`blob:limit`、`tree`、`combine` などの未対応フィルターは明示的に拒否します。
-`no-done`、`sideband-all`、SSH、LFS はまだ広告・提供していません。
-receive-pack の `atomic` は [書き込み](git-push.md) を参照してください。
-receive-pack の対応範囲と書き込みポリシーは [Git 書き込み](git-push.md) を参照してください。
+`filter` offers only `blob:none`; unsupported filters such as `blob:limit`, `tree`, and `combine` are explicitly rejected.
+`no-done`, `sideband-all`, SSH, and LFS are not yet advertised or provided.
+For receive-pack `atomic`, see [writes](git-push.md).
+For receive-pack scope and write policies, see [Git writes](git-push.md).
 
-pack はネイティブストアから生成します。サーバー処理で `git upload-pack` を起動したり、Git リポジトリを別途保持したりしません。
-非デルタの zlib pack を bounded channel でストリームし、クライアント切断時は書き込みを中断します。
-圧縮済みオブジェクトの LRU は 32 MiB の課金容量上限を持ち、payload と 1 オブジェクトあたり 256 bytes の管理分を数えます。
-キャッシュキーには Git OID と raw オブジェクトの BLAKE3 ID を含めます。ヒット数・ミス数・容量は
-`Backend::git_cache_stats()` で取得できます。
-pack 全体を保存するキャッシュはまだありません。
+Packs are generated from the native store. Server processing never runs `git upload-pack` or keeps a separate Git repository.
+Non-delta zlib packs are streamed over a bounded channel, and writing stops when the client disconnects.
+The LRU of compressed objects has a 32 MiB accounted capacity limit, counting the payload plus 256 bytes of overhead per object.
+Cache keys include the Git OID and the raw object's BLAKE3 ID. Hits, misses, and capacity can be obtained with
+`Backend::git_cache_stats()`.
+There is no cache that stores whole packs yet.
 
-## 認可と pack の集合
+## Authorization and Pack Sets
 
-OID 索引は repo でスコープを分けます。索引に存在するだけの未公開 Changeset や、他 repo の OID は want できません。
-明示公開は、サーバー側の `GitIndex::publish_commit` で行い、commit とその全履歴・tree・blob を永続的に公開します。
-これにより、ref なし commit の partial fetch 後にも省略した blob を取得できます。
-HTTP から公開状態を書き換える機能はまだありません。
-commit の到達可能性判定は Generation を使う全親 ancestry で検査します。
+The OID index is scoped per repository. Unpublished Changesets that merely exist in the index, and OIDs from other repositories, cannot be wanted.
+Explicit publication is done server-side with `GitIndex::publish_commit`, which durably publishes the commit and its entire history, trees, and blobs.
+This allows fetching omitted blobs after a partial fetch of a ref-less commit.
+There is no feature yet to change publication state over HTTP.
+Commit reachability is checked with all-parent ancestry using Generation.
 
-common commit からクライアントが確実に持つ集合を計算するときは、クライアントの既存 shallow 境界で親探索を止めます。
-通常の全履歴 fetch は [永続到達索引](benchmarks/pack-reachability.md) を使い、親の集合と共有する radix tree を保存します。
-索引がある部分の履歴・Git tree 本文を再走査せず、複数 want の到達集合から複数 common の集合を正確に引きます。
-未導出の commit は全親から反復計算し、親の履歴に含まれる subtree の配下を再走査しません。
-中間版や第二親だけに含まれる内容も保存するため、revert や merge の増分でも欠落しません。
-want／have の公開範囲の認可、push 時の shallow 境界・thin pack 基底・既存依存の判定も同じ索引で行い、リクエストごとの全履歴走査はしません。
-shallow／deepen の要求は既存の境界付きグラフ列挙を使います。
-shallow のマージ境界は全親を切るという Git の意味論に合わせます。
-索引の大規模バックフィル・容量・複数ノード負荷と、shallow 列挙・ネゴシエーションの改善、大規模 repo の delta 評価は残作業です。
+When computing the set the client certainly has from common commits, the parent search stops at the client's existing shallow boundary.
+Normal full-history fetches use the [durable reachability index](benchmarks/pack-reachability.md), which stores radix trees shared with parent sets.
+History and Git tree bodies already covered by the index are not rescanned, and the set for multiple commons is subtracted exactly from the reachable set of multiple wants.
+Underived commits are computed iteratively from all parents, without rescanning subtrees already in the parents' history.
+Contents present only in intermediate versions or second parents are also stored, so nothing is missing for incremental reverts or merges.
+Authorization of want / have publication scope, and checks of shallow boundaries, thin pack bases, and existing dependencies on push, use the same index without a full history walk per request.
+Shallow / deepen requests use the existing bounded graph enumeration.
+Shallow merge boundaries cut all parents, matching Git semantics.
+Large-scale index backfill / capacity / multi-node load, improving shallow enumeration and negotiation, and delta evaluation on large repositories remain.
 
 ## Partial clone
 
@@ -67,19 +69,19 @@ git sparse-checkout set deploy
 git checkout main
 ```
 
-初回は commit／tree／tag を配信し、blob は省略します。checkout や `git show` で必要になった blob は、
-Git が promisor remote に OID を指定して取得します。`--depth=1` との併用、`fetch --unshallow` にも対応します。
-v0／v1 は `filter` と `allow-reachable-sha1-in-want`、v2 は `fetch=shallow filter` を広告します。
-明示的な want はフィルターや common commit による差し引きより優先します。
-後続 fetch にも同じ repo 認可と公開範囲を適用し、索引に存在するだけの未公開 blob は取得できません。
-ref の削除・force push 後に到達不能になったオブジェクトの保持・読み取り保証はまだありません。
+The initial fetch delivers commits / trees / tags and omits blobs. Blobs needed for checkout or `git show`
+are fetched by Git from the promisor remote by OID. Combining with `--depth=1` and `fetch --unshallow` is supported.
+v0 / v1 advertise `filter` and `allow-reachable-sha1-in-want`; v2 advertises `fetch=shallow filter`.
+Explicit wants take precedence over subtraction by filters or common commits.
+Follow-up fetches are subject to the same repository authorization and publication scope, and unpublished blobs that merely exist in the index cannot be fetched.
+There is not yet any guarantee of retaining or reading objects that become unreachable after ref deletion or force push.
 
-Git 2.54.0／macOS arm64 と Git 2.39.5／固定 Rust 1.90 の Linux arm64 で、v0／v1／v2 の全履歴・shallow を検証しました。
-初回の物理オブジェクト DB に blob がないこと、`transfer.fsckObjects=true` の clone、
-過去の blob の単独取得、sparse checkout、unshallow、3回の増分 fetch、全 blob 取得後の到達 OID 一致と strict fsck が通過しています。
-通信 fixture は [互換性マトリクス](../crates/kasu-git/tests/fixtures/clients/matrix.json)、
-検証範囲・ソースと通信のハッシュは [結果](../crates/kasu-git/tests/fixtures/clients/partial-clone-summary.json) に保存しています。
-大規模 repo での帯域・列挙性能評価と、他のフィルターは今後の対象です。
+Full-history and shallow over v0 / v1 / v2 were verified with Git 2.54.0 / macOS arm64 and Git 2.39.5 / Linux arm64 with pinned Rust 1.90.
+No blobs in the physical object DB initially, clone with `transfer.fsckObjects=true`,
+fetching an old blob on its own, sparse checkout, unshallow, 3 incremental fetches, and matching reachable OIDs and strict fsck after fetching every blob all pass.
+Traffic fixtures are stored in the [compatibility matrix](../crates/kasu-git/tests/fixtures/clients/matrix.json),
+and verification scope and source / traffic hashes in the [results](../crates/kasu-git/tests/fixtures/clients/partial-clone-summary.json).
+Bandwidth and enumeration performance on large repositories, and other filters, are future work.
 
 ```sh
 KASU_CAPTURE_DIR=/tmp/kasu-partial-traces \
@@ -87,38 +89,38 @@ KASU_CAPTURE_DIR=/tmp/kasu-partial-traces \
 docker build -f tools/git-compat/Dockerfile -t kasu:partial-clone-test .
 ```
 
-Docker の検証は固定 Rust 1.90 の Linux で Git の集合・parser、HTTP、push、複数 ref の保存契約を実行します。
-外部 go-git バイナリが必要な ignored テストは、この Dockerfile では実行しません。
+The Docker verification runs Git set / parser, HTTP, push, and multi-ref storage contract tests on Linux with pinned Rust 1.90.
+Ignored tests that need an external go-git binary are not run by this Dockerfile.
 
-## 互換性の根拠
+## Basis for Compatibility
 
-[バージョン付きマトリクス](../crates/kasu-git/tests/fixtures/clients/matrix.json) と同じディレクトリに通信 fixture を保存しています。
+Traffic fixtures are stored in the same directory as the [versioned matrix](../crates/kasu-git/tests/fixtures/clients/matrix.json).
 
-| クライアント | 検証済み |
+| Client | Verified |
 |---|---|
-| Git 2.54.0 / darwin arm64 | v0／v1／v2、ls-remote、全履歴／depth=1 bare clone、増分 fetch、deepen／unshallow、時刻／ref 境界、strict fsck |
-| go-git v5.19.3 / Go 1.27.3 / linux arm64 | HTTP Basic、通常／depth=1 clone と checkout、symlink／実行権限／非 UTF-8 パス、取得した Git ディレクトリの strict fsck |
-| ArgoCD v3.5.6 / Git 2.53.0 / kind linux arm64 | HTTP Basic、v2 fetch、初回同期と ref 更新後の再同期、Application Synced／Healthy、SHA と ConfigMap の一致 |
-| Flux v2.9.6 / source-controller v1.9.6 / kind linux arm64 | HTTP Basic、v0 depth=1、初回同期と ref 更新後の再同期、GitRepository／Kustomization Ready、SHA と ConfigMap の一致 |
+| Git 2.54.0 / darwin arm64 | v0 / v1 / v2, ls-remote, full-history / depth=1 bare clone, incremental fetch, deepen / unshallow, time / ref boundaries, strict fsck |
+| go-git v5.19.3 / Go 1.27.3 / linux arm64 | HTTP Basic, normal / depth=1 clone and checkout, symlinks / executable bit / non-UTF-8 paths, strict fsck of the fetched Git directory |
+| ArgoCD v3.5.6 / Git 2.53.0 / kind linux arm64 | HTTP Basic, v2 fetch, initial sync and resync after ref updates, Application Synced / Healthy, matching SHA and ConfigMap |
+| Flux v2.9.6 / source-controller v1.9.6 / kind linux arm64 | HTTP Basic, v0 depth=1, initial sync and resync after ref updates, GitRepository / Kustomization Ready, matching SHA and ConfigMap |
 
-生成 pack のテストは `git index-pack --strict` と `git fsck --strict` を使用します。
-HTTP E2E では clone/fetch 後の全オブジェクト集合と OID、shallow 履歴長も検査します。
-中間 blob、第二親、shallow have、未公開 want、明示公開、無効な pkt-line、LRU 上限にもテストがあります。
-分岐とマージを含む2ブランチ・annotated tag を8回更新し、v0／v1／v2 の全履歴／shallow クライアントで
-毎回の複数 ref fetch、strict fsck、先端 OID を検証します。全履歴クライアントは全到達 OID も比較します。
-[固定 Flux サンプルの pack サイズ比較](benchmarks/gitops-pack.md) では、同じ OID 集合で非デルタ／デルタを測定しています。
+Generated pack tests use `git index-pack --strict` and `git fsck --strict`.
+HTTP E2E also checks the full object set and OIDs after clone/fetch, and shallow history length.
+There are also tests for intermediate blobs, second parents, shallow haves, unpublished wants, explicit publication, invalid pkt-lines, and the LRU limit.
+Two branches with divergence and merges plus an annotated tag are updated 8 times, and full-history / shallow clients over v0 / v1 / v2
+verify a multi-ref fetch, strict fsck, and tip OIDs each time. Full-history clients also compare every reachable OID.
+The [pack size comparison on the pinned Flux sample](benchmarks/gitops-pack.md) measures non-delta vs. delta on the same OID set.
 
-macOS は raw `0xff` ファイル名の checkout を拒否するため、同じ fixture を Linux コンテナ上で checkout しました。
-Go クライアントは checkout 後の各ファイル内容、symlink、実行権限を元の tree と照合します。
-ホストへ戻すのは `.git` と検証用の ASCII 名の成果物だけです。
+macOS refuses to check out a raw `0xff` file name, so the same fixture was checked out in a Linux container.
+The Go client checks each file's content, symlinks, and executable bits after checkout against the original tree.
+Only `.git` and verification artifacts with ASCII names are copied back to the host.
 
-通常の Rust テスト:
+Normal Rust tests:
 
 ```sh
 cargo test --workspace --all-targets
 ```
 
-Linux 上で go-git E2E を有効化:
+Enable go-git E2E on Linux:
 
 ```sh
 go -C tools/git-compat build -o /tmp/kasu-go-git-compat .
@@ -126,7 +128,7 @@ KASU_GO_GIT_CLIENT=/tmp/kasu-go-git-compat \
   cargo test -p kasu-server --test git_http -- --include-ignored
 ```
 
-macOS arm64 から Linux で実行する場合（Docker、Python 3.12 以降が必要）:
+Running on Linux from macOS arm64 (requires Docker and Python 3.12 or later):
 
 ```sh
 GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go -C tools/git-compat build -o /tmp/kasu-go-git-compat-linux .
@@ -136,14 +138,14 @@ KASU_GO_GIT_CONTAINER=1 KASU_LINUX_GO_GIT_BINARY=/tmp/kasu-go-git-compat-linux \
   cargo test -p kasu-server --test git_http -- --include-ignored
 ```
 
-`KASU_CAPTURE_DIR` を設定すると実行したクライアントの通信を保存します。Go の sideband 内容は省略し、Git の時刻／PID は除きます。
-夜間 CI `git-read.yml` に Linux での直接実行を追加しました。GitHub 上の実行結果は未確認です。
+Setting `KASU_CAPTURE_DIR` saves the traffic of the clients run. Go sideband contents are omitted, and Git timestamps / PIDs are removed.
+Direct execution on Linux was added to the nightly CI `git-read.yml`. Results of runs on GitHub are unconfirmed.
 
-2026-10-23 に kind v0.33.0／Kubernetes v1.37.0 で両コントローラーの同期を検証しました。
-[手順・夜間 CI](gitops-e2e.md) と [結果・実イメージ ID](../crates/kasu-git/tests/fixtures/clients/gitops-kind-summary.json) を保存しています。
-Image Updater／Image Automation の書き戻しと webhook は M7 を参照してください。
-指定ディレクトリだけを配信する [パス射影](git-projection.md) も提供しています。
+On 2026-10-23, syncing with both controllers was verified on kind v0.33.0 / Kubernetes v1.37.0.
+The [procedure and nightly CI](gitops-e2e.md) and [results and real image IDs](../crates/kasu-git/tests/fixtures/clients/gitops-kind-summary.json) are stored.
+See M7 for Image Updater / Image Automation write-back and webhooks.
+[Path projections](git-projection.md) that serve only a given directory are also provided.
 
-プロトコルの一次資料: [Smart HTTP](https://git-scm.com/docs/http-protocol)、
-[pack protocol](https://git-scm.com/docs/pack-protocol)、[protocol v2](https://git-scm.com/docs/protocol-v2)。
-partial clone の設計は [promisor と後続 fetch](https://git-scm.com/docs/partial-clone) を参照しています。
+Primary protocol references: [Smart HTTP](https://git-scm.com/docs/http-protocol),
+[pack protocol](https://git-scm.com/docs/pack-protocol), [protocol v2](https://git-scm.com/docs/protocol-v2).
+The partial clone design follows [promisors and follow-up fetches](https://git-scm.com/docs/partial-clone).

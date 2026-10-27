@@ -1,41 +1,43 @@
-# GitOps リポジトリの pack サイズ
+# Pack Sizes for a GitOps Repository
 
-2026-10-23 に [fluxcd/flux2-kustomize-helm-example](https://github.com/fluxcd/flux2-kustomize-helm-example/tree/4f1a5b1051b469108d1bdf0ebec6c814427e3834)
-の `4f1a5b1051b469108d1bdf0ebec6c814427e3834` を固定して測定しました。
-124 commit／588 object の小さなサンプルです。macOS arm64、Rust 1.98.1、Git 2.54.0、release ビルド、
-SQLite ファイル DB と FS blob store を使用しました。
+English | [日本語](gitops-pack_ja.md)
 
-| 要求 | object 数 | kasu 非デルタ | Git 非デルタ | Git デルタ |
+Measured on 2026-10-23 with [fluxcd/flux2-kustomize-helm-example](https://github.com/fluxcd/flux2-kustomize-helm-example/tree/4f1a5b1051b469108d1bdf0ebec6c814427e3834)
+pinned at `4f1a5b1051b469108d1bdf0ebec6c814427e3834`.
+It is a small sample of 124 commits / 588 objects. macOS arm64, Rust 1.98.1, Git 2.54.0, a release build,
+a SQLite file DB, and an FS blob store were used.
+
+| Request | Objects | kasu non-delta | Git non-delta | Git delta |
 |---|---:|---:|---:|---:|
-| 全履歴 | 588 | 735,303 B | 702,658 B | 526,220 B |
+| Full history | 588 | 735,303 B | 702,658 B | 526,220 B |
 | depth=1 | 46 | 26,158 B | 24,096 B | 22,128 B |
-| 1 commit 増分 | 11 | 15,140 B | 13,837 B | 13,837 B |
-| 10 commit 増分 | 123 | 77,308 B | 71,948 B | 41,829 B |
+| 1-commit increment | 11 | 15,140 B | 13,837 B | 13,837 B |
+| 10-commit increment | 123 | 77,308 B | 71,948 B | 41,829 B |
 
-[CSV](gitops-pack-flux.csv) に固定 SHA、have、列挙／cold・warm 圧縮時間も保存しています。
-pack 本文のバイト数であり、HTTP／TLS／pkt-line のオーバーヘッドは含みません。
-増分は第一親の 1 件／10 件前を、全履歴を持つクライアントの have とします。
+The [CSV](gitops-pack-flux.csv) also stores the pinned SHAs, haves, and enumeration / cold / warm compression times.
+These are pack body bytes and exclude HTTP / TLS / pkt-line overhead.
+Increments use the first-parent commit 1 / 10 back as the have of a client with full history.
 
-`plan_fetch` が選んだ**同一の OID 集合**を kasu と Git で pack 化しました。
-kasu は既存の非デルタ・fast zlib、Git は `pack.compression=1`、再利用なしで、
-非デルタは `--window=0`、デルタは `--window=10 --depth=50` です。
-圧縮実装と並び順も異なるため、Git 非デルタとの差にはそれらの影響を含みます。
-外部の have object をベースとする thin pack は測定していません。
-全 kasu pack は元の完全リポジトリを使った `git index-pack --strict --stdin` を通過しました。
+The **same OID set** chosen by `plan_fetch` was packed by kasu and Git.
+kasu uses its existing non-delta fast zlib; Git uses `pack.compression=1` without reuse,
+with `--window=0` for non-delta and `--window=10 --depth=50` for delta.
+The compression implementations and ordering also differ, so differences from Git non-delta include those effects.
+Thin packs based on external have objects were not measured.
+Every kasu pack passed `git index-pack --strict --stdin` against the original complete repository.
 
-このサンプルの1 commit 増分は Git のデルタ有無で同じサイズでした。
-10 commit 増分では Git デルタは kasu より約46%小さく、全履歴でも約28%小さくなりました。
-現時点では depth=1 と頻繁な単発更新の配信に非デルタを継続使用します。
-多数の更新をまとめる利用や大規模リポジトリでは、デルタ導入の効果を追加評価します。
-小さな1リポジトリ・各条件1回の結果から、大規模運用での不要性は判断しません。
+In this sample, the 1-commit increment was the same size with or without Git deltas.
+For the 10-commit increment, Git deltas were about 46% smaller than kasu, and about 28% smaller for full history.
+For now, non-delta continues to be used for delivering depth=1 and frequent single updates.
+For use cases bundling many updates or for large repositories, the effect of introducing deltas will be evaluated further.
+The results of one small repository with one run per condition are not used to conclude deltas are unnecessary at large scale.
 
-列挙は全履歴で約121 ms、1 commit 増分でも約76 msでした。
-この初回計測の実装では have の到達集合を再列挙するため、増分の列挙時間が履歴サイズに依存していました。
-2026-10-24 に通常 fetch の永続到達索引を追加し、[同じ固定ソースで再計測](pack-reachability.md) しました。
-shallow 列挙と大規模なバックフィル・容量評価は引き続き必要です。cold／warm 時間は圧縮キャッシュの差を含み、
-各ケースでキャッシュを空から作っています。ネットワーク転送速度のベンチマークではありません。
+Enumeration took about 121 ms for full history and about 76 ms even for the 1-commit increment.
+The implementation in this first measurement re-enumerated the reachable set of haves, so incremental enumeration time depended on history size.
+On 2026-10-24 a durable reachability index for normal fetches was added and [remeasured on the same pinned source](pack-reachability.md).
+Shallow enumeration and large-scale backfill / capacity evaluation are still needed. Cold / warm times include compression cache differences,
+and the cache is built from empty for each case. This is not a network transfer speed benchmark.
 
-再現手順（取得先はこの計測専用の一時リポジトリを指定）:
+Reproduction steps (use a temporary repository dedicated to this measurement as the destination):
 
 ```sh
 git clone --bare --single-branch --branch main \
@@ -44,5 +46,5 @@ cargo run --release --locked -p kasu-ingest --example pack_bandwidth -- \
   /tmp/kasu-flux-bandwidth.git 4f1a5b1051b469108d1bdf0ebec6c814427e3834
 ```
 
-計測用 native store は一時ディレクトリへ作成し終了時に削除します。
-strict 検証は入力の Git リポジトリに pack を追加するので、通常作業用のリポジトリは指定しないでください。
+The native store for measurement is created in a temporary directory and deleted at exit.
+Strict verification adds packs to the input Git repository, so do not specify a repository used for normal work.

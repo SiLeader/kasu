@@ -1,38 +1,40 @@
-# Changeset 作成の履歴長ベンチマーク
+# Changeset Creation vs. History Length Benchmark
 
-現在の eager index は [FirstParentSkip v2](first-parent-skip-v2.md) です。
-作成時の index 構築は7参照以下・82 bytes に固定し、両 OS で10万件を検証しました。
-以下の CSV と対数コストの説明は、移行前の v1 の計測記録です。
+English | [日本語](README_ja.md)
 
-[実際の分岐合流10万件とストア呼び出し回数](divergent-history.md) の追加計測では、
-macOS／Linux の内容 ID 一致と MergeBase の古い祖先走査の削減を検証しています。
+The current eager index is [FirstParentSkip v2](first-parent-skip-v2.md).
+Index construction at creation is fixed to at most 7 lookups and 82 bytes, verified over 100,000 Changesets on both OSes.
+The CSV and the explanation of logarithmic cost below are the measurement record for v1 before the migration.
 
-ストレージ候補の比較と障害試験は [TiKV／PostgreSQL 初期評価](kv-evaluation.md) を参照してください。
+Additional measurements on [100,000 real branch merges and store call counts](divergent-history.md)
+verify matching content IDs on macOS / Linux and the reduction of old-ancestor walks in MergeBase.
 
-`history-100k.csv` は 2026-10-23 にローカル macOS（aarch64、Rust 1.98.1）で実測した結果です。
-SQLite はファイル DB、WAL／synchronous=FULL、blob と tree はローカル FS／zstd です。
+For storage candidate comparisons and failure tests, see the [initial TiKV / PostgreSQL evaluation](kv-evaluation.md).
+
+`history-100k.csv` contains results measured on 2026-10-23 on local macOS (aarch64, Rust 1.98.1).
+SQLite is a file DB with WAL / synchronous=FULL, and blobs and trees use local FS / zstd.
 
 ```sh
 KASU_BENCH_HISTORY=1 cargo bench -p kasu-ops --bench history
 ```
 
-- 100,000 Changeset を順に作成し、各 Changeset は `bench/file` を 2 種類の内容間で更新します。
-- 毎 10 件目（ルート以外）に第二親を加え、最終的に 9,999 個の 2-parent Changeset を作成します。
-  第二親は既存の第一親チェーン上の祖先です。分岐と criss-cross の正しさは別途プロパティ／単体テストで検証します。
-- 親と blob の存在検証、Merkle tree の更新、Changeset 保存、RootTree／Generation／FirstParentSkip の
-  eager 計算を含みます。ref 更新・ネットワーク・Git オブジェクト変換は含みません。
-- `mean_create_microseconds` は直前 1,000 件の作成時間を 1 件あたりの µs に換算した値です。
+- 100,000 Changesets are created in sequence, each updating `bench/file` between 2 kinds of content.
+- Every 10th (except the root) adds a second parent, producing 9,999 two-parent Changesets in the end.
+  The second parent is an ancestor on the existing first-parent chain. Correctness of divergence and criss-cross is verified separately by property / unit tests.
+- Includes parent and blob existence checks, Merkle tree updates, Changeset storage, and eager computation of RootTree / Generation / FirstParentSkip.
+  Ref updates, network, and Git object conversion are not included.
+- `mean_create_microseconds` is the creation time of the preceding 1,000 Changesets converted to µs per Changeset.
 
-| 履歴内の区間 | 平均作成時間／Changeset |
+| Range in history | Mean creation time / Changeset |
 |---|---:|
-| 最初の 10,000 件 | 411.42 µs |
-| 45,001〜55,000 件 | 669.51 µs |
-| 最後の 10,000 件 | 580.07 µs |
+| First 10,000 | 411.42 µs |
+| 45,001–55,000 | 669.51 µs |
+| Last 10,000 | 580.07 µs |
 
-履歴が 100 倍になる区間でも、履歴全体の再走査に相当する線形増加は観測されませんでした。
-実装上、tree 更新は変更パス上のノードに限定し、Generation は保存済みの親を読みます。
-FirstParentSkip の構築には O(log 履歴長) の索引読み取り、SQLite の索引にもサイズ依存のコストがあります。
-したがって厳密な定数時間を証明する結果ではありません。
+Even across a range where history grows 100×, no linear increase corresponding to rescanning the whole history was observed.
+In the implementation, tree updates are limited to nodes on changed paths, and Generation reads stored parents.
+Building FirstParentSkip involves O(log history length) index reads, and SQLite indexes also have size-dependent costs.
+So this result does not prove strictly constant time.
 
-これは 1 台・1 回・同時に他テストも走った測定であり、本番スループットや分散ストレージの性能を
-保証しません。幅の広い tree、多数の変更パス、実際の分岐、複数 server の性能評価は今後の作業です。
+This was a single measurement on one machine with other tests running at the same time, and it does not
+guarantee production throughput or distributed storage performance. Evaluation of wide trees, many changed paths, real divergence, and multiple servers is future work.

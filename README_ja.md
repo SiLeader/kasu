@@ -29,9 +29,9 @@ Git アクセスは kasu のネイティブモデルを Git として見せる�
 - shallow clone、増分 fetch、deepen／unshallow、`blob:none` の partial clone。
 - 指定ディレクトリをリポジトリの root として公開する、読み取り専用のパス射影。
 - 対応する入力の元オブジェクトと SHA-1 OID を保持する Git 取り込み。
-- Git、go-git、Argo CD、Flux との結合試験。検証範囲は [Git 読み取り](docs/git-read.md) と [GitOps E2E 記録](docs/gitops-e2e.md) を参照。
+- Git、go-git、Argo CD、Flux との結合試験。検証範囲は [Git 読み取り](docs/git-read_ja.md) と [GitOps E2E 記録](docs/gitops-e2e_ja.md) を参照。
 
-画像更新などの GitOps の書き戻し用途には、追加で [ポリシーに基づく Git push](docs/git-push.md) にも対応しています。読み取り専用のパス射影は書き込みを受け付けません。アカウント権限と書き込みポリシーは [リポジトリアカウント](docs/repository-accounts.md) を参照してください。
+画像更新などの GitOps の書き戻し用途には、追加で [ポリシーに基づく Git push](docs/git-push_ja.md) にも対応しています。読み取り専用のパス射影は書き込みを受け付けません。アカウント権限と書き込みポリシーは [リポジトリアカウント](docs/repository-accounts_ja.md) を参照してください。
 
 ## ローカルで試す
 
@@ -62,7 +62,7 @@ export KASU_TOKEN=dev-token
 ./target/debug/kasu -C native-work status
 ```
 
-編集、commit、rebase、Land の使い方は [ネイティブ CLI](docs/native-cli.md)、取り込み可能な入力と制限は [Git 取り込み](docs/git-import.md) を参照してください。`dev-token` はローカル用の認証情報の例です。
+編集、commit、rebase、Land の使い方は [ネイティブ CLI](docs/native-cli_ja.md)、取り込み可能な入力と制限は [Git 取り込み](docs/git-import_ja.md) を参照してください。`dev-token` はローカル用の認証情報の例です。
 
 1 つのサーバーで複数のリポジトリを提供できます。リポジトリ名には `/` を使えます。ref・Git OID・権限・設定はリポジトリごとに独立し、同じ内容のオブジェクトは1回だけ保存します。
 
@@ -74,23 +74,23 @@ git -c http.extraHeader='Authorization: Bearer dev-token' clone http://127.0.0.1
 ./target/debug/kasu repo list
 ```
 
-名前の規則、既存データの移行（`kasu-server migrate-registry`）、リポジトリ単位の grant と設定、Admin API、削除、フォークは [マルチリポジトリ](docs/multi-repository.md) を参照してください。
+名前の規則、既存データの移行（`kasu-server migrate-registry`）、リポジトリ単位の grant と設定、Admin API、削除、フォークは [マルチリポジトリ](docs/multi-repository_ja.md) を参照してください。
 
 ## ドキュメントと実装状況
 
-ネイティブ CLI、サーバー API、Git ゲートウェイ、キャッシュ階層、PostgreSQL／S3 バックエンドを実装しています。完了項目、検証範囲、残作業は [実装状況](docs/implementation-status.md)、実装箇所と検証記録の対応は [計画・実装・検証の対応表](docs/plan-audit.json) を参照してください。詳細ドキュメントは現在、主に日本語で記述しています。
+ネイティブ CLI、サーバー API、Git ゲートウェイ、キャッシュ階層、PostgreSQL／S3 バックエンドを実装しています。完了項目、検証範囲、残作業は [実装状況](docs/implementation-status_ja.md)、実装箇所と検証記録の対応は [計画・実装・検証の対応表](docs/plan-audit.json) を参照してください。ドキュメントは英語版と日本語版（`*_ja.md`）を用意しています。ただし `docs/plan` の設計計画は日本語のみです。
 
 | 項目 | ドキュメント |
 |---|---|
 | アーキテクチャ・データモデル | [設計・実装計画](docs/plan/README.md) |
-| working copy | [ネイティブ CLI](docs/native-cli.md)、[仮想 checkout](docs/virtual-checkout.md) |
-| ネイティブ API | [Metadata](docs/metadata-api.md)、[書き込み](docs/write-api.md)、[Objects](docs/object-api.md)、[Land](docs/land.md) |
-| Git 互換機能 | [取り込み](docs/git-import.md)、[読み取り](docs/git-read.md)、[push](docs/git-push.md)、[SSH](docs/git-ssh.md)、[外部 LFS](docs/git-lfs.md) |
-| マルチリポジトリ | [レジストリ・grant・Admin API・ライフサイクル](docs/multi-repository.md) |
-| アクセス制御・射影 | [アカウント](docs/repository-accounts.md)、[ディレクトリ読み取り](docs/directory-read-acl.md)、[Git 射影](docs/git-projection.md)、[射影アカウント](docs/projection-accounts.md) |
-| ストレージ・キャッシュ | [PostgreSQL／S3](docs/production-storage.md)、[キャッシュ階層](docs/cache-hierarchy.md)、[ディスクキャッシュ](docs/disk-cache.md) |
-| 運用・自動化 | [サーバー制限・メトリクス](docs/server-runtime.md)、[tracing](docs/telemetry.md)、[Webhook](docs/webhooks.md)、[CI bot](docs/automation.md) |
-| 検証 | [GitOps E2E](docs/gitops-e2e.md)、[シミュレーション](docs/simulations/README.md)、[ベンチマーク](docs/benchmarks/README.md)、[KV 評価](docs/benchmarks/kv-evaluation.md) |
+| working copy | [ネイティブ CLI](docs/native-cli_ja.md)、[仮想 checkout](docs/virtual-checkout_ja.md) |
+| ネイティブ API | [Metadata](docs/metadata-api_ja.md)、[書き込み](docs/write-api_ja.md)、[Objects](docs/object-api_ja.md)、[Land](docs/land_ja.md) |
+| Git 互換機能 | [取り込み](docs/git-import_ja.md)、[読み取り](docs/git-read_ja.md)、[push](docs/git-push_ja.md)、[SSH](docs/git-ssh_ja.md)、[外部 LFS](docs/git-lfs_ja.md) |
+| マルチリポジトリ | [レジストリ・grant・Admin API・ライフサイクル](docs/multi-repository_ja.md) |
+| アクセス制御・射影 | [アカウント](docs/repository-accounts_ja.md)、[ディレクトリ読み取り](docs/directory-read-acl_ja.md)、[Git 射影](docs/git-projection_ja.md)、[射影アカウント](docs/projection-accounts_ja.md) |
+| ストレージ・キャッシュ | [PostgreSQL／S3](docs/production-storage_ja.md)、[キャッシュ階層](docs/cache-hierarchy_ja.md)、[ディスクキャッシュ](docs/disk-cache_ja.md) |
+| 運用・自動化 | [サーバー制限・メトリクス](docs/server-runtime_ja.md)、[tracing](docs/telemetry_ja.md)、[Webhook](docs/webhooks_ja.md)、[CI bot](docs/automation_ja.md) |
+| 検証 | [GitOps E2E](docs/gitops-e2e_ja.md)、[シミュレーション](docs/simulations/README_ja.md)、[ベンチマーク](docs/benchmarks/README_ja.md)、[KV 評価](docs/benchmarks/kv-evaluation_ja.md) |
 
 ## 開発
 

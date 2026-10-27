@@ -1,7 +1,9 @@
-# ref 更新の webhook
+# Webhooks for Ref Updates
 
-`KASU_WEBHOOKS_FILE=/path/to/webhooks.json` を指定すると、GitHub push 形式の
-POST を配信します。設定は起動時に読み込みます。
+English | [日本語](webhooks_ja.md)
+
+Setting `KASU_WEBHOOKS_FILE=/path/to/webhooks.json` delivers POSTs in the GitHub push format.
+The configuration is read at startup.
 
 ```json
 {
@@ -17,64 +19,64 @@ POST を配信します。設定は起動時に読み込みます。
 }
 ```
 
-`secret_file` は設定ファイルからの相対パス、または絶対パスです。
-ファイルのバイト列をそのまま HMAC-SHA256 の鍵に使います。改行も鍵の一部です。
-受信側にも同じ鍵を設定してください。`secret_file` を省略すると署名しません。
-ArgoCD は `webhook.github.secret`、Flux は `type: github` の Receiver と
-その `secretRef` を使います。URL は HTTP／HTTPS を受け付け、リダイレクトには追従しません。
+`secret_file` is a path relative to the configuration file, or an absolute path.
+The file's bytes are used as is as the HMAC-SHA256 key. Newlines are part of the key.
+Configure the same key on the receiver. If `secret_file` is omitted, deliveries are not signed.
+ArgoCD uses `webhook.github.secret`; Flux uses a Receiver with `type: github` and
+its `secretRef`. URLs may be HTTP / HTTPS, and redirects are not followed.
 
-複数リポジトリでは、endpoint を [リポジトリごとの設定](multi-repository.md#webhook) に書きます。
-このファイルは配信設定と、`clone_url` の基底になる `public_url`（または `KASU_PUBLIC_URL`）を与え、
-`endpoints` と `repository_url` は legacy リポジトリのものになります。
-payload の `repository.name`／`full_name`／`clone_url` は現在の名前から生成し、改名後の配信にも反映します。
-`ARCHIVED` のリポジトリには配信しません。
+With multiple repositories, write endpoints in the [per-repository configuration](multi-repository.md#webhook).
+This file then provides delivery settings and `public_url` (or `KASU_PUBLIC_URL`), the base for `clone_url`,
+while `endpoints` and `repository_url` belong to the legacy repository.
+The payload's `repository.name` / `full_name` / `clone_url` are generated from the current name, so deliveries after a rename reflect it.
+Nothing is delivered for `ARCHIVED` repositories.
 
-## 配信と再送
+## Delivery and Resending
 
-ref の CAS と同じ SQLite トランザクションで記録する `ref_log`／`git_ref_log` を
-outbox として使います。endpoint ID・repo・ログ種別ごとに cursor と未確定本文を永続化し、
-送信前に本文を確定します。HTTP 2xx で cursor を進め、それ以外は再送します。
-ネイティブ branch と Git tag のログは別々の順序付きキューです。
-`HEAD` のシンボリックな変更は push イベントを送らず cursor だけ進めます。
+The `ref_log` / `git_ref_log` recorded in the same SQLite transaction as the ref CAS
+serve as the outbox. A cursor and pending body are persisted per endpoint ID, repository, and log type,
+and the body is finalized before sending. An HTTP 2xx advances the cursor; anything else is retried.
+Native branch logs and Git tag logs are separate ordered queues.
+Symbolic changes to `HEAD` do not send push events; they only advance the cursor.
 
-`X-GitHub-Event: push`、安定した UUIDv8 の `X-GitHub-Delivery`、
-署名を設定した場合は `X-Hub-Signature-256: sha256=...` を付けます。
-応答喪失や再起動でも未確定本文と delivery ID を再利用します。
-受信側には重複排除が必要です。同じキューに複数 worker を接続しても cursor は巻き戻りませんが、
-同時送信による重複は発生し得ます。
+Deliveries carry `X-GitHub-Event: push`, a stable UUIDv8 `X-GitHub-Delivery`,
+and, when signing is configured, `X-Hub-Signature-256: sha256=...`.
+The pending body and delivery ID are reused after lost responses or restarts.
+Receivers need deduplication. Connecting multiple workers to the same queue never rewinds the cursor,
+but concurrent sends can produce duplicates.
 
-新しい endpoint ID はログ先頭から送信します。ID を維持すると再起動後も配信位置を引き継ぎます。
-URL・鍵の変更は再起動後の再送にも適用しますが、すでに確定した本文は変えません。
-停止中の endpoint は他の endpoint を止めません。同じキューの後続は成功まで待ちます。
-サーバー終了時の未確定配信は次回起動時に再送します。
+A new endpoint ID sends from the beginning of the log. Keeping the ID carries over the delivery position across restarts.
+URL / key changes apply to resends after a restart, but bodies already finalized do not change.
+A down endpoint does not block other endpoints. Later items in the same queue wait until it succeeds.
+Deliveries pending at server shutdown are resent at the next startup.
 
-## 本文と上限
+## Body and Limits
 
-作成・更新・force・削除、旧／新 OID、commit、第一親との差分パスを含めます。
-最後の commit には旧 ref から新 ref への最終差分も反映し、force rewind や削除でも
-パスによる refresh 判定を可能にします。commit 配列は最大2,048件で、総件数と省略フラグを別に含めます。
-非 UTF-8 の文字列は標準フィールドでは置換し、`kasu` 拡張に元のバイト列を base64 で保存します。
+The body includes create / update / force / delete, old / new OIDs, commits, and paths changed relative to the first parent.
+The last commit also reflects the final diff from the old ref to the new ref, so path-based refresh decisions work
+even for force rewinds and deletions. The commit array has at most 2,048 entries, with the total count and an omission flag included separately.
+Non-UTF-8 strings are replaced in standard fields, and the original bytes are stored base64-encoded in the `kasu` extension.
 
-| 設定 | 既定値 |
+| Setting | Default |
 |---|---:|
 | `poll_interval_ms` | 100 |
 | `timeout_ms` | 5,000 |
 | `retry_base_ms` | 100 |
 | `retry_max_ms` | 60,000 |
-| `max_payload_bytes` | 26,214,400（25 MiB） |
+| `max_payload_bytes` | 26,214,400 (25 MiB) |
 
-再送は決定的 jitter 付き指数 backoff で、HTTP 試行終了後から待機します。
-endpoint は最大32件、鍵は1〜65,536バイトです。
-本文上限超過は cursor を進めません。ログを確認し、設定上限を増やして再起動してください
-（設定可能な最大値は128 MiB）。現実装はイベント生成時に到達履歴を列挙するため、
-大規模履歴での生成時間とメモリ使用量の評価は継続課題です。
+Retries use exponential backoff with deterministic jitter, waiting from the end of the HTTP attempt.
+There are at most 32 endpoints, and keys are 1–65,536 bytes.
+Exceeding the body limit does not advance the cursor. Check the logs, raise the configured limit, and restart
+(the maximum configurable value is 128 MiB). The current implementation enumerates reachable history when generating events,
+so evaluating generation time and memory use on large histories is ongoing work.
 
 ```sh
 cargo test -p kasu-store --test webhook --locked
 cargo test -p kasu-server --test webhook --locked
 ```
 
-RFC 4231 の署名、再オープン・独立接続、HTTP 500・timeout 後の同一本文／ID、
-redirect 拒否、force／削除、本文上限と終了を検証します。
-ネイティブ UpdateRef と実 Git clone→commit→push からの outbox 配信も検証します。
-実コントローラーの検証は [kind E2E](gitops-e2e.md) の `--webhooks` を使います。
+These verify RFC 4231 signatures, reopening and independent connections, identical body / ID after HTTP 500 and timeouts,
+redirect rejection, force / delete, and the body limit and termination.
+Outbox delivery from native UpdateRef and from a real Git clone→commit→push is also verified.
+Verification with real controllers uses `--webhooks` in the [kind E2E](gitops-e2e.md).
