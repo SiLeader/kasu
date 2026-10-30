@@ -365,6 +365,7 @@ async fn ancestor_guard_is_rechecked_after_cas_loss_and_bound_to_receipts() {
         required_ancestor: f.bad.0.to_vec(),
         max_attempts: 3,
         timeout_ms: 1000,
+        require_unborn: false,
     };
     let operation = f.state.begin_land(q.clone()).unwrap();
     let LandPreparation::Ready(prepared) = f.state.prepare_land(&operation, 1).unwrap() else {

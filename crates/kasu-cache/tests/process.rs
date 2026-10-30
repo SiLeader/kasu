@@ -55,6 +55,12 @@ async fn cache_executable_serves_only_objects_exposes_metrics_and_uses_its_hop_t
             .await
             .unwrap();
     }));
+    Client::connect(&upstream, Some("server-hop"), Some(Layer::Server))
+        .await
+        .unwrap()
+        .repository_identity(b"repo")
+        .await
+        .unwrap();
     std::fs::write(root.join("downstream"), b"daemon-hop\n").unwrap();
     std::fs::write(root.join("upstream"), b"server-hop\n").unwrap();
     let mut child = ChildGuard(

@@ -220,6 +220,12 @@ impl Objects for AuthorityRpc {
             extensions,
         ))
     }
+    async fn get_repository_identity(
+        &self,
+        q: Request<p::RepositoryIdentityRequest>,
+    ) -> std::result::Result<Response<p::RepositoryIdentityResponse>, Status> {
+        self.0.inner.get_repository_identity(q).await
+    }
 }
 struct CacheRpcState {
     current: Mutex<Option<Arc<Layer>>>,
@@ -259,6 +265,19 @@ impl Objects for CacheRpc {
             .clone()
             .ok_or_else(|| Status::unavailable("simulated cache stopped"))?;
         Service::new(layer).get_blobs(q).await
+    }
+    async fn get_repository_identity(
+        &self,
+        q: Request<p::RepositoryIdentityRequest>,
+    ) -> std::result::Result<Response<p::RepositoryIdentityResponse>, Status> {
+        let layer = self
+            .0
+            .current
+            .lock()
+            .unwrap()
+            .clone()
+            .ok_or_else(|| Status::unavailable("simulated cache stopped"))?;
+        Service::new(layer).get_repository_identity(q).await
     }
 }
 struct WriteFault {
@@ -528,7 +547,10 @@ async fn run(seed: u64, clients: usize) -> CacheSimulation {
 
     *rpc.current.lock().unwrap() = None;
     for node in &nodes {
-        assert_eq!(spin(node.get(REPO, keys[0])).await.unwrap(), frames[0]);
+        assert_eq!(
+            spin(node.get(REPO, keys[0])).await.unwrap_err().code(),
+            tonic::Code::Unavailable
+        );
         tick(2).await;
         assert_eq!(
             spin(node.get(REPO, keys[1])).await.unwrap_err().code(),
@@ -538,7 +560,7 @@ async fn run(seed: u64, clients: usize) -> CacheSimulation {
     let outage_authority_requests = source.calls.load(Ordering::SeqCst) - 1;
     assert_eq!(outage_authority_requests, 0);
     events.push(event(
-        "cache_unavailable_warm_and_cold",
+        "cache_unavailable_cached_and_cold_fail_closed",
         start,
         &source,
         &rpc,

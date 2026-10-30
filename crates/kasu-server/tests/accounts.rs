@@ -227,6 +227,7 @@ impl Fixture {
             max_attempts: 3,
             timeout_ms: 5000,
             required_ancestor: vec![],
+            require_unborn: false,
         }
     }
 }
@@ -722,6 +723,7 @@ async fn actual_servers_preserve_account_land_receipts_across_reorder_rotation_a
         max_attempts: 3,
         timeout_ms: 5000,
         required_ancestor: vec![],
+        require_unborn: false,
     };
     async fn call(
         client: &reqwest::Client,

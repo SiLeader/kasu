@@ -736,7 +736,7 @@ async fn land(
     ctx: &mut Ctx,
     repo: Repo,
     resolved: Resolved,
-    fields: Fields,
+    mut fields: Fields,
     view: String,
     commit: Commit,
 ) -> Result<Response> {
@@ -915,30 +915,7 @@ async fn land(
         }
         "branch" | "direct" => {
             let target = if destination == "branch" {
-                let name = branch_ref(&fields.text("new_branch"))?;
-                let current = rpc!(
-                    ctx,
-                    metadata.resolve_ref(p::RefRequest {
-                        repo: repo.bytes(),
-                        name: name.clone()
-                    })
-                )
-                .await
-                .read()?;
-                if current.target.is_some() {
-                    return rerender(
-                        ctx,
-                        &repo,
-                        &resolved,
-                        &fields,
-                        &view,
-                        "the branch already exists".into(),
-                        Vec::new(),
-                        StatusCode::CONFLICT,
-                    )
-                    .await;
-                }
-                name
+                branch_ref(&fields.text("new_branch"))?
             } else {
                 branch
             };
@@ -950,6 +927,7 @@ async fn land(
                     id: changeset.id.clone(),
                     name: target.clone(),
                     idempotency_key: key.into_bytes(),
+                    require_unborn: destination == "branch",
                     ..Default::default()
                 }))
                 .await
@@ -970,6 +948,9 @@ async fn land(
                     Ok(ctx.redirect(&shown))
                 }
                 Ok(p::LandOutcome::Conflict) => {
+                    if let Some((_, key)) = fields.0.iter_mut().find(|(name, _)| name == "key") {
+                        *key = Ctx::idempotency_key();
+                    }
                     let conflicts = landed
                         .conflict
                         .map(|c| c.conflicts.iter().map(|c| lossy(&c.path)).collect())
@@ -984,6 +965,19 @@ async fn land(
                             .s("This change conflicts with the current branch.")
                             .into(),
                         conflicts,
+                        StatusCode::CONFLICT,
+                    )
+                    .await
+                }
+                Ok(p::LandOutcome::Denied) if landed.message == "ref already exists" => {
+                    rerender(
+                        ctx,
+                        &repo,
+                        &resolved,
+                        &fields,
+                        &view,
+                        "the branch already exists".into(),
+                        Vec::new(),
                         StatusCode::CONFLICT,
                     )
                     .await

@@ -57,6 +57,12 @@ impl Objects for Counted {
         }
         self.inner.get_blobs(q).await
     }
+    async fn get_repository_identity(
+        &self,
+        q: Request<p::RepositoryIdentityRequest>,
+    ) -> Result<Response<p::RepositoryIdentityResponse>, Status> {
+        self.inner.get_repository_identity(q).await
+    }
 }
 struct Running {
     url: String,
@@ -213,7 +219,7 @@ async fn cache(f: &Fixture, limits: Limits) -> Arc<Layer> {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 6)]
-async fn thousand_clients_coalesce_across_two_nodes_and_warm_hits_survive_cache_loss() {
+async fn thousand_clients_coalesce_and_cached_frames_fail_closed_without_identity_checks() {
     let f = Fixture::new().await;
     let cache = cache(&f, limits()).await;
     let regional = start(cache.clone()).await;
@@ -238,7 +244,7 @@ async fn thousand_clients_coalesce_across_two_nodes_and_warm_hits_survive_cache_
         layers.push(layer);
         stores.push(store);
     }
-    let clients = vec![
+    let clients = [
         Client::connect(&nodes[0].url, Some("user"), Some(Role::Daemon))
             .await
             .unwrap(),
@@ -278,19 +284,17 @@ async fn thousand_clients_coalesce_across_two_nodes_and_warm_hits_survive_cache_
     drop(fresh);
     regional.shutdown().await;
     let before = f.calls.load(Ordering::SeqCst);
-    for client in &clients {
-        for _ in 0..10 {
-            assert_eq!(
-                client
-                    .fetch(b"repo", f.keys[0].id, Kind::Blob)
-                    .await
-                    .unwrap(),
-                expected
-            );
-        }
+    for client in clients.iter().take(2) {
+        assert_eq!(
+            client
+                .fetch(b"repo", f.keys[0].id, Kind::Blob)
+                .await
+                .unwrap_err()
+                .code(),
+            tonic::Code::Unavailable
+        );
     }
-    assert!(layers.iter().all(|layer| layer.stats().hits >= 10));
-    // A cold miss has one configured upstream; there is no authority fallback.
+    // Neither hot nor cold frames are served without authoritative identity.
     assert!(
         clients[0]
             .fetch(b"repo", f.keys[1].id, Kind::Blob)
@@ -301,7 +305,7 @@ async fn thousand_clients_coalesce_across_two_nodes_and_warm_hits_survive_cache_
     assert!(cache.stats().bytes <= 1024 * 1024);
     assert!(cache.stats().max_active <= 2);
     if let Ok(path) = std::env::var("KASU_CACHE_CAPTURE") {
-        let evidence = serde_json::json!({"schema":1,"clients":1000,"nodes":2,"authorityRequestsBeforeCacheStop":before,"authorityRequestsAfterCacheStop":f.calls.load(Ordering::SeqCst),"warmReadsPerNode":10,"cacheStopped":true,"coldMissRejected":true,"framesEqualStoredBytes":true,"configuredMaxFills":2,"cache":cache.stats(),"daemons":layers.iter().map(|layer|layer.stats()).collect::<Vec<_>>()});
+        let evidence = serde_json::json!({"schema":1,"clients":1000,"nodes":2,"authorityRequestsBeforeCacheStop":before,"authorityRequestsAfterCacheStop":f.calls.load(Ordering::SeqCst),"warmReadsPerNode":0,"cacheStopped":true,"cachedFramesRetainedButNotServed":true,"coldMissRejected":true,"configuredMaxFills":2,"cache":cache.stats(),"daemons":layers.iter().map(|layer|layer.stats()).collect::<Vec<_>>()});
         std::fs::write(path, serde_json::to_vec_pretty(&evidence).unwrap()).unwrap();
     }
 }
@@ -416,9 +420,9 @@ async fn hierarchy_credentials_roles_scope_and_cancelled_leaders_are_enforced() 
         layer.get(b"other", key).await.unwrap_err().code(),
         tonic::Code::NotFound
     );
-    assert_eq!(f.calls.load(Ordering::SeqCst), calls + 1);
+    assert_eq!(f.calls.load(Ordering::SeqCst), calls);
     assert!(layer.get(b"repo", key).await.is_ok());
-    assert_eq!(f.calls.load(Ordering::SeqCst), calls + 1);
+    assert_eq!(f.calls.load(Ordering::SeqCst), calls);
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]

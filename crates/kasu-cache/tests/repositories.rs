@@ -37,6 +37,12 @@ impl Objects for Counted {
         self.calls.fetch_add(1, Ordering::SeqCst);
         self.inner.get_blobs(q).await
     }
+    async fn get_repository_identity(
+        &self,
+        q: Request<p::RepositoryIdentityRequest>,
+    ) -> Result<Response<p::RepositoryIdentityResponse>, Status> {
+        self.inner.get_repository_identity(q).await
+    }
 }
 fn create(store: &SqliteStore, name: &str) -> RepoKey {
     let record = RepositoryRecord::new(
@@ -148,6 +154,11 @@ async fn frames_are_shared_but_served_only_after_per_repository_confirmation() {
     repo.associate_blob(reused.as_bytes(), kasu_core::BlobId(private.id.0))
         .unwrap();
     tokio::time::sleep(Duration::from_millis(5)).await;
+    assert_eq!(
+        layer.get(b"team/b", shared).await.unwrap_err().code(),
+        tonic::Code::NotFound
+    );
+    assert!(!store.member(b"team/b", shared).unwrap());
     layer.get(b"team/b", private).await.unwrap();
     assert_ne!(store.identity(b"team/b").unwrap().unwrap(), identity);
     assert!(!store.member(b"team/b", shared).unwrap());

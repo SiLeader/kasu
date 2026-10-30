@@ -15,7 +15,7 @@ args = parser.parse_args()
 root = Path(__file__).resolve().parents[2]
 out = root / 'docs/simulations/cache-deterministic'
 out.mkdir(parents=True, exist_ok=True)
-phases = ['coalesced_wave', 'cache_unavailable_warm_and_cold', 'empty_cache_restarted',
+phases = ['coalesced_wave', 'cache_unavailable_cached_and_cold_fail_closed', 'empty_cache_restarted',
           'truncated_frame_rejected', 'upstream_deadline', 'persistence_circuit_blocks_burst',
           'failed_half_open_probe', 'persistence_recovered', 'daemon_disk_reopened']
 expected_times = [5, 9, 18, 20, 80, 110, 140, 170, 170]
@@ -87,7 +87,7 @@ summary = {
     'macos_cache_daemon_cli_sim_tests_passed': 50,
     'verified': ['production cache Layer and Objects Client/handler with in-memory HTTP/2',
         'two node DiskStores and one regional memory cache; 1000 requests coalesce to one authority call',
-        'cache unavailable: warm node hits and failed cold misses do not fetch directly from authority',
+        'cache unavailable: cached and cold reads fail closed without authoritative identity confirmation',
         'empty cache restart, incomplete-frame rejection and recovery',
         'virtual upstream timeout; no partial cache publication',
         'persistence failures, blocked 30-request burst, failed probe and recovery',

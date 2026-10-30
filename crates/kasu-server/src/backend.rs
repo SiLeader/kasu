@@ -302,7 +302,17 @@ impl Backend {
     pub fn resolve_ref(&self, q: p::RefRequest) -> Result<p::Ref, tonic::Status> {
         self.repo(&q.repo)?;
         let value = self.refs.resolve(self.key(), &q.name).map_err(status)?;
-        if let Some(target) = value.target {
+        let mut version = value.version;
+        let target = match value.target {
+            Some(target) => Some(target),
+            None if q.name.starts_with(b"refs/tags/") => {
+                let git_state = self.refs.resolve_git(self.key(), &q.name).map_err(status)?;
+                version = git_state.version;
+                self.git_tag_target_for_value(git_state.value)?
+            }
+            None => None,
+        };
+        if let Some(target) = target {
             self.ops()
                 .ctx
                 .repo
@@ -311,13 +321,13 @@ impl Backend {
         }
         Ok(p::Ref {
             name: q.name,
-            target: value.target.map(|id| id.0.to_vec()),
-            version: value.version,
+            target: target.map(|id| id.0.to_vec()),
+            version,
         })
     }
     pub fn list_refs(&self, q: p::ListRefsRequest) -> Result<p::ListRefsResponse, tonic::Status> {
         self.repo(&q.repo)?;
-        let mut refs = Vec::new();
+        let mut refs = std::collections::BTreeMap::new();
         for (name, state) in self.refs.list(self.key(), &q.prefix).map_err(status)? {
             if let Some(id) = state.target {
                 self.ops()
@@ -326,13 +336,71 @@ impl Backend {
                     .require_membership(self.key(), id)
                     .map_err(status)?;
             }
-            refs.push(p::Ref {
-                name,
-                target: state.target.map(|id| id.0.to_vec()),
-                version: state.version,
-            });
+            refs.insert(
+                name.clone(),
+                p::Ref {
+                    name,
+                    target: state.target.map(|id| id.0.to_vec()),
+                    version: state.version,
+                },
+            );
         }
-        Ok(p::ListRefsResponse { refs })
+        if q.prefix.is_empty()
+            || q.prefix.starts_with(b"refs/tags/")
+            || b"refs/tags/".starts_with(&q.prefix)
+        {
+            for (name, state) in self
+                .refs
+                .list_git(self.key(), b"refs/tags/")
+                .map_err(status)?
+            {
+                if !name.starts_with(&q.prefix) || refs.contains_key(&name) {
+                    continue;
+                }
+                let target = self.git_tag_target_for_value(state.value)?;
+                if let Some(id) = target {
+                    self.ops()
+                        .ctx
+                        .repo
+                        .require_membership(self.key(), id)
+                        .map_err(status)?;
+                    refs.insert(
+                        name.clone(),
+                        p::Ref {
+                            name,
+                            target: Some(id.0.to_vec()),
+                            version: state.version,
+                        },
+                    );
+                }
+            }
+        }
+        Ok(p::ListRefsResponse {
+            refs: refs.into_values().collect(),
+        })
+    }
+    fn git_tag_target_for_value(
+        &self,
+        value: Option<core::GitRef>,
+    ) -> Result<Option<core::ChangesetId>, tonic::Status> {
+        let Some(core::GitRef::Direct {
+            target,
+            peeled,
+            kind,
+        }) = value
+        else {
+            return Ok(None);
+        };
+        let oid = match (kind, peeled) {
+            (core::GitKind::Commit, None) => target,
+            (core::GitKind::Tag, Some(oid)) => oid,
+            _ => return Ok(None),
+        };
+        let index = GitIndex {
+            repo: self.ops().ctx.repo,
+            projection: ProjectionId::full(self.key()),
+        };
+        index.find_changeset(oid).map_err(status)
     }
     pub fn log(&self, q: p::LogRequest) -> Result<p::LogResponse, tonic::Status> {
         let id = self.id(&q.repo, &q.start)?;

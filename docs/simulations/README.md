@@ -88,7 +88,7 @@ Initially, 499 requests on each node were coalesced, and the regional cache comb
 | Phase | Virtual time ms | Cumulative authoritative RPCs |
 |---|---:|---:|
 | Aggregating 1,000 requests | 5 | 1 |
-| Warm hit / cold miss while cache unreachable | 9 | 1 |
+| Cached hit and cold miss both fail closed while cache unreachable | 9 | 1 |
 | Restart with an empty cache | 18 | 2 |
 | Reject an incomplete response | 20 | 3 |
 | Upstream RPC deadline expires | 80 | 5 |
@@ -97,6 +97,7 @@ Initially, 499 requests on each node were coalesced, and the regional cache comb
 | Store recovers; every tier recovers | 170 | 11 |
 | Warm hit after reopening the daemon store | 170 | 11 |
 
+The archived traces below predate authoritative identity checks on every cached read; the current simulation rejects both cached and cold reads while the identity upstream is unavailable.
 A response cut midway is made to fail after a 64 KiB chunk produced by the real handler. Incomplete frames are not stored.
 A stalled fetch ends at the 50 ms virtual upstream deadline and recovers on a later refetch.
 After 3 store failures, 30 requests end without additional authoritative fetches, while warm node hits still work.

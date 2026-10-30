@@ -619,6 +619,7 @@ async fn final_tree_acl_blocks_second_parent_changes_and_native_publication() {
             idempotency_key: b"acl-land".to_vec(),
             max_attempts: 2,
             timeout_ms: 1000,
+            require_unborn: false,
         })
         .await
         .unwrap();

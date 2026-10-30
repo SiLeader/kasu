@@ -153,6 +153,9 @@ impl Backend {
             encoded.bytes(bytes);
         }
         encoded.bytes(b"api");
+        if request.require_unborn {
+            encoded.bytes(b"require-unborn-v1");
+        }
         if !request.required_ancestor.is_empty() {
             self.id(&request.repo, &request.required_ancestor)?;
             // Leave the fingerprint of legacy unguarded requests unchanged.
@@ -215,6 +218,15 @@ impl Backend {
             return Ok(LandPreparation::Complete(response));
         }
         let expected = self.refs.resolve(self.key(), &q.name).map_err(status)?;
+        if q.require_unborn && expected.target.is_some() {
+            return Ok(LandPreparation::Complete(p::LandResponse {
+                outcome: p::LandOutcome::Denied as i32,
+                actual: Some(reference(&q.name, expected)),
+                attempts: attempt,
+                message: "ref already exists".into(),
+                ..Default::default()
+            }));
+        }
         if !q.required_ancestor.is_empty() {
             let ancestor = self.id(&q.repo, &q.required_ancestor)?;
             let allowed = match expected.target {

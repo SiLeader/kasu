@@ -178,6 +178,7 @@ async fn land_grpc_and_http_replay_the_durable_result_after_ref_moves() {
         idempotency_key: b"land-once".to_vec(),
         max_attempts: 3,
         timeout_ms: 1000,
+        require_unborn: false,
     };
     assert_eq!(
         client.land(q.clone()).await.unwrap_err().code(),

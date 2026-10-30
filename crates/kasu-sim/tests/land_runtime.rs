@@ -102,6 +102,7 @@ impl Fixture {
             idempotency_key: b"key".to_vec(),
             max_attempts: 3,
             timeout_ms: 1000,
+            require_unborn: false,
         };
         Self {
             _temp: temp,

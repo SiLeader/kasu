@@ -441,6 +441,20 @@ impl Layer {
     /// `repo` is a normalized repository name.
     pub async fn get(self: &Arc<Self>, repo: &[u8], key: Key) -> Result<Frame, Status> {
         self.counters.requests.fetch_add(1, Ordering::Relaxed);
+        self.validate_repository(repo).await?;
+        self.get_validated(repo, key).await
+    }
+    async fn validate_repository(&self, repo: &[u8]) -> Result<String, Status> {
+        let identity = self.upstream.repository_identity(repo).await?;
+        let store = self.store.clone();
+        let repo = repo.to_vec();
+        let identity_for_store = identity.clone();
+        kasu_telemetry::blocking(move || store.identify(&repo, &identity_for_store))
+            .await
+            .map_err(|_| Status::internal("object cache identity worker failed"))??;
+        Ok(identity)
+    }
+    async fn get_validated(self: &Arc<Self>, repo: &[u8], key: Key) -> Result<Frame, Status> {
         if self.store.member(repo, key)?
             && let Some(bytes) = self.store.hot(key)?
         {
@@ -656,7 +670,7 @@ impl Service {
                 self.layer.counters.rejected.fetch_add(1, Ordering::Relaxed);
                 Status::resource_exhausted("object stream concurrency limit")
             })?;
-        let identity = self.layer.store.identity(&repo)?;
+        let identity = self.layer.validate_repository(&repo).await?;
         let (tx, rx) = tokio::sync::mpsc::channel(2);
         let layer = self.layer.clone();
         tokio::spawn(
@@ -664,7 +678,7 @@ impl Service {
                 let _permit = permit;
                 for id in ids {
                     let result =
-                        tokio::select! {_=tx.closed()=>return,r=layer.get(&repo,Key{kind,id})=>r};
+                        tokio::select! {_=tx.closed()=>return,r=layer.get_validated(&repo,Key{kind,id})=>r};
                     let bytes = match result {
                         Ok(bytes) => bytes,
                         Err(error) => {
@@ -696,7 +710,7 @@ impl Service {
         response
             .metadata_mut()
             .insert(LAYER_HEADER, self.layer.role.name().parse().unwrap());
-        if let Some(value) = identity.and_then(|v| v.parse().ok()) {
+        if let Ok(value) = identity.parse() {
             response
                 .metadata_mut()
                 .insert(kasu_object::REPOSITORY_HEADER, value);
@@ -731,6 +745,23 @@ impl Objects for Service {
             last,
         })
         .await
+    }
+    async fn get_repository_identity(
+        &self,
+        q: Request<p::RepositoryIdentityRequest>,
+    ) -> Result<Response<p::RepositoryIdentityResponse>, Status> {
+        if !kasu_object::authorized(&self.layer.token, q.metadata().get("authorization")) {
+            return Err(Status::unauthenticated("object layer token required"));
+        }
+        let repo = normalize(&q.into_inner().repo)
+            .filter(|repo| self.layer.serves(repo))
+            .ok_or_else(|| Status::not_found("repository not found"))?;
+        let identity = self.layer.validate_repository(&repo).await?;
+        let mut response = Response::new(p::RepositoryIdentityResponse { identity });
+        response
+            .metadata_mut()
+            .insert(LAYER_HEADER, self.layer.role.name().parse().unwrap());
+        Ok(response)
     }
 }
 

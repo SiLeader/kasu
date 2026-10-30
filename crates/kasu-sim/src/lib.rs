@@ -190,6 +190,7 @@ pub fn simulate_land(seed: u64, count: usize) -> LandSimulation {
             idempotency_key: key,
             max_attempts: 3,
             timeout_ms: 1000,
+            require_unborn: false,
         };
         let operation = backend.begin_land(request.clone()).unwrap();
         clients.push(Client {

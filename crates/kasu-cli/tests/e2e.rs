@@ -82,6 +82,12 @@ impl Objects for Observed {
             .extend(q.get_ref().ids.iter().map(|id| (false, id.clone())));
         self.inner.get_blobs(q).await
     }
+    async fn get_repository_identity(
+        &self,
+        q: Request<p::RepositoryIdentityRequest>,
+    ) -> std::result::Result<Response<p::RepositoryIdentityResponse>, Status> {
+        self.inner.get_repository_identity(q).await
+    }
 }
 struct Fixture {
     _temp: tempfile::TempDir,
@@ -880,7 +886,7 @@ async fn lazy_blob_reads_verify_content_hashes() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 6)]
-async fn real_cli_uses_the_unix_daemon_and_a_snapshot_can_boot_without_the_cache() {
+async fn real_cli_uses_the_unix_daemon_and_snapshots_fail_closed_without_authoritative_identity() {
     use kasu_cache::{DiskStore, Layer, Limits, MemoryStore, Service};
     use kasu_object::{Client, Layer as Role};
     struct Task(tokio::task::JoinHandle<()>);
@@ -1012,34 +1018,29 @@ async fn real_cli_uses_the_unix_daemon_and_a_snapshot_can_boot_without_the_cache
     }));
     let before = f.reads.lock().unwrap().len();
     let objects2 = format!("unix://{}", socket2.display());
-    f.ok(
-        &f.root,
-        &[
-            "checkout",
-            "main",
-            "offline-warm",
-            "--server",
-            &f.url,
-            "--objects",
-            &objects2,
-            "--repo",
-            "repo",
-            "--sparse",
-            "app",
-        ],
-    )
-    .await;
+    let offline = f
+        .cli(
+            &f.root,
+            &[
+                "checkout",
+                "main",
+                "offline-warm",
+                "--server",
+                &f.url,
+                "--objects",
+                &objects2,
+                "--repo",
+                "repo",
+                "--sparse",
+                "app",
+            ],
+        )
+        .await;
+    assert!(!offline.status.success());
+    assert!(!f.root.join("offline-warm").exists());
     assert_eq!(node2.stats().upstream, 0);
-    assert_eq!(node2.stats().hits, 7);
+    assert_eq!(node2.stats().hits, 0);
     assert_eq!(f.reads.lock().unwrap().len(), before);
-    assert!(
-        !f.cli(&f.root.join("offline-warm"), &["sparse", "add", "secret"])
-            .await
-            .status
-            .success()
-    );
-    assert_eq!(f.reads.lock().unwrap().len(), before);
-    assert!(!f.root.join("offline-warm/secret").exists());
     let working = f.root.join("layered");
     let state_path = working.join(".kasu/state.json");
     let mut state: kasu_cli::State =

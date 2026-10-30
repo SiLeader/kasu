@@ -390,6 +390,7 @@ async fn two_server_processes_share_ingest_git_atomic_push_native_cas_and_land_r
         idempotency_key: b"shared-key".to_vec(),
         max_attempts: 3,
         timeout_ms: 5000,
+        require_unborn: false,
     };
     let first = aw.land(auth(q.clone())).await.unwrap().into_inner();
     assert_eq!(first.outcome, p::LandOutcome::Landed as i32);

@@ -267,6 +267,25 @@ impl Client {
         );
         result
     }
+    pub async fn repository_identity(&self, repo: &[u8]) -> Result<String, Status> {
+        let mut client = self.client.clone();
+        let mut request = Request::new(p::RepositoryIdentityRequest {
+            repo: repo.to_vec(),
+        });
+        if let Some(value) = &self.authorization {
+            request
+                .metadata_mut()
+                .insert("authorization", value.clone());
+        }
+        kasu_telemetry::inject(request.metadata_mut());
+        let response = client.get_repository_identity(request).await?;
+        self.check(&response)?;
+        let identity = response.into_inner().identity;
+        if identity.is_empty() || identity.len() > 128 {
+            return Err(Status::data_loss("invalid repository identity"));
+        }
+        Ok(identity)
+    }
 }
 pub struct Frame {
     id: ObjectId,

@@ -122,6 +122,29 @@ impl ObjectService {
         });
         Ok((ReceiverStream::new(rx), identity))
     }
+
+    async fn repository_identity(
+        &self,
+        request: Request<p::RepositoryIdentityRequest>,
+    ) -> Result<Response<p::RepositoryIdentityResponse>, Status> {
+        let authorization = request
+            .metadata()
+            .get("authorization")
+            .and_then(|v| v.to_str().ok())
+            .map(str::to_owned);
+        let input = request.into_inner();
+        let scoped = self
+            .state
+            .scoped(authorization.as_deref(), &input.repo, crate::Mode::Objects)
+            .await?;
+        let mut response = Response::new(p::RepositoryIdentityResponse {
+            identity: kasu_core::ObjectId::hash(scoped.key()).to_string(),
+        });
+        response
+            .metadata_mut()
+            .insert(kasu_object::LAYER_HEADER, "server".parse().unwrap());
+        Ok(response)
+    }
 }
 fn respond<T>(stream: T, identity: &str) -> Response<T> {
     let mut response = Response::new(stream);
@@ -166,5 +189,12 @@ impl Objects for ObjectService {
             })
             .await?;
         Ok(respond(stream, &identity))
+    }
+
+    async fn get_repository_identity(
+        &self,
+        request: Request<p::RepositoryIdentityRequest>,
+    ) -> Result<Response<p::RepositoryIdentityResponse>, Status> {
+        self.repository_identity(request).await
     }
 }

@@ -204,6 +204,120 @@ async fn editing_round_trips_empty_files_and_trailing_blank_lines() {
 }
 
 #[tokio::test]
+async fn branch_creation_replay_succeeds_and_conflict_allows_corrected_resubmission() {
+    let h = Harness::delegated(&["team/app"]).await;
+    h.commit("team/app", &[(b"a", Some(b"base\n"))], "init")
+        .await;
+    let alice = h.login("alice").await;
+
+    let form = h.get("/team/app/-/edit/main/a", Some(&alice)).await;
+    let mut fields = form_fields(&form);
+    fields.extend([
+        ("path".into(), "a".into()),
+        ("content".into(), "branch content".into()),
+        ("message".into(), "Create feature branch".into()),
+        ("destination".into(), "branch".into()),
+        ("new_branch".into(), "feature/web".into()),
+    ]);
+    let pairs: Vec<_> = fields
+        .iter()
+        .map(|(name, value)| (name.as_str(), value.as_str()))
+        .collect();
+    let first = h
+        .post("/team/app/-/edit/main/a", Some(&alice), &pairs)
+        .await;
+    assert_eq!(first.status, StatusCode::SEE_OTHER, "{}", first.text());
+    let second = h
+        .post("/team/app/-/edit/main/a", Some(&alice), &pairs)
+        .await;
+    assert_eq!(second.status, StatusCode::SEE_OTHER, "{}", second.text());
+    assert_eq!(first.location(), second.location());
+
+    let main_version = main_tip(&h, "team/app").version;
+    let form = h.get("/team/app/-/edit/main/a", Some(&alice)).await;
+    let mut fields = form_fields(&form);
+    fields.extend([
+        ("path".into(), "a".into()),
+        ("content".into(), "must not replace main".into()),
+        ("message".into(), "Reject existing branch".into()),
+        ("destination".into(), "branch".into()),
+        ("new_branch".into(), "main".into()),
+    ]);
+    let pairs: Vec<_> = fields
+        .iter()
+        .map(|(name, value)| (name.as_str(), value.as_str()))
+        .collect();
+    let collision = h
+        .post("/team/app/-/edit/main/a", Some(&alice), &pairs)
+        .await;
+    assert_eq!(
+        collision.status,
+        StatusCode::CONFLICT,
+        "{}",
+        collision.text()
+    );
+    assert_eq!(main_tip(&h, "team/app").version, main_version);
+
+    let form = h.get("/team/app/-/edit/main/a", Some(&alice)).await;
+    let mut fields = form_fields(&form);
+    fields.extend([
+        ("path".into(), "a".into()),
+        ("content".into(), "mine\n".into()),
+        ("message".into(), "Resolve concurrent edit".into()),
+        ("destination".into(), "direct".into()),
+        ("confirmed".into(), "1".into()),
+    ]);
+    let pairs: Vec<_> = fields
+        .iter()
+        .map(|(name, value)| (name.as_str(), value.as_str()))
+        .collect();
+    h.commit("team/app", &[(b"a", Some(b"theirs\n"))], "concurrent")
+        .await;
+    let conflict = h
+        .post("/team/app/-/edit/main/a", Some(&alice), &pairs)
+        .await;
+    assert_eq!(conflict.status, StatusCode::CONFLICT, "{}", conflict.text());
+    let old_key = fields
+        .iter()
+        .find(|(name, _)| name == "key")
+        .unwrap()
+        .1
+        .clone();
+    fields.iter_mut().find(|(name, _)| name == "key").unwrap().1 = conflict.field("key");
+    assert_ne!(
+        fields.iter().find(|(name, _)| name == "key").unwrap().1,
+        old_key
+    );
+    fields
+        .iter_mut()
+        .find(|(name, _)| name == "base")
+        .unwrap()
+        .1 = hex::encode(main_tip(&h, "team/app").target.unwrap().0);
+    fields
+        .iter_mut()
+        .find(|(name, _)| name == "content")
+        .unwrap()
+        .1 = "resolved\n".into();
+    let pairs: Vec<_> = fields
+        .iter()
+        .map(|(name, value)| (name.as_str(), value.as_str()))
+        .collect();
+    let corrected = h
+        .post("/team/app/-/edit/main/a", Some(&alice), &pairs)
+        .await;
+    assert_eq!(
+        corrected.status,
+        StatusCode::SEE_OTHER,
+        "{}",
+        corrected.text()
+    );
+    assert_eq!(
+        read(&h, &alice, "/team/app/-/raw/main/a").await,
+        b"resolved\n"
+    );
+}
+
+#[tokio::test]
 async fn empty_repositories_accept_initial_commits_and_reviews() {
     let h = Harness::delegated(&[]).await;
     let alice = h.login("alice").await;

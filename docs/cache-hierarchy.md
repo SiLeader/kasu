@@ -133,7 +133,7 @@ The latter can be set with `--snapshot-max-bytes`. The archive itself also has a
 The tar is never extracted directly to the filesystem; every entry is verified in a temporary store before the typed indexes are published.
 Only part of an invalid snapshot never becomes servable.
 If an IO failure occurs during publication after verification, part of the verified data may remain.
-Snapshots are assumed to be distributed by trusted operators; keep authorization and the repo mapping intact.
+Snapshots are assumed to be distributed by trusted operators; keep authorization and the repo mapping intact. Every object request verifies the current repository identity upstream before serving cached frames. If that identity service is unavailable, the layer fails closed, including for snapshot-backed warm hits.
 
 The repo of a disk is fixed in `scope.json`, and reuse for a different repo is rejected.
 Double starts with the same data directory and socket are rejected with a lock.

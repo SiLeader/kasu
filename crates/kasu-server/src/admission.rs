@@ -825,6 +825,7 @@ fn operation(path: &str, query: Option<&str>, grpc: bool) -> &'static str {
             "Land" => "Land",
             "GetTrees" => "GetTrees",
             "GetBlobs" => "GetBlobs",
+            "GetRepositoryIdentity" => "GetRepositoryIdentity",
             "CreateRepository" => "CreateRepository",
             "GetRepository" => "GetRepository",
             "ListRepositories" => "ListRepositories",
@@ -1010,7 +1011,7 @@ where
                     let client_slots = state.runtime.bucket(client_key, Instant::now())?;
                     let identity = state.transport_identity(
                         authorization,
-                        grpc && matches!(method, "GetTrees" | "GetBlobs"),
+                        grpc && matches!(method, "GetTrees" | "GetBlobs" | "GetRepositoryIdentity"),
                     )?;
                     let slots = match identity {
                         Some(identity) => state.runtime.bucket(identity, Instant::now())?,

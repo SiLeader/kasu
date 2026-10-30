@@ -269,6 +269,7 @@ impl WorkingCopy {
             idempotency_key: self.state.land_key.clone().unwrap(),
             max_attempts: 8,
             timeout_ms: 30_000,
+            require_unborn: false,
         });
         let result = remote.writer.land(q).await?.into_inner();
         p::LandOutcome::try_from(result.outcome)?;

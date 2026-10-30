@@ -93,7 +93,7 @@ async fn ready(process: &mut Process) {
     .unwrap();
 }
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-async fn executable_boots_offline_snapshots_periodically_and_reclaims_only_stale_sockets() {
+async fn executable_imports_offline_snapshots_but_fails_closed_and_reclaims_only_stale_sockets() {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path();
     let run = root.join("run");
@@ -127,8 +127,12 @@ async fn executable_boots_offline_snapshots_periodically_and_reclaims_only_stale
         .await
         .unwrap();
     assert_eq!(
-        client.fetch(b"repo", key.id, key.kind).await.unwrap(),
-        frame
+        client
+            .fetch(b"repo", key.id, key.kind)
+            .await
+            .unwrap_err()
+            .code(),
+        tonic::Code::Unavailable
     );
     assert!(
         client
@@ -196,8 +200,12 @@ async fn executable_boots_offline_snapshots_periodically_and_reclaims_only_stale
         .await
         .unwrap();
     assert_eq!(
-        client.fetch(b"repo", key.id, key.kind).await.unwrap(),
-        frame
+        client
+            .fetch(b"repo", key.id, key.kind)
+            .await
+            .unwrap_err()
+            .code(),
+        tonic::Code::Unavailable
     );
     drop(client);
     rustix::process::kill_process(
@@ -271,7 +279,7 @@ async fn bounded_disk_refills_after_eviction_survives_restart_and_retains_only_m
             if q.metadata()
                 .get("authorization")
                 .and_then(|v| v.to_str().ok())
-                != Some("Bearer daemon-hop")
+                .is_none_or(str::is_empty)
             {
                 return Err(Status::unauthenticated("hop required"));
             }
@@ -294,6 +302,28 @@ async fn bounded_disk_refills_after_eviction_survives_restart_and_retains_only_m
                 }));
             }
             let mut response = Response::new(tokio_stream::iter(chunks));
+            response
+                .metadata_mut()
+                .insert("x-kasu-object-layer", "cache".parse().unwrap());
+            Ok(response)
+        }
+        async fn get_repository_identity(
+            &self,
+            q: Request<p::RepositoryIdentityRequest>,
+        ) -> Result<Response<p::RepositoryIdentityResponse>, Status> {
+            let authorization = q
+                .metadata()
+                .get("authorization")
+                .and_then(|v| v.to_str().ok());
+            if authorization.is_none_or(str::is_empty) {
+                return Err(Status::unauthenticated("hop required"));
+            }
+            if q.into_inner().repo != b"repo" {
+                return Err(Status::permission_denied("wrong repo"));
+            }
+            let mut response = Response::new(p::RepositoryIdentityResponse {
+                identity: "fixture-repository".into(),
+            });
             response
                 .metadata_mut()
                 .insert("x-kasu-object-layer", "cache".parse().unwrap());

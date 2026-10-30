@@ -4,7 +4,10 @@ package kasu.v1;
 service Objects {
   rpc GetTrees(ObjectRequest) returns (stream TreeObject);
   rpc GetBlobs(ObjectRequest) returns (stream BlobChunk);
+  rpc GetRepositoryIdentity(RepositoryIdentityRequest) returns (RepositoryIdentityResponse);
 }
+message RepositoryIdentityRequest { bytes repo = 1; }
+message RepositoryIdentityResponse { string identity = 1; }
 message ObjectRequest { bytes repo = 1; repeated bytes ids = 2; }
 // Each object's chunks are contiguous. Offsets address the stored zstd frame,
 // not decompressed content. Verify the complete frame and content ID before use.
@@ -37,7 +40,7 @@ service Writer {
   rpc UpdateRef(UpdateRefRequest) returns (UpdateRefResponse);
   rpc Land(LandRequest) returns (LandResponse);
 }
-message LandRequest { bytes repo = 1; bytes id = 2; bytes name = 3; bytes idempotency_key = 4; uint32 max_attempts = 5; uint32 timeout_ms = 6; bytes required_ancestor = 7; }
+message LandRequest { bytes repo = 1; bytes id = 2; bytes name = 3; bytes idempotency_key = 4; uint32 max_attempts = 5; uint32 timeout_ms = 6; bytes required_ancestor = 7; bool require_unborn = 8; }
 enum LandOutcome { LANDED = 0; CONFLICT = 1; RETRY = 2; DENIED = 3; }
 message LandResponse { LandOutcome outcome = 1; optional bytes id = 2; Ref actual = 3; RewriteResponse conflict = 4; uint32 attempts = 5; bool replayed = 6; string message = 7; }
 // Chunks for each blob are contiguous and offsets start at zero. A zero-data,

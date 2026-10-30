@@ -723,6 +723,70 @@ async fn grpc_over_tcp_and_http_json_preserve_bytes_and_enforce_access() {
             .len(),
         32
     );
+    let index = GitIndex {
+        repo: Repository {
+            meta: f.meta.as_ref(),
+            blobs: f.blobs.as_ref(),
+        },
+        projection: ProjectionId::full(b"repo".as_slice()),
+    };
+    let tag_raw = format!(
+        "object {}\ntype commit\ntag v1\ntagger A <a@b> 1 +0000\n\nrelease\n",
+        f.oids[6]
+    );
+    let annotated = GitOid::hash("tag", tag_raw.as_bytes());
+    index
+        .put(annotated, NativeTarget::Tag, tag_raw.as_bytes())
+        .unwrap();
+    f.meta
+        .compare_git(
+            b"repo",
+            &[
+                GitRefUpdate {
+                    name: b"refs/tags/light".to_vec(),
+                    expected: GitRefState::default(),
+                    new: Some(GitRef::Direct {
+                        target: f.oids[6],
+                        peeled: None,
+                        kind: GitKind::Commit,
+                    }),
+                },
+                GitRefUpdate {
+                    name: b"refs/tags/v1".to_vec(),
+                    expected: GitRefState::default(),
+                    new: Some(GitRef::Direct {
+                        target: annotated,
+                        peeled: Some(f.oids[6]),
+                        kind: GitKind::Tag,
+                    }),
+                },
+            ],
+            b"metadata test",
+            1,
+        )
+        .unwrap();
+    let tags = client
+        .list_refs(auth(p::ListRefsRequest {
+            repo: b"repo".to_vec(),
+            prefix: b"refs/tags/".to_vec(),
+        }))
+        .await
+        .unwrap()
+        .into_inner()
+        .refs;
+    assert_eq!(tags.len(), 2);
+    for tag in [b"refs/tags/light".as_slice(), b"refs/tags/v1"] {
+        let resolved = client
+            .resolve_ref(auth(p::RefRequest {
+                repo: b"repo".to_vec(),
+                name: tag.to_vec(),
+            }))
+            .await
+            .unwrap()
+            .into_inner();
+        assert_eq!(resolved.target, Some(f.ids[6].0.to_vec()));
+        assert_eq!(resolved.version, 1);
+    }
     let p::entry::Kind::File(file) = data.entry.as_ref().unwrap().kind.as_ref().unwrap() else {
         panic!()
     };

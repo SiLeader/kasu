@@ -191,7 +191,7 @@ payload の `repository.name` / `full_name` / `clone_url` は現在の名前か�
 - `kasu clone <server> <repo> [destination]` は既定 branch（取得できなければ `main`）を checkout します。working copy はサーバー URL とリポジトリ名を記録します。
 - `kasu repo list [--prefix P]` / `kasu repo create <name> [--default-branch B]` / `kasu repo show <name>` は Admin API を使います（`--server` / `KASU_SERVER`）。
 - `kasu-ingest --create <git-repository> <kasu-directory> <name>` は未登録のリポジトリを作成してから取り込みます。`--create` なしで未登録の名前を指定するとエラーです（レジストリが空の場合だけ legacy として登録します）。リポジトリが異なる取り込みは並行実行できます。
-- `kasu-cache` / `kasu-daemon` は要求の `repo` ごとに扱います。`--repo` は省略可能・複数指定可能な許可リストで、それ以外の名前は `NotFound` です。frame は ID 単位で共有し、上位がそのリポジトリでの所属を一度確認した `(repo, id)` だけをヒットにします。所属は disk カタログと snapshot に保存し、サーバーが返すリポジトリ識別子（`x-kasu-repository`）が名前に対して変わると、その名前の所属を破棄します。`kasu-daemon snapshot --repo A --repo B` で対象リポジトリを選べます。単一リポジトリ時代のカタログと snapshot は、そのリポジトリの所属として読み込みます。
+- `kasu-cache` / `kasu-daemon` は要求の `repo` ごとに扱います。`--repo` は省略可能・複数指定可能な許可リストで、それ以外の名前は `NotFound` です。frame は ID 単位で共有し、上位がそのリポジトリでの所属を確認した `(repo, id)` だけをヒットにします。hot hit を含む各要求で上位に現在のリポジトリ識別子を確認し、識別子が変わればその名前の所属を破棄します。識別子を確認できない場合は fail closed となり、要求は失敗します。所属と frame は disk カタログと snapshot に保存されますが、識別子を確認する上位が利用できない間は snapshot からオブジェクトを配信しません。`kasu-daemon snapshot --repo A --repo B` で対象リポジトリを選べます。単一リポジトリ時代のカタログと snapshot は、そのリポジトリの所属として読み込みます。
 
 ## 検証
 
