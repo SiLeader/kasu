@@ -1072,6 +1072,10 @@ async fn act(ctx: &mut Ctx, repo: Repo, number: u64, action: &str) -> Result<Res
             Ok(ctx.redirect(&back))
         }
         "publish" => {
+            let revision = fields
+                .text("revision")
+                .parse()
+                .map_err(|_| WebError::BadRequest("invalid revision".into()))?;
             let vote = match fields.get("vote") {
                 Some("approve") => Some(p::VoteValue::Approve as i32),
                 Some("request_changes") => Some(p::VoteValue::RequestChanges as i32),
@@ -1082,7 +1086,7 @@ async fn act(ctx: &mut Ctx, repo: Repo, number: u64, action: &str) -> Result<Res
                 .publish(ctx.wreq(p::PublishRequest {
                     repo: repo.bytes(),
                     number,
-                    revision: latest,
+                    revision,
                     vote,
                     body: fields.text("body").replace("\r\n", "\n").into_bytes(),
                 }))

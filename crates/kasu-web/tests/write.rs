@@ -55,7 +55,7 @@ async fn editing_preserves_line_endings_and_double_submission_lands_once() {
     let mut fields = form_fields(&form);
     fields.extend([
         ("path".into(), "conf.txt".into()),
-        ("content".into(), "a\r\nB\r\n".into()),
+        ("content".into(), "a\r\nB".into()),
         ("line_endings".into(), "crlf".into()),
         ("final_newline".into(), "1".into()),
         ("message".into(), "Edit conf".into()),
@@ -90,7 +90,31 @@ async fn editing_preserves_line_endings_and_double_submission_lands_once() {
         .get(&format!("/team/app/-/changeset/{tip}"), Some(&alice))
         .await;
     assert!(log.text().contains("Alice A"), "{}", log.text());
-    // A non-UTF-8 path round-trips through links and deletion.
+    // A non-UTF-8 path round-trips through editing, links and deletion.
+    let edit = h
+        .get("/team/app/-/edit/main/dir/%FF.txt", Some(&alice))
+        .await;
+    assert_eq!(edit.status, StatusCode::OK, "{}", edit.text());
+    let mut fields = form_fields(&edit);
+    fields.extend([
+        ("path".into(), edit.field("path")),
+        ("content".into(), "changed".into()),
+        ("message".into(), "Edit non-UTF-8 path".into()),
+        ("destination".into(), "direct".into()),
+    ]);
+    let pairs: Vec<(&str, &str)> = fields
+        .iter()
+        .map(|(a, b)| (a.as_str(), b.as_str()))
+        .collect();
+    let edited = h
+        .post("/team/app/-/edit/main/dir/%FF.txt", Some(&alice), &pairs)
+        .await;
+    assert_eq!(edited.status, StatusCode::SEE_OTHER, "{}", edited.text());
+    assert!(edited.location().ends_with("/dir/%FF.txt"));
+    assert_eq!(
+        read(&h, &alice, "/team/app/-/raw/main/dir/%FF.txt").await,
+        b"changed"
+    );
     let tree = h.get("/team/app/-/tree/main/dir", Some(&alice)).await;
     assert!(
         tree.links()
@@ -122,6 +146,139 @@ async fn editing_preserves_line_endings_and_double_submission_lands_once() {
             .status,
         StatusCode::NOT_FOUND
     );
+}
+
+#[tokio::test]
+async fn editing_round_trips_empty_files_and_trailing_blank_lines() {
+    let h = Harness::delegated(&["team/app"]).await;
+    let cases = [
+        ("lf", "hello\n\n\n"),
+        ("crlf", "hello\r\n\r\n\r\n"),
+        ("empty", ""),
+        ("unterminated", "hello"),
+        ("blank", "\n\n\n"),
+        ("leading", "\nhello\n\n"),
+    ];
+    let files: Vec<_> = cases
+        .iter()
+        .map(|(path, text)| (path.as_bytes(), Some(text.as_bytes())))
+        .collect();
+    h.commit("team/app", &files, "init").await;
+    let alice = h.login("alice").await;
+    for (path, text) in cases {
+        let url = format!("/team/app/-/edit/main/{path}");
+        let form = h.get(&url, Some(&alice)).await;
+        assert_eq!(form.status, StatusCode::OK, "{}", form.text());
+        assert_eq!(
+            form.text()
+                .contains("name=\"final_newline\" value=\"1\" checked"),
+            text.ends_with('\n'),
+            "{path}"
+        );
+        let mut fields = form_fields(&form);
+        fields.extend([
+            ("path".into(), form.field("path")),
+            ("content".into(), form.field("content")),
+            (
+                "line_endings".into(),
+                if text.contains("\r\n") { "crlf" } else { "lf" }.into(),
+            ),
+            ("message".into(), format!("Save {path} unchanged")),
+            ("destination".into(), "direct".into()),
+        ]);
+        if text.ends_with('\n') {
+            fields.push(("final_newline".into(), "1".into()));
+        }
+        let pairs: Vec<_> = fields
+            .iter()
+            .map(|(a, b)| (a.as_str(), b.as_str()))
+            .collect();
+        let saved = h.post(&url, Some(&alice), &pairs).await;
+        assert_eq!(saved.status, StatusCode::SEE_OTHER, "{}", saved.text());
+        assert_eq!(
+            read(&h, &alice, &format!("/team/app/-/raw/main/{path}")).await,
+            text.as_bytes(),
+            "{path}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn empty_repositories_accept_initial_commits_and_reviews() {
+    let h = Harness::delegated(&[]).await;
+    let alice = h.login("alice").await;
+    for destination in ["direct", "review"] {
+        let repository = format!("team/{destination}");
+        let form = h.get("/-/new", Some(&alice)).await;
+        let created = h
+            .post(
+                "/-/new",
+                Some(&alice),
+                &[
+                    ("csrf", &form.field("csrf")),
+                    ("key", &form.field("key")),
+                    ("name", &repository),
+                    ("default_branch", "trunk"),
+                ],
+            )
+            .await;
+        assert_eq!(created.status, StatusCode::SEE_OTHER, "{}", created.text());
+        if destination == "review" {
+            h.set_config(
+                &repository,
+                r#"{"review":{"rules":[{"ref_patterns":["refs/heads/trunk"]}]}}"#,
+            );
+        }
+        let page = h.get(&created.location(), Some(&alice)).await;
+        let url = page
+            .links()
+            .into_iter()
+            .find(|url| url.contains("/-/new/"))
+            .unwrap();
+        let form = h.get(&url, Some(&alice)).await;
+        assert_eq!(form.status, StatusCode::OK, "{}", form.text());
+        assert_eq!(form.field("base"), "");
+        assert!(form.links().contains(&format!("/{repository}")));
+        let mut fields = form_fields(&form);
+        fields.extend([
+            ("path".into(), "first.txt".into()),
+            ("content".into(), "first".into()),
+            ("message".into(), "Initial commit".into()),
+            ("destination".into(), destination.into()),
+        ]);
+        let pairs: Vec<_> = fields
+            .iter()
+            .map(|(a, b)| (a.as_str(), b.as_str()))
+            .collect();
+        let saved = h.post(&url, Some(&alice), &pairs).await;
+        assert_eq!(saved.status, StatusCode::SEE_OTHER, "{}", saved.text());
+        let replayed = h.post(&url, Some(&alice), &pairs).await;
+        assert_eq!(
+            replayed.status,
+            StatusCode::SEE_OTHER,
+            "{}",
+            replayed.text()
+        );
+        assert_eq!(saved.location(), replayed.location());
+        assert_eq!(
+            h.get(&saved.location(), Some(&alice)).await.status,
+            StatusCode::OK
+        );
+        if destination == "direct" {
+            assert_eq!(
+                read(&h, &alice, &format!("/{repository}/-/raw/trunk/first.txt")).await,
+                b"first"
+            );
+        } else {
+            assert_eq!(saved.location(), format!("/{repository}/-/reviews/1"));
+        }
+        assert_eq!(
+            h.get(&format!("/{repository}/-/new/unknown"), Some(&alice))
+                .await
+                .status,
+            StatusCode::NOT_FOUND
+        );
+    }
 }
 
 #[tokio::test]

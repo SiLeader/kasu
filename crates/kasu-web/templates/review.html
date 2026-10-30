@@ -38,6 +38,7 @@
 {% if can_vote %}
 <form method="post" action="{{ review.tabs[0].url }}/publish" class="stack">
   <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="revision" value="{{ review.revision }}">
   <label>{{ page.t.s("Add a comment") }}<textarea name="body"></textarea></label>
   {% if drafts > 0 %}<p class="muted">{{ page.t.s("Draft") }}: {{ drafts }}</p>{% endif %}
   <fieldset><legend>{{ page.t.s("Votes") }}</legend>

@@ -12,7 +12,8 @@
 <p class="notice">{{ page.t.s("Delete") }}: <span class="code">{{ path }}</span></p>
 {% else %}
 <label>{{ page.t.s("Path") }}<input type="text" name="path" value="{{ path }}" required{% if !path_editable %} readonly{% endif %}></label>
-<label>{{ page.t.s("Content") }}<textarea class="editor" name="content" spellcheck="false">{{ content }}</textarea></label>
+<label>{{ page.t.s("Content") }}<textarea class="editor" name="content" spellcheck="false">
+{{ content }}</textarea></label>
 <div class="bar">
   <label class="inline">{{ page.t.s("Line endings") }} <select name="line_endings"><option value="lf"{% if !crlf %} selected{% endif %}>LF</option><option value="crlf"{% if crlf %} selected{% endif %}>CRLF</option></select></label>
   <label class="inline"><input type="checkbox" name="final_newline" value="1"{% if final_newline %} checked{% endif %}> final newline</label>

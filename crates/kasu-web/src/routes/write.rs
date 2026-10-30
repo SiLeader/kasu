@@ -304,7 +304,20 @@ pub async fn write(
     let rev = rest.next().ok_or(WebError::NotFound)?;
     let path = rev::join(&rest.collect::<Vec<_>>()).ok_or(WebError::NotFound)?;
     let repo = ctx.repo(&name).await?;
-    let resolved = ctx.resolve(&repo, &rev).await?;
+    let resolved = match ctx.resolve(&repo, &rev).await {
+        Ok(resolved) => resolved,
+        Err(WebError::NotFound)
+            if matches!(view.as_str(), "new" | "upload")
+                && (rev == repo.record.default_branch || rev == repo.default_ref()) =>
+        {
+            Resolved {
+                requested: rev,
+                id: Vec::new(),
+                reference: Some(repo.default_ref()),
+            }
+        }
+        Err(error) => return Err(error),
+    };
     let branch = resolved
         .reference
         .clone()
@@ -351,7 +364,7 @@ async fn form_base(
     let mut nav = ctx.nav(
         repo,
         "code",
-        Some(resolved),
+        (!resolved.id.is_empty()).then_some(resolved),
         permissions.as_ref().is_some_and(|p| p.admin),
     );
     nav.crumbs = ctx.crumbs(repo, resolved.segment(), path);
@@ -399,15 +412,19 @@ async fn form_base(
         conflicts: Vec::new(),
         changed_warning: false,
         retry: false,
-        cancel: repo.url(
-            if mode == "edit" || mode == "delete" {
-                "blob"
-            } else {
-                "tree"
-            },
-            Some(&segment),
-            Some(path),
-        ),
+        cancel: if resolved.id.is_empty() {
+            repo.top()
+        } else {
+            repo.url(
+                if mode == "edit" || mode == "delete" {
+                    "blob"
+                } else {
+                    "tree"
+                },
+                Some(&segment),
+                Some(path),
+            )
+        },
     })
 }
 async fn edit_form(
@@ -438,7 +455,7 @@ async fn edit_form(
     };
     let mut form = form_base(ctx, repo, resolved, "edit", &path, review).await?;
     form.crlf = text.contains("\r\n");
-    form.final_newline = text.ends_with('\n') || text.is_empty();
+    form.final_newline = text.ends_with('\n');
     form.executable = file.executable;
     form.content = text.replace("\r\n", "\n");
     if form.final_newline {
@@ -549,15 +566,8 @@ async fn submit(
     let commit = match view.as_str() {
         "edit" | "new" => {
             let original = fields.hex("original_path")?;
-            let target = if fields.get("path").is_some() {
-                checked_path(&fields.text("path"))?
-            } else {
-                original.clone()
-            };
+            let target = commit_path(&fields)?;
             let mut content = fields.text("content").replace("\r\n", "\n");
-            while content.ends_with('\n') {
-                content.pop();
-            }
             if fields.flag("final_newline") {
                 content.push('\n');
             }
@@ -570,6 +580,7 @@ async fn submit(
                 ));
             }
             if (view == "new" || target != original)
+                && !base.is_empty()
                 && browse::entry_at(ctx, &repo, &base, &target).await.is_ok()
             {
                 return rerender(
@@ -658,7 +669,7 @@ async fn upload(ctx: &mut Ctx, repo: Repo, resolved: Resolved, dir: Vec<u8>) -> 
         return Err(WebError::BadRequest("choose at least one file".into()));
     }
     let base = fields.hex("base")?;
-    if !fields.flag("overwrite") {
+    if !base.is_empty() && !fields.flag("overwrite") {
         for (path, _) in &files {
             if browse::entry_at(ctx, &repo, &base, path).await.is_ok() {
                 return Err(WebError::Conflict(format!(
@@ -828,7 +839,11 @@ async fn land(
         .writer()
         .create_changeset(ctx.wreq(p::CreateChangesetRequest {
             repo: repo.bytes(),
-            parents: vec![base],
+            parents: if base.is_empty() {
+                Vec::new()
+            } else {
+                vec![base]
+            },
             changes,
             metadata: Some(p::CommitMetadata {
                 author: Some(signature.clone()),
@@ -948,7 +963,7 @@ async fn land(
                     let shown = match view.as_str() {
                         "delete" | "upload" => repo.url("tree", Some(segment.as_bytes()), None),
                         _ => {
-                            let file = commit_path(&fields);
+                            let file = commit_path(&fields)?;
                             repo.url("blob", Some(segment.as_bytes()), Some(&file))
                         }
                     };
@@ -992,9 +1007,13 @@ async fn land(
         _ => Err(WebError::BadRequest("unknown destination".into())),
     }
 }
-fn commit_path(fields: &Fields) -> Vec<u8> {
+fn commit_path(fields: &Fields) -> Result<Vec<u8>> {
+    let original = fields.hex("original_path")?;
+    if std::str::from_utf8(&original).is_err() {
+        return Ok(original);
+    }
     match fields.get("path") {
-        Some(path) => path.trim().trim_matches('/').as_bytes().to_vec(),
-        None => fields.hex("original_path").unwrap_or_default(),
+        Some(path) => checked_path(path),
+        None => Ok(original),
     }
 }

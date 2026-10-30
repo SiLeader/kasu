@@ -87,12 +87,13 @@ struct Sink {
 }
 impl Write for Sink {
     fn write(&mut self, data: &[u8]) -> std::io::Result<usize> {
-        self.buffer.extend_from_slice(data);
-        self.written += data.len() as u64;
-        if self.buffer.len() >= CHUNK {
+        let size = data.len().min(CHUNK - self.buffer.len());
+        self.buffer.extend_from_slice(&data[..size]);
+        self.written += size as u64;
+        if self.buffer.len() == CHUNK {
             self.flush()?;
         }
-        Ok(data.len())
+        Ok(size)
     }
     fn flush(&mut self) -> std::io::Result<()> {
         if self.buffer.is_empty() {
@@ -343,6 +344,32 @@ impl Archive for ArchiveService {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn sink_splits_large_writes_without_losing_bytes() {
+        let data: Vec<u8> = (0..5 * 1024 * 1024 + 17).map(|i| i as u8).collect();
+        let expected = [b"header".as_slice(), &data].concat();
+        let (tx, mut rx) = tokio::sync::mpsc::channel(2);
+        let worker = std::thread::spawn(move || {
+            let mut sink = Sink {
+                tx,
+                buffer: Vec::new(),
+                written: 0,
+            };
+            sink.write_all(b"header").unwrap();
+            sink.write_all(&data).unwrap();
+            sink.flush().unwrap();
+            sink.written
+        });
+        let mut received = Vec::new();
+        while let Some(chunk) = rx.blocking_recv() {
+            let chunk = chunk.unwrap();
+            assert!(!chunk.data.is_empty() && chunk.data.len() <= CHUNK);
+            received.extend(chunk.data);
+        }
+        assert_eq!(worker.join().unwrap(), expected.len() as u64);
+        assert_eq!(received, expected);
+    }
+
     #[test]
     fn tar_headers_have_valid_checksums_and_pax_carries_long_names() {
         let header = tar_header(b"a.txt", 5, 0o644, b'0', b"");

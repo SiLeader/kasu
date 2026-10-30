@@ -147,7 +147,12 @@ async fn reviews_are_created_commented_approved_and_submitted_without_javascript
         .post(
             "/team/app/-/reviews/1/publish",
             Some(&bob),
-            &[("csrf", &csrf), ("body", "LGTM"), ("vote", "approve")],
+            &[
+                ("csrf", &csrf),
+                ("revision", &overview.field("revision")),
+                ("body", "LGTM"),
+                ("vote", "approve"),
+            ],
         )
         .await;
     assert_eq!(
@@ -190,6 +195,109 @@ async fn reviews_are_created_commented_approved_and_submitted_without_javascript
         .get("/team/app/-/reviews?state=submitted", Some(&alice))
         .await;
     assert!(list.text().contains("Add b"));
+}
+
+#[tokio::test]
+async fn approvals_from_stale_forms_stay_on_the_displayed_revision() {
+    use kasu_proto::v1 as p;
+
+    let h = Harness::delegated(&["team/app"]).await;
+    h.commit("team/app", &[(b"a", Some(b"one"))], "init").await;
+    h.set_config(
+        "team/app",
+        r#"{"review":{"rules":[{"ref_patterns":["refs/heads/main"],"required_approvals":1}]}}"#,
+    );
+    let alice = h.login("alice").await;
+    let bob = h.login("bob").await;
+    branch(&h, &alice, "topic").await;
+    edit_on(&h, &alice, "topic", "b", "two").await;
+    let head = h.get("/team/app/-/new/topic", Some(&alice)).await;
+    let first = hex::decode(head.field("base")).unwrap();
+    h.backend
+        .create_review(
+            Some("Bearer alice-pat"),
+            p::CreateReviewRequest {
+                repo: b"team/app".to_vec(),
+                target: b"refs/heads/main".to_vec(),
+                changesets: vec![first.clone()],
+                title: b"Add files".to_vec(),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+    let stale = h.get("/team/app/-/reviews/1", Some(&bob)).await;
+    let html = stale.text();
+    let publish_form = html.split("/publish\" class=\"stack\">").nth(1).unwrap();
+    assert!(
+        publish_form
+            .split("</form>")
+            .next()
+            .unwrap()
+            .contains(&format!(
+                "name=\"revision\" value=\"{}\"",
+                stale.field("revision")
+            ))
+    );
+
+    edit_on(&h, &alice, "topic", "c", "three").await;
+    let head = h.get("/team/app/-/new/topic", Some(&alice)).await;
+    h.backend
+        .add_revision(
+            Some("Bearer alice-pat"),
+            p::AddRevisionRequest {
+                repo: b"team/app".to_vec(),
+                number: 1,
+                expected_revision: 1,
+                changesets: vec![first, hex::decode(head.field("base")).unwrap()],
+            },
+        )
+        .unwrap();
+    let csrf = stale.field("csrf");
+    for revision in [None, Some("invalid")] {
+        let mut fields = vec![("csrf", csrf.as_str()), ("vote", "approve")];
+        if let Some(revision) = revision {
+            fields.push(("revision", revision));
+        }
+        let invalid = h
+            .post("/team/app/-/reviews/1/publish", Some(&bob), &fields)
+            .await;
+        assert_eq!(invalid.status, StatusCode::BAD_REQUEST);
+    }
+    let published = h
+        .post(
+            "/team/app/-/reviews/1/publish",
+            Some(&bob),
+            &[
+                ("csrf", &csrf),
+                ("revision", &stale.field("revision")),
+                ("vote", "approve"),
+            ],
+        )
+        .await;
+    assert_eq!(
+        published.status,
+        StatusCode::SEE_OTHER,
+        "{}",
+        published.text()
+    );
+    let record = h
+        .backend
+        .get_review(
+            Some("Bearer bob-pat"),
+            p::GetReviewRequest {
+                repo: b"team/app".to_vec(),
+                number: 1,
+            },
+        )
+        .unwrap();
+    assert_eq!(record.votes.len(), 1);
+    assert_eq!(record.votes[0].revision, 1);
+    let current = h.get("/team/app/-/reviews/1", Some(&bob)).await;
+    assert!(
+        current.text().contains("0 of 1 required approvals"),
+        "{}",
+        current.text()
+    );
 }
 
 #[tokio::test]

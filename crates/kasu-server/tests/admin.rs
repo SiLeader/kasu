@@ -366,7 +366,7 @@ async fn repository_admins_cannot_configure_webhook_endpoints() {
     let f = Fixture::with(&["team/app"], |b| {
         b.with_repository_accounts(accounts).unwrap()
     });
-    let webhook_config = r#"{"webhooks":[{"id":"internal","url":"http://127.0.0.1:8080/hook"}]}"#;
+    let webhook_config = r#"{"webhooks":[{"id":"internal","url":"http://127.0.0.1:8080/hook","secret_file":"/operator/webhook.secret"}]}"#;
     let (status, _) = f
         .call(
             Some("admin-pat"),
@@ -403,7 +403,7 @@ async fn repository_admins_cannot_configure_webhook_endpoints() {
                 name: "team/app".into(),
                 expected_config_version: f.record("team/app").config_version,
                 config_json: Some(
-                    r#"{"limits":{"active":2},"webhooks":[{"id":"internal","url":"http://127.0.0.1:8080/hook"}]}"#
+                    r#"{"limits":{"active":2},"webhooks":[{"id":"internal","url":"http://127.0.0.1:8080/hook","secret_file":"/operator/webhook.secret"}]}"#
                         .into(),
                 ),
                 ..Default::default()
@@ -411,6 +411,28 @@ async fn repository_admins_cannot_configure_webhook_endpoints() {
         )
         .await;
     assert_eq!(status, StatusCode::OK, "{preserved}");
+    let saved: serde_json::Value =
+        serde_json::from_str(preserved["config_json"].as_str().unwrap()).unwrap();
+    assert_eq!(saved["limits"]["active"], 2);
+    assert_eq!(
+        saved["webhooks"][0]["secret_file"],
+        "/operator/webhook.secret"
+    );
+    let (status, _) = f
+        .call(
+            Some("admin-pat"),
+            "/v1/admin/update-repository",
+            &p::UpdateRepositoryRequest {
+                name: "team/app".into(),
+                expected_config_version: f.record("team/app").config_version,
+                config_json: Some(
+                    webhook_config.replace("/operator/webhook.secret", "/other/secret"),
+                ),
+                ..Default::default()
+            },
+        )
+        .await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
 
     let (status, _) = f
         .call(

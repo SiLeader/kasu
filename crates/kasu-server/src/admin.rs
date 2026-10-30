@@ -384,14 +384,19 @@ impl Backend {
         let mut events = Vec::new();
         if let Some(config) = &q.config_json {
             let config = RepositoryConfig::parse_request(config.as_bytes())?;
-            if !matches!(credential, Credential::Operator)
-                && config.webhooks != RepositoryConfig::parse(&record.config)?.webhooks
-            {
-                return Err(Status::permission_denied(
-                    "only operators may configure webhook endpoints",
-                ));
-            }
-            record.config = self.confine_secrets(credential, config)?.encode();
+            let webhooks_changed =
+                config.webhooks != RepositoryConfig::parse(&record.config)?.webhooks;
+            let config = if webhooks_changed {
+                if !matches!(credential, Credential::Operator) {
+                    return Err(Status::permission_denied(
+                        "only operators may configure webhook endpoints",
+                    ));
+                }
+                self.confine_secrets(credential, config)?
+            } else {
+                config
+            };
+            record.config = config.encode();
             events.push("config");
         }
         if let Some(value) = &q.default_branch {

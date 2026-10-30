@@ -213,6 +213,35 @@ async fn archives_stream_tar_gz_and_zip_within_the_read_scope() {
 }
 
 #[tokio::test]
+async fn zip_downloads_stream_files_larger_than_the_grpc_message_limit() {
+    let h = Harness::delegated(&["team/app"]).await;
+    let mut data = vec![0; 5 * 1024 * 1024];
+    getrandom::fill(&mut data).unwrap();
+    h.commit("team/app", &[(b"large.bin", Some(&data))], "large file")
+        .await;
+    let zip = h.get("/team/app/-/archive/main?format=zip", None).await;
+    assert_eq!(zip.status, StatusCode::OK, "{}", zip.text());
+    assert!(zip.body.starts_with(b"PK\x03\x04"));
+    let compressed = u32::from_le_bytes(zip.body[18..22].try_into().unwrap()) as usize;
+    assert!(compressed > 4 * 1024 * 1024);
+    let name_len = u16::from_le_bytes(zip.body[26..28].try_into().unwrap()) as usize;
+    let extra_len = u16::from_le_bytes(zip.body[28..30].try_into().unwrap()) as usize;
+    let start = 30 + name_len + extra_len;
+    let mut restored = Vec::new();
+    std::io::Read::read_to_end(
+        &mut flate2::read::DeflateDecoder::new(&zip.body[start..start + compressed]),
+        &mut restored,
+    )
+    .unwrap();
+    assert_eq!(restored, data);
+    assert!(zip.body.ends_with(b"\0\0"));
+    assert_eq!(
+        &zip.body[zip.body.len() - 22..zip.body.len() - 18],
+        b"PK\x05\x06"
+    );
+}
+
+#[tokio::test]
 async fn short_changeset_ids_resolve_when_unambiguous() {
     let h = Harness::delegated(&["team/app"]).await;
     let id = h

@@ -31,6 +31,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use kasu_proto::v1 as p;
+use prost::Message;
 use std::{net::SocketAddr, sync::Arc, time::Instant};
 use tonic::{Code, Status};
 
@@ -649,6 +650,7 @@ async fn route(ctx: &mut Ctx, path: &str) -> (&'static str, Result<Response>) {
 pub struct Repo {
     pub name: String,
     pub record: p::Repository,
+    pub cache_scope: Vec<u8>,
 }
 impl Repo {
     pub fn bytes(&self) -> Vec<u8> {
@@ -704,9 +706,20 @@ impl Ctx {
         )
         .await
         .read()?;
+        // Refresh the effective scope for every request, before using cached data.
+        let permissions = rpc!(
+            self,
+            identity.get_permissions(p::PermissionsRequest {
+                repo: name.as_bytes().to_vec(),
+                refs: Vec::new(),
+            })
+        )
+        .await
+        .read()?;
         Ok(Repo {
             name: name.to_owned(),
             record,
+            cache_scope: permissions.encode_to_vec(),
         })
     }
     pub async fn permissions(&self, repo: &Repo, refs: &[Vec<u8>]) -> Option<p::Permissions> {

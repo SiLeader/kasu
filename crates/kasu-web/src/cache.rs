@@ -1,6 +1,6 @@
 //! In-process cache of immutable upstream responses (addressed by Changeset
-//! or object ID). Keys always include the account the request acted as, so
-//! one account's filtered view never reaches another.
+//! or object ID). Keys include the account, repository key and freshly
+//! fetched permissions, so cached views cannot outlive their read scope.
 use std::{
     collections::{HashMap, VecDeque},
     sync::Mutex,

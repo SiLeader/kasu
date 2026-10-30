@@ -129,19 +129,8 @@ impl Harness {
         .with_registry_ttl(std::time::Duration::from_millis(1))
         .with_reviews(store.clone());
         let backend = Arc::new(backend(base));
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let address = listener.local_addr().unwrap();
-        let server = tonic::transport::Server::builder()
-            .add_service(MetadataService::new(backend.clone()).into_server())
-            .add_service(WriteService::new(backend.clone()).into_server())
-            .add_service(AdminService::new(backend.clone()).into_server())
-            .add_service(IdentityService::new(backend.clone()).into_server())
-            .add_service(ReviewService::new(backend.clone()).into_server())
-            .add_service(ArchiveService::new(backend.clone()).into_server());
-        tokio::spawn(
-            server.serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener)),
-        );
-        let mut web_config = kasu_web::Config::local(&format!("http://{address}"));
+        let server = serve(backend.clone()).await;
+        let mut web_config = kasu_web::Config::local(&server);
         web_config.file.clone_urls.http = Some("https://kasu.example".into());
         config(&mut web_config);
         web_config.validate().unwrap();
@@ -153,6 +142,20 @@ impl Harness {
             app,
             backend,
         }
+    }
+    /// Replace the server configuration while retaining the Web cache and sessions.
+    pub async fn reconfigure_backend(&mut self, configure: impl FnOnce(Backend) -> Backend) {
+        self.backend = Arc::new(configure(self.backend.as_ref().clone()));
+        let server = serve(self.backend.clone()).await;
+        self.web = Router::new();
+        let app = Arc::get_mut(&mut self.app).unwrap();
+        app.config.server = server;
+        app.upstream = kasu_web::upstream::Upstream::new(
+            &app.config.server,
+            app.config.delegate_token.clone(),
+        )
+        .unwrap();
+        self.web = kasu_web::router(self.app.clone());
     }
     pub async fn send(&self, request: Request<Body>) -> Response {
         let response = self.web.clone().oneshot(request).await.unwrap();
@@ -265,11 +268,17 @@ impl Harness {
             })
             .collect();
         if !chunks.is_empty() {
-            call(
-                "/v1/upload-blobs",
-                serde_json::to_value(p::UploadBlobsHttpRequest { chunks }).unwrap(),
-            )
-            .await;
+            self.app
+                .upstream
+                .writer()
+                .upload_blobs(
+                    self.app
+                        .upstream
+                        .with_token("operator", tokio_stream::iter(chunks))
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
         }
         let current = call(
             "/v1/resolve-ref",
@@ -348,6 +357,21 @@ impl Harness {
             .unwrap();
     }
 }
+async fn serve(backend: Arc<Backend>) -> String {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let server = tonic::transport::Server::builder()
+        .add_service(MetadataService::new(backend.clone()).into_server())
+        .add_service(WriteService::new(backend.clone()).into_server())
+        .add_service(AdminService::new(backend.clone()).into_server())
+        .add_service(IdentityService::new(backend.clone()).into_server())
+        .add_service(ReviewService::new(backend.clone()).into_server())
+        .add_service(ArchiveService::new(backend).into_server());
+    tokio::spawn(
+        server.serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener)),
+    );
+    format!("http://{address}")
+}
 pub fn bytes(value: &serde_json::Value) -> Vec<u8> {
     value
         .as_array()
@@ -409,6 +433,8 @@ impl Response {
                     out.push(unescape(value));
                 } else if attribute == "value" && tag.starts_with("<textarea") {
                     let body = &rest[end + 1..];
+                    // HTML discards one newline immediately after the opening tag.
+                    let body = body.strip_prefix('\n').unwrap_or(body);
                     out.push(unescape(&body[..body.find("</textarea>").unwrap_or(0)]));
                 }
             }

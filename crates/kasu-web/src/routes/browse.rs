@@ -384,12 +384,12 @@ pub struct Listing {
     pub entries: Vec<p::DirEntry>,
     pub read_filtered: bool,
 }
-/// List a directory; immutable by Changeset ID, so cached per account.
+/// List a directory; cached by Changeset ID and the current read scope.
 pub async fn list_dir(ctx: &Ctx, repo: &Repo, id: &[u8], path: &[u8]) -> Result<Listing> {
     let key = crate::cache::Cache::key(
         ctx.caller().act_as.as_deref(),
         "list_dir",
-        &[repo.name.as_bytes(), id, path],
+        &[&repo.record.key, &repo.cache_scope, id, path],
     );
     let root = cached(ctx, key.clone(), || async {
         rpc!(
@@ -409,7 +409,7 @@ pub async fn list_dir(ctx: &Ctx, repo: &Repo, id: &[u8], path: &[u8]) -> Result<
     let key = crate::cache::Cache::key(
         ctx.caller().act_as.as_deref(),
         "entries",
-        &[repo.name.as_bytes(), id, path],
+        &[&repo.record.key, &repo.cache_scope, id, path],
     );
     let listing: p::ListDirResponse = cached(ctx, key, || async {
         rpc!(
@@ -462,7 +462,7 @@ pub async fn read_file(
     let key = crate::cache::Cache::key(
         ctx.caller().act_as.as_deref(),
         "read_file",
-        &[repo.name.as_bytes(), id, path],
+        &[&repo.record.key, &repo.cache_scope, id, path],
     );
     cached(ctx, key, || async {
         rpc!(
@@ -482,7 +482,7 @@ pub async fn get_changeset(ctx: &Ctx, repo: &Repo, id: &[u8]) -> Result<p::Chang
     let key = crate::cache::Cache::key(
         ctx.caller().act_as.as_deref(),
         "changeset",
-        &[repo.name.as_bytes(), id],
+        &[&repo.record.key, &repo.cache_scope, id],
     );
     cached(ctx, key, || async {
         rpc!(

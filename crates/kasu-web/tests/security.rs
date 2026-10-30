@@ -253,3 +253,90 @@ async fn cached_views_never_cross_accounts() {
         .await;
     assert_eq!(raw.status, StatusCode::NOT_FOUND);
 }
+
+#[tokio::test]
+async fn cached_views_follow_reduced_permissions_for_sessions_and_anonymous_visitors() {
+    let mut h = Harness::delegated(&["team/app"]).await;
+    let id = h
+        .commit(
+            "team/app",
+            &[(b"docs/a", Some(b"public")), (b"secret/b", Some(b"hidden"))],
+            "init",
+        )
+        .await;
+    let alice = h.login("alice").await;
+    let tree = format!("/team/app/-/tree/{}", hex::encode(&id));
+    let raw = format!("/team/app/-/raw/{}/secret/b", hex::encode(&id));
+    for session in [Some(&alice), None] {
+        assert!(h.get(&tree, session).await.text().contains("secret"));
+        assert_eq!(h.get(&raw, session).await.body, b"hidden");
+        assert_eq!(h.get(&raw, session).await.body, b"hidden");
+    }
+    assert!(h.app.metrics.cache[0].load(std::sync::atomic::Ordering::Relaxed) > 0);
+
+    h.reconfigure_backend(|backend| {
+        let mut accounts = accounts();
+        for account in &mut accounts {
+            if account.name == "alice" || account.name == "public" {
+                account.grants[0].read_directories =
+                    Some(vec![kasu_core::RepoPath::new(b"docs".to_vec()).unwrap()]);
+            }
+        }
+        backend.with_repository_accounts(accounts).unwrap()
+    })
+    .await;
+
+    for session in [Some(&alice), None] {
+        let denied = h.get(&raw, session).await;
+        assert_eq!(denied.status, StatusCode::NOT_FOUND);
+        let limited = h.get(&tree, session).await;
+        assert_eq!(limited.status, StatusCode::OK, "{}", limited.text());
+        assert!(!limited.text().contains("secret"), "{}", limited.text());
+        assert!(limited.text().contains("Directory-limited view"));
+        let allowed = h
+            .get(
+                &format!("/team/app/-/raw/{}/docs/a", hex::encode(&id)),
+                session,
+            )
+            .await;
+        assert_eq!(allowed.status, StatusCode::OK);
+        assert_eq!(allowed.body, b"public");
+    }
+}
+
+#[tokio::test]
+async fn cached_files_do_not_survive_repository_name_reuse() {
+    use kasu_proto::v1 as p;
+
+    let h = Harness::delegated(&["team/app"]).await;
+    let id = h
+        .commit("team/app", &[(b"a", Some(b"old repository"))], "init")
+        .await;
+    let alice = h.login("alice").await;
+    let raw = format!("/team/app/-/raw/{}/a", hex::encode(&id));
+    assert_eq!(h.get(&raw, Some(&alice)).await.body, b"old repository");
+    h.backend
+        .delete_repository(
+            Some("Bearer operator"),
+            p::DeleteRepositoryRequest {
+                name: "team/app".into(),
+            },
+        )
+        .unwrap();
+    h.backend
+        .create_repository(
+            Some("Bearer operator"),
+            p::CreateRepositoryRequest {
+                name: "team/app".into(),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+    let response = h.get(&raw, Some(&alice)).await;
+    assert_eq!(
+        response.status,
+        StatusCode::NOT_FOUND,
+        "{}",
+        response.text()
+    );
+}
