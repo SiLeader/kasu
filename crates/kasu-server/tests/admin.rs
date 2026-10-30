@@ -353,6 +353,81 @@ async fn accounts_see_only_granted_repositories_and_cannot_administer() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn repository_admins_cannot_configure_webhook_endpoints() {
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::write(dir.path().join("admin.pat"), "admin-pat").unwrap();
+    let config = dir.path().join("accounts.json");
+    std::fs::write(
+        &config,
+        br#"{"accounts":[{"name":"admin","token_file":"admin.pat","create_repositories":["team/**"],"grants":[{"repositories":["team/**"],"admin":true}]}]}"#,
+    )
+    .unwrap();
+    let accounts = load_repository_accounts(&config).unwrap();
+    let f = Fixture::with(&["team/app"], |b| {
+        b.with_repository_accounts(accounts).unwrap()
+    });
+    let webhook_config = r#"{"webhooks":[{"id":"internal","url":"http://127.0.0.1:8080/hook"}]}"#;
+    let (status, _) = f
+        .call(
+            Some("admin-pat"),
+            "/v1/admin/update-repository",
+            &p::UpdateRepositoryRequest {
+                name: "team/app".into(),
+                expected_config_version: f.record("team/app").config_version,
+                config_json: Some(webhook_config.into()),
+                ..Default::default()
+            },
+        )
+        .await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+
+    let (status, configured) = f
+        .call(
+            Some("operator"),
+            "/v1/admin/update-repository",
+            &p::UpdateRepositoryRequest {
+                name: "team/app".into(),
+                expected_config_version: f.record("team/app").config_version,
+                config_json: Some(webhook_config.into()),
+                ..Default::default()
+            },
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{configured}");
+
+    let (status, preserved) = f
+        .call(
+            Some("admin-pat"),
+            "/v1/admin/update-repository",
+            &p::UpdateRepositoryRequest {
+                name: "team/app".into(),
+                expected_config_version: f.record("team/app").config_version,
+                config_json: Some(
+                    r#"{"limits":{"active":2},"webhooks":[{"id":"internal","url":"http://127.0.0.1:8080/hook"}]}"#
+                        .into(),
+                ),
+                ..Default::default()
+            },
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{preserved}");
+
+    let (status, _) = f
+        .call(
+            Some("admin-pat"),
+            "/v1/admin/create-repository",
+            &p::CreateRepositoryRequest {
+                name: "team/new".into(),
+                default_branch: b"main".to_vec(),
+                config_json: webhook_config.into(),
+                idempotency_key: Vec::new(),
+            },
+        )
+        .await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn file_managed_configuration_refuses_admin_configuration_changes() {
     let f = Fixture::with(&["team/app"], |b| {
         b.with_lifecycle(Lifecycle {

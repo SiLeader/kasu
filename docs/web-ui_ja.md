@@ -138,7 +138,7 @@ branch 上でファイルの編集・新規作成・アップロード・削除�
 
 ## 管理
 
-grant に `admin: true` を持つアカウントには `/<repo>/-/settings` を表示します。default branch、レビューポリシー（最初の rule のフォーム）、Webhook、JSON による設定全体、状態（Active / ReadOnly / Archived）、使用量、改名、フォーク、削除（名前の再入力で確認）を扱えます。変更はすべて表示時の `config_version` を伴い、他者の変更と競合した場合は上書きせずにエラーと送信内容を表示します。`create_repositories` を持つアカウントは `/-/new` でリポジトリを作成できます。
+grant に `admin: true` を持つアカウントには `/<repo>/-/settings` を表示します。default branch、レビューポリシー（最初の rule のフォーム）、Webhook、JSON による設定全体、状態（Active / ReadOnly / Archived）、使用量、改名、フォーク、削除（名前の再入力で確認）を扱えます。Webhook endpoint の追加・変更・削除は運用者のみ可能です。リポジトリ管理者は他の設定変更時に既存 endpoint を維持できます。変更はすべて表示時の `config_version` を伴い、他者の変更と競合した場合は上書きせずにエラーと送信内容を表示します。`create_repositories` を持つアカウントは `/-/new` で Webhook endpoint のないリポジトリを作成できます。
 
 ## レビュー
 

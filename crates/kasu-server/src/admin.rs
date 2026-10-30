@@ -257,12 +257,13 @@ impl Backend {
         let name = name(&q.name)?;
         let actor = self.admin_actor(credential, None, Some(&name))?;
         let default_branch = branch(&q.default_branch)?;
-        let config = self
-            .confine_secrets(
-                credential,
-                RepositoryConfig::parse_request(q.config_json.as_bytes())?,
-            )?
-            .encode();
+        let config = RepositoryConfig::parse_request(q.config_json.as_bytes())?;
+        if !matches!(credential, Credential::Operator) && !config.webhooks.is_empty() {
+            return Err(Status::permission_denied(
+                "only operators may configure webhook endpoints",
+            ));
+        }
+        let config = self.confine_secrets(credential, config)?.encode();
         if q.idempotency_key.len() > 256 {
             return Err(Status::invalid_argument(
                 "idempotency key exceeds 256 bytes",
@@ -382,12 +383,15 @@ impl Backend {
         }
         let mut events = Vec::new();
         if let Some(config) = &q.config_json {
-            record.config = self
-                .confine_secrets(
-                    credential,
-                    RepositoryConfig::parse_request(config.as_bytes())?,
-                )?
-                .encode();
+            let config = RepositoryConfig::parse_request(config.as_bytes())?;
+            if !matches!(credential, Credential::Operator)
+                && config.webhooks != RepositoryConfig::parse(&record.config)?.webhooks
+            {
+                return Err(Status::permission_denied(
+                    "only operators may configure webhook endpoints",
+                ));
+            }
+            record.config = self.confine_secrets(credential, config)?.encode();
             events.push("config");
         }
         if let Some(value) = &q.default_branch {

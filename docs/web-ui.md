@@ -138,7 +138,7 @@ Line endings, the final newline and the executable bit are preserved and can be 
 
 ## Administration
 
-Accounts whose grant has `admin: true` see `/<repo>/-/settings`: default branch, review policy (form for the first rule), webhooks, the whole configuration as JSON, state (Active / ReadOnly / Archived), usage, rename, fork, and deletion (confirmed by typing the name). Every change carries the displayed `config_version`; a concurrent change shows the error and the submitted values instead of overwriting. Accounts with `create_repositories` create repositories at `/-/new`.
+Accounts whose grant has `admin: true` see `/<repo>/-/settings`: default branch, review policy (form for the first rule), webhooks, the whole configuration as JSON, state (Active / ReadOnly / Archived), usage, rename, fork, and deletion (confirmed by typing the name). Only operators can add, change, or remove webhook endpoints; repository admins may preserve existing endpoints while changing other settings. Every change carries the displayed `config_version`; a concurrent change shows the error and the submitted values instead of overwriting. Accounts with `create_repositories` create repositories at `/-/new`, without webhook endpoints.
 
 ## Reviews
 

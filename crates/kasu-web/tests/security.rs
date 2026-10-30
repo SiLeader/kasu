@@ -136,6 +136,28 @@ async fn sessions_end_when_the_pat_changes_and_operators_cannot_log_in() {
 }
 
 #[tokio::test]
+async fn login_rejects_control_characters_in_redirect_targets() {
+    let h = Harness::delegated(&["team/app"]).await;
+    let visitor = Session {
+        cookies: vec![("kasu_visitor".into(), "3".repeat(32))],
+    };
+    let csrf = h.get("/-/login", Some(&visitor)).await.field("csrf");
+    let response = h
+        .post(
+            "/-/login",
+            Some(&visitor),
+            &[
+                ("csrf", &csrf),
+                ("token", "alice-pat"),
+                ("next", "/\t//evil.example"),
+            ],
+        )
+        .await;
+    assert_eq!(response.status, StatusCode::SEE_OTHER);
+    assert_eq!(response.location(), "/");
+}
+
+#[tokio::test]
 async fn logins_are_rate_limited_per_client() {
     let h = Harness::delegated(&["team/app"]).await;
     let visitor = Session {

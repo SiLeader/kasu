@@ -21,6 +21,9 @@ fn safe_next(next: &str) -> String {
     if next.starts_with('/')
         && !next.starts_with("//")
         && !next.contains('\\')
+        && !next
+            .chars()
+            .any(|c| c.is_ascii_control() || c.is_whitespace())
         && !next.starts_with("/-/log")
     {
         next.to_owned()
