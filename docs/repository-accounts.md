@@ -113,6 +113,30 @@ There is no need to accept account configuration or policy environment variables
 restrict,command="/opt/kasu/kasu-git-ssh /srv/kasu demo /etc/kasu/secrets/deploy-bot.pat" ssh-ed25519 AAAA... deploy-bot
 ```
 
+## Administration, Profiles and Delegates
+
+Grants may carry `"admin": true` to let the account administer the repositories they match (settings, state, rename, deletion), and accounts may list `create_repositories` (name globs) they may create, rename to or fork to. See [multiple repositories](multi-repository.md#admin-api).
+`display_name` and `email` are optional profile fields (at most 256 bytes, no `<`, `>` or newlines) used as the default signature of commits made in the [Web UI](web-ui.md).
+
+The same file declares **delegates**: principals such as kasu-web that cannot read anything themselves but act as an account per request.
+
+```json
+"delegates": [
+  { "name": "kasu-web", "token_file": "secrets/kasu-web.pat", "act_as": ["*"], "allow_admin": true,
+    "allow_unbound": false, "anonymous_account": "public-reader", "trusted_peers": ["10.0.20.0/24"] }
+]
+```
+
+| Field | Meaning |
+|---|---|
+| `act_as` | Account name globs the delegate may act as. The operator and projection accounts are never targets |
+| `allow_admin` | Whether delegated requests may change repositories through the Admin API |
+| `allow_unbound` | Whether requests without `kasu-act-binding` (reverse-proxy authentication) are accepted |
+| `anonymous_account` | The account anonymous visitors act as. It need not match `act_as` and is always read-only |
+| `trusted_peers` | Source networks (CIDR) the delegate may connect from; empty allows any address and logs a warning |
+
+A delegated request carries `authorization: Bearer <delegate token>`, `kasu-act-as: <account>`, and optionally `kasu-act-binding` (hex of the binding `Identity.WhoAmI` returned when the user signed in with their PAT), `kasu-act-user` (an audit name, at most 256 bytes) and `kasu-client-addr` (the browser's address). The server rejects with `UNAUTHENTICATED` a missing or unknown account, one outside `act_as`, an untrusted peer, and a binding that does not match the account's current PAT; a delegate token without `kasu-act-as` reads nothing. Otherwise the request is authorized, attributed (ref log actor, Land keys, review authorship) and admitted exactly as a direct request by that account, except that the anonymous account is fixed read-only. The ref log records the delegate and user in the `via` column. Bindings are keyed hashes of the PAT under `KASU_BINDING_KEY_FILE` (32 bytes or more; shared by every replica); without it each process uses a random key. Delegate tokens must differ from every other credential.
+
 ## Configuration Limits
 
 - 1–256 accounts. Names are 1–128 bytes and must be unique within the configuration and across projection accounts.

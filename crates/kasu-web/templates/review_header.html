@@ -1,0 +1,3 @@
+<h1>#{{ review.number }} {{ review.title }}</h1>
+<p><span class="badge">{{ review.state }}</span> <span class="code">{{ review.target }}</span> · {{ review.author }} · {{ page.t.s("Revision") }} {{ review.revision }}</p>
+<nav class="tabs" aria-label="review">{% for tab in review.tabs %}<a href="{{ tab.url }}"{% if tab.on %} class="on" aria-current="page"{% endif %}>{{ tab.label }}</a>{% endfor %}</nav>

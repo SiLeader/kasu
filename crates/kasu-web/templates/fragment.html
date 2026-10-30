@@ -1,0 +1,1 @@
+<div data-fragment>{% for file in files %}{% if file.collapsed %}<p class="muted">…</p>{% else %}{{ file.html|safe }}{% endif %}{% endfor %}</div>

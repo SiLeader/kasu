@@ -76,6 +76,15 @@ git -c http.extraHeader='Authorization: Bearer dev-token' clone http://127.0.0.1
 ./target/debug/kasu repo list
 ```
 
+To browse in a web browser, run the Web UI next to a server without authentication (development only; see the [Web UI guide](docs/web-ui.md) for accounts, delegates, and sign-in):
+
+```sh
+cargo run -p kasu-server -- /path/to/kasu-data &
+mkdir -p dev && head -c 32 /dev/urandom > dev/session.key
+KASU_WEB_SERVER=http://127.0.0.1:50051 KASU_WEB_SESSION_KEY_FILE=dev/session.key \
+KASU_WEB_PUBLIC_URL=http://127.0.0.1:50090 cargo run -p kasu-web
+```
+
 See [multiple repositories](docs/multi-repository.md) for naming, migration of existing data (`kasu-server migrate-registry`), per-repository grants and configuration, the Admin API, deletion, and forks.
 
 ## Documentation and status
@@ -87,6 +96,7 @@ The implementation includes the native CLI, server APIs, Git gateway, cache hier
 | Architecture and data model | [Design plan](docs/plan/README.md) |
 | Working copies | [Native CLI](docs/native-cli.md), [virtual checkout](docs/virtual-checkout.md) |
 | Native APIs | [Metadata](docs/metadata-api.md), [writes](docs/write-api.md), [objects](docs/object-api.md), [Land](docs/land.md) |
+| Web UI and reviews | [Web UI](docs/web-ui.md), [reviews and protected refs](docs/review.md) |
 | Git compatibility | [Import](docs/git-import.md), [reads](docs/git-read.md), [push](docs/git-push.md), [SSH](docs/git-ssh.md), [external LFS](docs/git-lfs.md) |
 | Multiple repositories | [Registry, grants, Admin API, lifecycle](docs/multi-repository.md) |
 | Access control and projections | [Accounts](docs/repository-accounts.md), [directory reads](docs/directory-read-acl.md), [Git projections](docs/git-projection.md), [projection accounts](docs/projection-accounts.md) |

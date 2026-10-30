@@ -35,6 +35,7 @@ cd work
 | `checkout <ref または Changeset ID> <新しい directory>` | 基底を解決し、必要な Tree／Blob だけ取得して作成 |
 | `clone <server> <repo> [directory]` | リポジトリの既定 branch を checkout。directory の既定は名前の最後のセグメント |
 | `repo list [--prefix P]`／`repo create <name> [--default-branch B]`／`repo show <name>` | [Admin API](multi-repository_ja.md#admin-api) でリポジトリを一覧・作成・表示 |
+| `review list [--state S]` / `review show <n>` / `review create --title T [--target R] [ID…]` / `review vote <n> approve\|request-changes\|none [-m M]` / `review comment <n> <メッセージ>` / `review update <n> [--title T] [--close\|--reopen]` / `review rebase <n>` / `review submit <n> [--method rebase\|squash]` | Changeset スタックの [レビュー](review_ja.md)（`--server`、`--repo` または working copy）。ID を省略した `create` は working copy の現在の Changeset を提案する。保護 ref への `land` は `review create` を案内して失敗する |
 | `status`／`diff` | 起動時に実ファイルを比較。通常ファイル、実行ビット、symlink、削除・追加を検出 |
 | `status --watch` | notify の FSEvents／inotify で変更を監視し、全状態比較を再実行 |
 | `commit -m <message>` | Blob の存在確認／ストリーム upload と、サーバーでの Changeset 作成 |

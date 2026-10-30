@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block content %}
+{% include "review_header.html" %}
+<div class="bar">{% for r in revisions %}<a href="{{ r.url }}" class="badge{% if r.on %} ok{% endif %}">{{ r.label }}</a> {% endfor %}
+{% for r in against %}<a href="{{ r.url }}" class="badge{% if r.on %} ok{% endif %}">{{ r.label }}</a> {% endfor %}</div>
+{% if let Some(notice) = notice %}<p class="notice">{{ notice }}</p>{% endif %}
+{% include "diff_files.html" %}
+{% if !older.is_empty() %}
+<details><summary>{{ page.t.s("Older revision") }} ({{ older.len() }})</summary>
+{% for thread in older %}<div class="thread"><div class="muted code">{{ thread.location }}</div><div class="comment"><span class="who">{{ thread.root.author }}</span> {{ thread.root.body|safe }}</div>{% for reply in thread.replies %}<div class="comment"><span class="who">{{ reply.author }}</span> {{ reply.body|safe }}</div>{% endfor %}</div>{% endfor %}
+</details>
+{% endif %}
+{% for thread in general %}<div class="thread"><div class="muted code">{{ thread.location }}</div><div class="comment"><span class="who">{{ thread.root.author }}</span> {{ thread.root.body|safe }}</div></div>{% endfor %}
+{% endblock %}

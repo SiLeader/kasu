@@ -46,6 +46,28 @@ gRPC（`kasu-proto`）を正とし、主要な読み取り系は HTTP/JSON で�
 | `DeleteRepository(name)` | `Deleting` に遷移し非同期に削除。名前は即時解放 |
 | `ForkRepository(source, ref, new_name)` | 所属のみコピーするフォーク（後半） |
 
+運用者に加え、grant の `admin` と `create_repositories` を持つアカウントも管理できる（[webui/02](webui/02-auth.md#管理権限の拡張)）。
+
+### Identity API
+
+| RPC | 説明 |
+|---|---|
+| `WhoAmI()` | 呼び出し元のアカウント・匿名か・プロフィール・PAT の binding・作成可能な名前 |
+| `GetPermissions(repo, refs)` | UI 表示用の実効権限（読み取り範囲・書き込み・ref ごとの更新可否とレビュー要否・管理） |
+
+委譲資格情報（delegate）は `kasu-act-as` 等のメタデータで要求ごとに代理対象アカウントを指定する（[webui/02](webui/02-auth.md#委譲資格情報)）。
+
+### Review API
+
+| RPC | 説明 |
+|---|---|
+| `CreateReview` / `GetReview` / `ListReviews` / `UpdateReview` | Changeset スタックのレビューの作成・取得・一覧・タイトル等の更新と Close / Reopen |
+| `AddRevision` / `RebaseReview` | リビジョンの追加、target 先端への rebase |
+| `ListComments` / `SaveDraft` / `EditComment` / `ResolveThread` / `Publish` | 行コメント（下書き → 公開）、スレッド解決、投票 |
+| `GetSubmitStatus` / `Submit` | 承認判定と、ref CAS・レビュー確定を 1 トランザクションで行う着地 |
+
+保護 ref（`review` ポリシー）への Land / UpdateRef / receive-pack は bypass アカウント以外拒否する（[webui/04](webui/04-review.md)）。
+
 ## Object 取得プロトコル（全階層共通）
 
 ```

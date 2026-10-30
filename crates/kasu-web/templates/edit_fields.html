@@ -1,0 +1,8 @@
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="key" value="{{ key }}">
+<input type="hidden" name="at" value="{{ at }}">
+<input type="hidden" name="base" value="{{ base }}">
+<input type="hidden" name="original_path" value="{{ original_path }}">
+<input type="hidden" name="original_blob" value="{{ original_blob }}">
+{% if !review_number.is_empty() %}<input type="hidden" name="review" value="{{ review_number }}">{% endif %}
+{% if changed_warning %}<input type="hidden" name="confirmed" value="1">{% endif %}

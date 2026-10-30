@@ -196,6 +196,9 @@ impl Fixture {
         );
         let backend = backend
             .with_repository_accounts(vec![RepositoryAccount {
+                create_repositories: vec![],
+                display_name: None,
+                email: None,
                 grants: vec![],
                 name: "app-user".into(),
                 token: "app-user-pat".into(),

@@ -9,6 +9,7 @@
                 │   ├─ Write API (create changeset, rebase, merge, ref CAS)             │
                 │   ├─ Object API (GetTree / GetBlob)  ← 全階層共通 RPC                 │
                 │   ├─ Admin API (repository create / rename / archive / delete)        │
+                │   ├─ Identity / Review API (委譲・権限照会・レビューと Submit)          │
                 │   ├─ Derived Data Engine                                              │
                 │   └─ Git Gateway (Smart HTTP: upload-pack / receive-pack)             │
                 │        │                                                              │
@@ -29,6 +30,7 @@
                 └─────────────────┘
 
   外部:  git / go-git / ArgoCD / Flux ──HTTPS──▶ Git Gateway
+         ブラウザ ──HTTPS──▶ kasu-web（stateless）──gRPC + 委譲資格情報──▶ kasu-server（webui/ 参照）
          CI / bisect / revert bot ──gRPC/HTTP──▶ Metadata API（チェックアウト不要）
 ```
 
@@ -87,6 +89,7 @@ crates/
   kasu-git       # Git オブジェクト変換, pack 生成/解析, Smart HTTP ゲートウェイ
   kasu-ingest    # 既存 Git リポジトリからの取り込み
   kasu-sim       # 決定的シミュレーションテスト基盤
+  kasu-web       # Web UI（独立プロセス、SSR。kasu-server とは gRPC。webui/ 参照）
 ```
 
 主要依存クレート（候補）: `tokio`, `tonic`/`prost`, `axum`, `gix`（gitoxide: オブジェクト/パック/プロトコル）,

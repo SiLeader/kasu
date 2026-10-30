@@ -64,6 +64,15 @@ enum Command {
         #[command(subcommand)]
         action: RepoAction,
     },
+    /// Reviews of Changeset stacks (see docs/review.md).
+    Review {
+        #[arg(long, env = "KASU_SERVER", default_value = "http://127.0.0.1:50051")]
+        server: String,
+        #[arg(long, env = "KASU_REPO")]
+        repo: Option<String>,
+        #[command(subcommand)]
+        action: ReviewAction,
+    },
     Status {
         #[arg(long)]
         watch: bool,
@@ -117,6 +126,58 @@ enum RepoAction {
     },
     Show {
         name: String,
+    },
+}
+#[derive(Subcommand)]
+enum ReviewAction {
+    List {
+        /// open, submitted, closed or all.
+        #[arg(long, default_value = "open")]
+        state: String,
+    },
+    Show {
+        number: u64,
+    },
+    /// Propose the given stack (oldest first; 64-hex Changeset IDs), or the
+    /// working copy's current Changeset, for `target`.
+    Create {
+        #[arg(long, default_value = "refs/heads/main")]
+        target: String,
+        #[arg(long)]
+        title: String,
+        #[arg(long, default_value = "")]
+        description: String,
+        changesets: Vec<String>,
+    },
+    /// approve, request-changes or none.
+    Vote {
+        number: u64,
+        value: String,
+        #[arg(short = 'm', long, default_value = "")]
+        message: String,
+    },
+    Comment {
+        number: u64,
+        message: String,
+    },
+    Update {
+        number: u64,
+        #[arg(long)]
+        title: Option<String>,
+        #[arg(long, conflicts_with = "reopen")]
+        close: bool,
+        #[arg(long)]
+        reopen: bool,
+    },
+    /// Rebase the latest revision onto the target's tip.
+    Rebase {
+        number: u64,
+    },
+    Submit {
+        number: u64,
+        /// rebase or squash.
+        #[arg(long, default_value = "rebase")]
+        method: String,
     },
 }
 #[derive(Subcommand)]
@@ -290,6 +351,284 @@ async fn repo(cli: &Cli, server: &str, action: &RepoAction) -> Result<()> {
     }
     Ok(())
 }
+fn decode_id(text: &str) -> Result<Vec<u8>> {
+    let id = hex::decode(text)?;
+    if id.len() != 32 {
+        return Err(format!("{text} is not a 64-hex Changeset ID").into());
+    }
+    Ok(id)
+}
+fn random_key() -> Vec<u8> {
+    let mut key = [0u8; 16];
+    getrandom::fill(&mut key).expect("the operating system provides randomness");
+    hex::encode(key).into_bytes()
+}
+async fn review(cli: &Cli, server: &str, repo: Option<&str>, action: &ReviewAction) -> Result<()> {
+    let copy = WorkingCopy::open(&cli.directory).ok();
+    let repo = match (repo, &copy) {
+        (Some(repo), _) => repo.as_bytes().to_vec(),
+        (None, Some(copy)) => copy.state.repo.clone(),
+        (None, None) => {
+            return Err("set --repo or KASU_REPO, or run inside a working copy".into());
+        }
+    };
+    let mut reviews = kasu_cli::Reviews::connect(server, cli.token.as_deref()).await?;
+    let get = |number: u64| p::GetReviewRequest {
+        repo: repo.clone(),
+        number,
+    };
+    let show = |r: &p::ReviewRecord| {
+        let state = p::ReviewState::try_from(r.state)
+            .map(|s| s.as_str_name().trim_start_matches("REVIEW_STATE_"))
+            .unwrap_or("UNKNOWN");
+        println!(
+            "#{}\t{state}\t{}\t{}\t{}",
+            r.number,
+            String::from_utf8_lossy(&r.target),
+            r.author,
+            String::from_utf8_lossy(&r.title)
+        );
+    };
+    let latest = |r: &p::ReviewRecord| r.revisions.last().map(|r| r.number).unwrap_or(1);
+    match action {
+        ReviewAction::List { state } => {
+            let state = match state.as_str() {
+                "open" => Some(p::ReviewState::Open as i32),
+                "submitted" => Some(p::ReviewState::Submitted as i32),
+                "closed" => Some(p::ReviewState::Closed as i32),
+                "all" => None,
+                other => return Err(format!("unknown state {other}").into()),
+            };
+            let mut cursor = 0;
+            let mut all = Vec::new();
+            loop {
+                let q = reviews.request(p::ListReviewsRequest {
+                    repo: repo.clone(),
+                    state,
+                    cursor,
+                    limit: 500,
+                    ..Default::default()
+                });
+                let page = reviews.client.list_reviews(q).await?.into_inner();
+                all.extend(page.reviews);
+                if page.cursor == 0 {
+                    break;
+                }
+                cursor = page.cursor;
+            }
+            if cli.json {
+                return emit(&all);
+            }
+            all.iter().for_each(show);
+        }
+        ReviewAction::Show { number } => {
+            let record = reviews
+                .client
+                .get_review(reviews.request(get(*number)))
+                .await?
+                .into_inner();
+            let status = reviews
+                .client
+                .get_submit_status(reviews.request(get(*number)))
+                .await?
+                .into_inner();
+            if cli.json {
+                return emit(&serde_json::json!({ "review": record, "status": status }));
+            }
+            show(&record);
+            for revision in &record.revisions {
+                let stack: Vec<String> = revision.changesets.iter().map(hex::encode).collect();
+                println!(
+                    "revision {}\t{}\t{}",
+                    revision.number,
+                    revision.created_by,
+                    stack.join(" ")
+                );
+            }
+            for vote in &record.votes {
+                let value = p::VoteValue::try_from(vote.value)
+                    .map(|v| v.as_str_name().trim_start_matches("VOTE_VALUE_"))
+                    .unwrap_or("UNKNOWN");
+                println!("vote\t{}\t{value}\tr{}", vote.account, vote.revision);
+            }
+            println!(
+                "submit\t{}\t{}/{} approvals",
+                if status.ready { "ready" } else { "not ready" },
+                status.approvals,
+                status.required_approvals
+            );
+            for unmet in &status.unmet {
+                println!("unmet\t{unmet}");
+            }
+        }
+        ReviewAction::Create {
+            target,
+            title,
+            description,
+            changesets,
+        } => {
+            let stack = if changesets.is_empty() {
+                let copy = copy.ok_or("give Changeset IDs or run inside a working copy")?;
+                vec![copy.state.id()?.0.to_vec()]
+            } else {
+                changesets
+                    .iter()
+                    .map(|c| decode_id(c))
+                    .collect::<Result<_>>()?
+            };
+            let q = reviews.request(p::CreateReviewRequest {
+                repo: repo.clone(),
+                target: target.as_bytes().to_vec(),
+                changesets: stack,
+                title: title.as_bytes().to_vec(),
+                description: description.as_bytes().to_vec(),
+                idempotency_key: random_key(),
+            });
+            let created = reviews.client.create_review(q).await?.into_inner();
+            if cli.json {
+                return emit(&created);
+            }
+            show(&created);
+        }
+        ReviewAction::Vote {
+            number,
+            value,
+            message,
+        } => {
+            let vote = match value.as_str() {
+                "approve" => p::VoteValue::Approve,
+                "request-changes" => p::VoteValue::RequestChanges,
+                "none" => p::VoteValue::None,
+                other => return Err(format!("unknown vote {other}").into()),
+            };
+            let record = reviews
+                .client
+                .get_review(reviews.request(get(*number)))
+                .await?
+                .into_inner();
+            let q = reviews.request(p::PublishRequest {
+                repo: repo.clone(),
+                number: *number,
+                revision: latest(&record),
+                vote: Some(vote as i32),
+                body: message.as_bytes().to_vec(),
+            });
+            reviews.client.publish(q).await?;
+        }
+        ReviewAction::Comment { number, message } => {
+            let record = reviews
+                .client
+                .get_review(reviews.request(get(*number)))
+                .await?
+                .into_inner();
+            let q = reviews.request(p::PublishRequest {
+                repo: repo.clone(),
+                number: *number,
+                revision: latest(&record),
+                vote: None,
+                body: message.as_bytes().to_vec(),
+            });
+            reviews.client.publish(q).await?;
+        }
+        ReviewAction::Update {
+            number,
+            title,
+            close,
+            reopen,
+        } => {
+            let record = reviews
+                .client
+                .get_review(reviews.request(get(*number)))
+                .await?
+                .into_inner();
+            let state = match (close, reopen) {
+                (true, _) => Some(p::ReviewState::Closed as i32),
+                (_, true) => Some(p::ReviewState::Open as i32),
+                _ => None,
+            };
+            let q = reviews.request(p::UpdateReviewRequest {
+                repo: repo.clone(),
+                number: *number,
+                expected_version: record.version,
+                title: title.as_ref().map(|t| t.as_bytes().to_vec()),
+                description: None,
+                state,
+            });
+            let updated = reviews.client.update_review(q).await?.into_inner();
+            if cli.json {
+                return emit(&updated);
+            }
+            show(&updated);
+        }
+        ReviewAction::Rebase { number } => {
+            let record = reviews
+                .client
+                .get_review(reviews.request(get(*number)))
+                .await?
+                .into_inner();
+            let q = reviews.request(p::RebaseReviewRequest {
+                repo: repo.clone(),
+                number: *number,
+                expected_revision: latest(&record),
+                onto: vec![],
+            });
+            let rebased = reviews.client.rebase_review(q).await?.into_inner();
+            if cli.json {
+                emit(&rebased)?;
+            }
+            if let Some(conflict) = rebased.conflict {
+                for c in &conflict.conflicts {
+                    eprintln!("conflict\t{}", String::from_utf8_lossy(&c.path));
+                }
+                return Err(format!(
+                    "changeset {} of the stack conflicts with the target",
+                    rebased.conflict_index + 1
+                )
+                .into());
+            }
+        }
+        ReviewAction::Submit { number, method } => {
+            let method = match method.as_str() {
+                "rebase" => p::SubmitMethod::Rebase,
+                "squash" => p::SubmitMethod::Squash,
+                other => return Err(format!("unknown method {other}").into()),
+            };
+            let record = reviews
+                .client
+                .get_review(reviews.request(get(*number)))
+                .await?
+                .into_inner();
+            let q = reviews.request(p::SubmitRequest {
+                repo: repo.clone(),
+                number: *number,
+                expected_revision: latest(&record),
+                method: method as i32,
+                idempotency_key: random_key(),
+                ..Default::default()
+            });
+            let response = reviews.client.submit(q).await?.into_inner();
+            if cli.json {
+                emit(&response)?;
+            } else {
+                println!(
+                    "{:?} {}",
+                    p::SubmitOutcome::try_from(response.outcome)?,
+                    response.landed.last().map(hex::encode).unwrap_or_default()
+                );
+            }
+            if response.outcome != p::SubmitOutcome::Landed as i32 {
+                let unmet = response
+                    .status
+                    .map(|s| s.unmet.join("; "))
+                    .unwrap_or_default();
+                return Err(
+                    format!("review was not submitted: {} {unmet}", response.message).into(),
+                );
+            }
+        }
+    }
+    Ok(())
+}
 async fn run(cli: &Cli) -> Result<()> {
     #[cfg(target_os = "linux")]
     if let Command::Mount {
@@ -359,6 +698,14 @@ async fn run(cli: &Cli) -> Result<()> {
     }
     if let Command::Repo { server, action } = &cli.command {
         return repo(cli, server, action).await;
+    }
+    if let Command::Review {
+        server,
+        repo,
+        action,
+    } = &cli.command
+    {
+        return review(cli, server, repo.as_deref(), action).await;
     }
     if let Command::Clone {
         server,
@@ -463,6 +810,9 @@ async fn run(cli: &Cli) -> Result<()> {
                     p::LandOutcome::try_from(response.outcome)?,
                     response.id.as_ref().map(hex::encode).unwrap_or_default()
                 );
+            }
+            if response.message == "review required" {
+                return Err("the ref is protected: propose it with `kasu review create` and submit it once approved".into());
             }
             if response.outcome != p::LandOutcome::Landed as i32 {
                 return Err("Land did not land; working copy was preserved".into());

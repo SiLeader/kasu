@@ -1,0 +1,9 @@
+<p class="muted">{{ files.len() }} {{ page.t.s("files") }}</p>
+<ul>{% for file in files %}<li><a href="#{{ file.anchor }}">{{ file.path }}</a> <span class="badge">{{ file.status }}</span></li>{% endfor %}</ul>
+{% for file in files %}
+<details class="file" id="{{ file.anchor }}" open{% if file.collapsed %} data-load="{{ file.load }}"{% endif %}>
+<summary><span class="code">{{ file.path }}</span> <span class="badge">{{ file.status }}</span></summary>
+<div>{% if file.collapsed %}<p class="muted">… <a href="{{ file.load }}">{{ page.t.s("Changes") }}</a></p>{% else %}{{ file.html|safe }}{% endif %}</div>
+</details>
+{% endfor %}
+{% if !pages.is_empty() %}<p class="bar">{% for link in pages %}<a href="{{ link.url }}"{% if link.on %} aria-current="page"{% endif %}>{{ link.label }}</a>{% endfor %}</p>{% endif %}

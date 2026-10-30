@@ -3,6 +3,7 @@ use ::postgres::{Client, Config, GenericClient, Row, Transaction, config::SslMod
 use rustls::pki_types::{CertificateDer, pem::PemObject};
 use std::{collections::BTreeSet, path::PathBuf, sync::Mutex, time::Duration};
 mod registry;
+mod review;
 mod webhook;
 
 /// Connection settings are intentionally not Debug: the DSN can contain a password.
@@ -128,6 +129,8 @@ fn connect_client(options: PostgresOptions) -> Result<Client> {
     tx.query_one("SELECT pg_advisory_xact_lock(1801548659)", &[])
         .map_err(pg_error)?;
     tx.batch_execute(include_str!("postgres/schema.sql"))
+        .map_err(pg_error)?;
+    tx.batch_execute(include_str!("postgres/review.sql"))
         .map_err(pg_error)?;
     if tx
         .query_one(
@@ -268,13 +271,14 @@ fn append_log(
     audit: (&[u8], i64),
 ) -> Result<()> {
     let (actor, time) = audit;
+    let (actor, via) = actor_parts(actor);
     tx.execute(
         "INSERT INTO kasu.log_counters(repo,stream,value) VALUES ($1,$2,0) ON CONFLICT DO NOTHING",
         &[&repo, &stream],
     )
     .map_err(pg_error)?;
     let sequence: i64 = tx.query_one("UPDATE kasu.log_counters SET value=value+1 WHERE repo=$1 AND stream=$2 RETURNING value", &[&repo,&stream]).map_err(pg_error)?.get(0);
-    tx.execute("INSERT INTO kasu.ref_log(repo,stream,seq,name,old,new,actor,time) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)", &[&repo,&stream,&sequence,&name,&old,&new,&actor,&time]).map_err(pg_error)?;
+    tx.execute("INSERT INTO kasu.ref_log(repo,stream,seq,name,old,new,actor,via,time) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)", &[&repo,&stream,&sequence,&name,&old,&new,&actor,&via,&time]).map_err(pg_error)?;
     Ok(())
 }
 fn write_native(
@@ -387,6 +391,21 @@ impl MetaStore for PostgresStore {
             Ok(())
         })
     }
+    fn scan_prefix(&self, prefix: &[u8], limit: usize) -> Result<Vec<Vec<u8>>> {
+        let indexed = &prefix[..prefix.len().min(registry::KEY_INDEX_BYTES)];
+        let end = prefix_end(indexed);
+        self.client(|client| {
+            Ok(client
+                .query(
+                    "SELECT key FROM kasu.immutable WHERE substring(key from 1 for 96)>=$1 AND ($2::BYTEA IS NULL OR substring(key from 1 for 96)<$2) AND substring(key from 1 for $3)=$4 ORDER BY key LIMIT $5",
+                    &[&indexed, &end, &(prefix.len() as i32), &prefix, &(limit.min(i64::MAX as usize) as i64)],
+                )
+                .map_err(pg_error)?
+                .into_iter()
+                .map(|row| row.get(0))
+                .collect())
+        })
+    }
     fn delete_prefix(&self, prefix: &[u8], limit: usize) -> Result<usize> {
         if prefix.is_empty() {
             return Err(invalid("refusing to delete every immutable key"));
@@ -438,7 +457,7 @@ impl RefStore for PostgresStore {
     fn tail(&self, repo: &[u8], after: u64, limit: usize) -> Result<Vec<RefLog>> {
         self.client(|client| {
             let repo = scope(client, repo)?;
-            client.query("SELECT seq,name,old,new,actor,time FROM kasu.ref_log WHERE repo=$1 AND stream=0 AND seq>$2 ORDER BY seq LIMIT $3", &[&repo,&(after.min(i64::MAX as u64) as i64),&(limit.min(i64::MAX as usize) as i64)]).map_err(pg_error)?.into_iter().map(|row| Ok(RefLog { seq:unsigned(row.get(0))?, name:row.get(1),old:native_value(row.get(2))?,new:native_value(row.get(3))?,actor:row.get(4),time:row.get(5) })).collect()
+            client.query("SELECT seq,name,old,new,actor,time,COALESCE(via,''::bytea) FROM kasu.ref_log WHERE repo=$1 AND stream=0 AND seq>$2 ORDER BY seq LIMIT $3", &[&repo,&(after.min(i64::MAX as u64) as i64),&(limit.min(i64::MAX as usize) as i64)]).map_err(pg_error)?.into_iter().map(|row| Ok(RefLog { seq:unsigned(row.get(0))?, name:row.get(1),old:native_value(row.get(2))?,new:native_value(row.get(3))?,actor:row.get(4),via:row.get(6),time:row.get(5) })).collect()
         })
     }
     fn land_record(&self, repo: &[u8], key: &[u8]) -> Result<Option<LandRecord>> {
@@ -633,7 +652,7 @@ impl GitRefStore for PostgresStore {
     fn tail_git(&self, repo: &[u8], after: u64, limit: usize) -> Result<Vec<GitRefLog>> {
         self.client(|client| {
             let repo=scope(client,repo)?;
-            client.query("SELECT seq,name,old,new,actor,time FROM kasu.ref_log WHERE repo=$1 AND stream=1 AND seq>$2 ORDER BY seq LIMIT $3", &[&repo,&(after.min(i64::MAX as u64) as i64),&(limit.min(i64::MAX as usize) as i64)]).map_err(pg_error)?.into_iter().map(|row| Ok(GitRefLog { seq:unsigned(row.get(0))?,name:row.get(1),old:git_value(row.get(2))?,new:git_value(row.get(3))?,actor:row.get(4),time:row.get(5) })).collect()
+            client.query("SELECT seq,name,old,new,actor,time,COALESCE(via,''::bytea) FROM kasu.ref_log WHERE repo=$1 AND stream=1 AND seq>$2 ORDER BY seq LIMIT $3", &[&repo,&(after.min(i64::MAX as u64) as i64),&(limit.min(i64::MAX as usize) as i64)]).map_err(pg_error)?.into_iter().map(|row| Ok(GitRefLog { seq:unsigned(row.get(0))?,name:row.get(1),old:git_value(row.get(2))?,new:git_value(row.get(3))?,actor:row.get(4),via:row.get(6),time:row.get(5) })).collect()
         })
     }
 }

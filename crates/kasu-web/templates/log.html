@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>{{ page.t.s("History") }}{% if !path.is_empty() %}: {{ path }}{% endif %}</h1>
+<table class="list">
+{% for row in rows %}
+<tr>
+<td><a class="code" href="{{ row.url }}">{{ row.short }}</a></td>
+<td>{{ row.summary }}{% if row.merge %} <span class="badge">{{ page.t.s("Merge") }}</span>{% endif %}</td>
+<td>{{ row.author }}</td>
+<td class="num"><time datetime="{{ row.iso }}" title="{{ row.when }}">{{ row.when }}</time></td>
+<td class="code muted">{% if !row.git.is_empty() %}{{ row.git }}{% endif %}</td>
+</tr>
+{% endfor %}
+</table>
+{% if let Some(next) = next %}<p><a href="{{ next }}">{{ page.t.s("Next") }} →</a></p>{% endif %}
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>{{ page.t.s("Compare") }}: <span class="code">{{ base }}</span>{% if two_dot %}..{% else %}...{% endif %}<span class="code">{{ head }}</span></h1>
+<p>{{ page.t.s("Merge bases") }}: {% for b in bases %}<a class="code" href="{{ b.url }}">{{ b.label }}</a> {% endfor %}
+{% if bases.len() > 1 %}<span class="muted">(1)</span>{% endif %}
+· {% if ancestor %}<span class="badge ok">{{ page.t.s("ahead of base") }}</span>{% else %}<span class="badge">{{ page.t.s("not ahead of base") }}</span>{% endif %}</p>
+{% if let Some(review) = review %}<p><a class="button primary" href="{{ review }}">{{ page.t.s("Create a review") }}</a></p>{% endif %}
+{% include "diff_files.html" %}
+{% endblock %}

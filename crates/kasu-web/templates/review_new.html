@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>{{ page.t.s("New review") }}</h1>
+{% if let Some(error) = error %}<p class="notice error">{{ error }}</p>{% endif %}
+<form method="get" class="bar">
+  <label>{{ page.t.s("Target") }} <input type="text" name="target" value="{{ target }}" required></label>
+  <label>head <input type="text" name="head" value="{{ head }}" placeholder="branch or changeset ID" required></label>
+  <button type="submit">→</button>
+</form>
+{% if !candidates.is_empty() %}
+<form method="post" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+  <input type="hidden" name="target" value="{{ target }}"><input type="hidden" name="head" value="{{ head }}">
+  <fieldset><legend>{{ page.t.s("Changesets") }}</legend>
+  {% for (id, short, summary) in candidates %}
+  <label class="inline"><input type="radio" name="base_after" value="{{ id }}"{% if loop.last %} checked{% endif %}> <span class="code">{{ short }}</span> {{ summary }}</label>
+  {% endfor %}
+  </fieldset>
+  <label>{{ page.t.s("Title") }}<input type="text" name="title" value="{{ title }}" required maxlength="256"></label>
+  <label>{{ page.t.s("Description") }}<textarea name="description">{{ description }}</textarea></label>
+  <div><button type="submit" class="primary">{{ page.t.s("Create a review") }}</button></div>
+</form>
+{% endif %}
+{% endblock %}

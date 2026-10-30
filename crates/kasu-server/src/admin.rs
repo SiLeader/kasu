@@ -24,6 +24,9 @@ pub struct Lifecycle {
     pub ref_log_retention: Duration,
     /// Who owns configuration when a repositories file is in use.
     pub config_source: Option<ConfigSource>,
+    /// Where webhook secret files set by repository administrators (not
+    /// operators) must live; None forbids them.
+    pub webhook_secret_dir: Option<std::path::PathBuf>,
 }
 impl Default for Lifecycle {
     fn default() -> Self {
@@ -31,6 +34,7 @@ impl Default for Lifecycle {
             alias_ttl: Some(Duration::from_secs(30 * 24 * 3600)),
             ref_log_retention: Duration::from_secs(90 * 24 * 3600),
             config_source: None,
+            webhook_secret_dir: None,
         }
     }
 }
@@ -73,19 +77,109 @@ impl Backend {
     fn admin_credential(&self, authorization: Option<&str>) -> Result<Credential, Status> {
         self.credential(authorization, false)
     }
-    fn require_operator(&self, credential: Credential) -> Result<&'static [u8], Status> {
-        match credential {
-            Credential::Anonymous => Ok(b"anonymous"),
-            Credential::Operator => Ok(b"operator"),
-            _ => Err(Status::permission_denied(
-                "repository administration requires operator credentials",
-            )),
+    /// The ref_log/repo_log actor of an administrative change, after checking
+    /// that `credential` may administer `record` (when given) and create
+    /// `creating` (when given). Operators may do everything.
+    fn admin_actor(
+        &self,
+        credential: Credential,
+        record: Option<&RepositoryRecord>,
+        creating: Option<&RepoName>,
+    ) -> Result<Vec<u8>, Status> {
+        let denied = || Status::permission_denied("repository administration is not permitted");
+        let account = match credential {
+            Credential::Anonymous => return Ok(b"anonymous".to_vec()),
+            Credential::Operator => return Ok(b"operator".to_vec()),
+            Credential::Delegated(d) if d.anonymous => {
+                return Err(Status::permission_denied("anonymous access is read-only"));
+            }
+            Credential::Delegated(d) if !self.delegate_config(d.delegate).allow_admin => {
+                return Err(Status::permission_denied(
+                    "this delegate does not permit repository administration",
+                ));
+            }
+            credential => credential.account().ok_or_else(denied)?,
+        };
+        if let Some(record) = record {
+            if !self.visible(credential, record) {
+                return Err(not_found());
+            }
+            if !self.administers(credential, record) {
+                return Err(denied());
+            }
         }
+        let account = &self.repository_accounts[account];
+        if let Some(name) = creating
+            && !account.may_create(name)
+        {
+            return Err(Status::permission_denied(
+                "the account may not create this repository name",
+            ));
+        }
+        Ok(account.name.as_bytes().to_vec())
     }
-    fn visible(&self, credential: Credential, record: &RepositoryRecord) -> bool {
+    /// Whether `credential` holds `admin` on the grant that applies to `record`.
+    pub(crate) fn administers(&self, credential: Credential, record: &RepositoryRecord) -> bool {
         match credential {
             Credential::Anonymous | Credential::Operator => true,
-            Credential::Account(account) => self.repository_accounts[account]
+            Credential::Delegated(d)
+                if d.anonymous || !self.delegate_config(d.delegate).allow_admin =>
+            {
+                false
+            }
+            credential => credential.account().is_some_and(|account| {
+                let account = &self.repository_accounts[account];
+                account
+                    .grant_for(record, self.legacy.as_ref())
+                    .is_some_and(|g| account.grant(g).admin)
+            }),
+        }
+    }
+    /// Non-operators may only name webhook secrets below the configured
+    /// secret directory; relative names are resolved against it.
+    fn confine_secrets(
+        &self,
+        credential: Credential,
+        mut config: RepositoryConfig,
+    ) -> Result<RepositoryConfig, Status> {
+        if matches!(credential, Credential::Anonymous | Credential::Operator) {
+            return Ok(config);
+        }
+        for endpoint in &mut config.webhooks {
+            let Some(path) = &endpoint.secret_file else {
+                continue;
+            };
+            let dir = self.lifecycle.webhook_secret_dir.as_ref().ok_or_else(|| {
+                Status::invalid_argument(
+                    "webhook secret files require KASU_WEBHOOK_SECRET_DIR on the server",
+                )
+            })?;
+            let relative = if path.is_absolute() {
+                path.strip_prefix(dir).map_err(|_| {
+                    Status::invalid_argument("webhook secret file is outside the secret directory")
+                })?
+            } else {
+                path.as_path()
+            };
+            if relative.as_os_str().is_empty()
+                || !relative
+                    .components()
+                    .all(|c| matches!(c, std::path::Component::Normal(_)))
+            {
+                return Err(Status::invalid_argument(
+                    "webhook secret file is outside the secret directory",
+                ));
+            }
+            endpoint.secret_file = Some(dir.join(relative));
+        }
+        Ok(config)
+    }
+    pub(crate) fn visible(&self, credential: Credential, record: &RepositoryRecord) -> bool {
+        match credential {
+            Credential::Anonymous | Credential::Operator => true,
+            Credential::Account(account)
+            | Credential::Delegated(crate::delegate::Delegation { account, .. }) => self
+                .repository_accounts[account]
                 .grant_for(record, self.legacy.as_ref())
                 .is_some(),
             Credential::Projection(account) => self.projection_accounts[account]
@@ -96,7 +190,6 @@ impl Backend {
         }
     }
     fn describe(&self, credential: Credential, record: &RepositoryRecord) -> p::Repository {
-        let operator = matches!(credential, Credential::Anonymous | Credential::Operator);
         p::Repository {
             name: record.name.to_string(),
             key: record.key.as_bytes().to_vec(),
@@ -104,8 +197,8 @@ impl Backend {
             default_branch: record.default_branch.clone(),
             git_commit_rule: record.git_commit_rule,
             config_version: record.config_version,
-            // Webhook URLs and secret paths are for operators only.
-            config_json: if operator {
+            // Webhook URLs and secret paths are for administrators only.
+            config_json: if self.administers(credential, record) {
                 String::from_utf8_lossy(&record.config).into_owned()
             } else {
                 String::new()
@@ -161,10 +254,16 @@ impl Backend {
         q: p::CreateRepositoryRequest,
     ) -> Result<p::Repository, Status> {
         let credential = self.admin_credential(authorization)?;
-        let actor = self.require_operator(credential)?;
         let name = name(&q.name)?;
+        let actor = self.admin_actor(credential, None, Some(&name))?;
         let default_branch = branch(&q.default_branch)?;
-        let config = RepositoryConfig::parse_request(q.config_json.as_bytes())?.encode();
+        let config = RepositoryConfig::parse_request(q.config_json.as_bytes())?;
+        if !matches!(credential, Credential::Operator) && !config.webhooks.is_empty() {
+            return Err(Status::permission_denied(
+                "only operators may configure webhook endpoints",
+            ));
+        }
+        let config = self.confine_secrets(credential, config)?.encode();
         if q.idempotency_key.len() > 256 {
             return Err(Status::invalid_argument(
                 "idempotency key exceeds 256 bytes",
@@ -183,7 +282,7 @@ impl Backend {
         };
         let now = now_seconds();
         let mut record =
-            RepositoryRecord::new(RepoKey::generate().map_err(status)?, name, actor, now);
+            RepositoryRecord::new(RepoKey::generate().map_err(status)?, name, &actor, now);
         record.default_branch = default_branch;
         record.config = config;
         record.config_version = 1;
@@ -271,8 +370,8 @@ impl Backend {
         q: p::UpdateRepositoryRequest,
     ) -> Result<p::Repository, Status> {
         let credential = self.admin_credential(authorization)?;
-        let actor = self.require_operator(credential)?;
         let mut record = self.lookup(&q.name)?;
+        let actor = self.admin_actor(credential, Some(&record), None)?;
         if record.config_version != q.expected_config_version {
             return Err(Status::aborted("repository configuration version mismatch"));
         }
@@ -284,7 +383,20 @@ impl Backend {
         }
         let mut events = Vec::new();
         if let Some(config) = &q.config_json {
-            record.config = RepositoryConfig::parse_request(config.as_bytes())?.encode();
+            let config = RepositoryConfig::parse_request(config.as_bytes())?;
+            let webhooks_changed =
+                config.webhooks != RepositoryConfig::parse(&record.config)?.webhooks;
+            let config = if webhooks_changed {
+                if !matches!(credential, Credential::Operator) {
+                    return Err(Status::permission_denied(
+                        "only operators may configure webhook endpoints",
+                    ));
+                }
+                self.confine_secrets(credential, config)?
+            } else {
+                config
+            };
+            record.config = config.encode();
             events.push("config");
         }
         if let Some(value) = &q.default_branch {
@@ -315,7 +427,7 @@ impl Backend {
         let record = self.written(
             self.registry
                 .store()
-                .update_repository(&record, &event, actor, now_seconds())
+                .update_repository(&record, &event, &actor, now_seconds())
                 .map_err(status)?,
         )?;
         Ok(self.describe(credential, &record))
@@ -326,9 +438,9 @@ impl Backend {
         q: p::RenameRepositoryRequest,
     ) -> Result<p::Repository, Status> {
         let credential = self.admin_credential(authorization)?;
-        let actor = self.require_operator(credential)?;
         let record = self.lookup(&q.name)?;
         let new = name(&q.new_name)?;
+        let actor = self.admin_actor(credential, Some(&record), Some(&new))?;
         let now = now_seconds();
         let alias = match (q.keep_alias, self.lifecycle.alias_ttl) {
             (true, Some(ttl)) => {
@@ -339,7 +451,7 @@ impl Backend {
         let record = self.written(
             self.registry
                 .store()
-                .rename_repository(&record.key, record.version, &new, alias, actor, now)
+                .rename_repository(&record.key, record.version, &new, alias, &actor, now)
                 .map_err(status)?,
         )?;
         Ok(self.describe(credential, &record))
@@ -352,14 +464,14 @@ impl Backend {
         q: p::DeleteRepositoryRequest,
     ) -> Result<p::Repository, Status> {
         let credential = self.admin_credential(authorization)?;
-        let actor = self.require_operator(credential)?;
         let mut record = self.lookup(&q.name)?;
+        let actor = self.admin_actor(credential, Some(&record), None)?;
         record.state = RepositoryState::Deleting;
         record.deleted_at = now_seconds();
         let record = self.written(
             self.registry
                 .store()
-                .update_repository(&record, "deleted", actor, record.deleted_at)
+                .update_repository(&record, "deleted", &actor, record.deleted_at)
                 .map_err(status)?,
         )?;
         Ok(self.describe(credential, &record))
@@ -398,6 +510,11 @@ impl Backend {
                             .map_err(status)?
                             > 0
                         {}
+                    }
+                    if let Some(reviews) = &self.reviews {
+                        reviews
+                            .purge_reviews(record.key.as_bytes(), PURGE_BATCH)
+                            .map_err(status)?;
                     }
                     record.purged = true;
                     record = self.written(
@@ -499,8 +616,21 @@ impl Backend {
         q: p::ForkRepositoryRequest,
     ) -> Result<p::Repository, Status> {
         let credential = self.admin_credential(authorization)?;
-        let actor = self.require_operator(credential)?;
-        let source = self.lookup(&q.source)?;
+        let source = self.lookup_visible(credential, &q.source)?;
+        let new = name(&q.new_name)?;
+        let actor = self.admin_actor(credential, None, Some(&new))?;
+        // A fork shares every reachable object, so it needs unrestricted reads.
+        if let Some(account) = credential.account() {
+            let account = &self.repository_accounts[account];
+            if account
+                .grant_for(&source, self.legacy.as_ref())
+                .is_some_and(|g| account.grant(g).read_directories.is_some())
+            {
+                return Err(Status::permission_denied(
+                    "directory-restricted accounts cannot fork",
+                ));
+            }
+        }
         kasu_git::validate_branch_name(&q.r#ref).map_err(status)?;
         let target = self
             .refs
@@ -508,7 +638,6 @@ impl Backend {
             .map_err(status)?
             .target
             .ok_or_else(|| Status::not_found("source ref not found"))?;
-        let new = name(&q.new_name)?;
         if q.idempotency_key.len() > 256 {
             return Err(Status::invalid_argument(
                 "idempotency key exceeds 256 bytes",
@@ -524,7 +653,7 @@ impl Backend {
         ]);
         let now = now_seconds();
         let mut record =
-            RepositoryRecord::new(RepoKey::generate().map_err(status)?, new, actor, now);
+            RepositoryRecord::new(RepoKey::generate().map_err(status)?, new, &actor, now);
         record.default_branch = source.default_branch.clone();
         record.git_commit_rule = source.git_commit_rule;
         record.creation_key = creation_key.clone();
@@ -555,7 +684,7 @@ impl Backend {
                         expected: RefState::default(),
                         new: Some(target),
                     }],
-                    actor,
+                    &actor,
                     now,
                 )
                 .map_err(status)?;

@@ -14,6 +14,7 @@ kasu は Anthropic の社内 VCS **Scion**（参考: <https://www.anthropic.com/
 | [04-git-compat.md](04-git-compat.md) | Git 互換レイヤー（Smart HTTP, upload-pack/receive-pack, GitOps 対応） |
 | [05-roadmap.md](05-roadmap.md) | マイルストーン・テスト戦略・リスク |
 | [06-multi-repository.md](06-multi-repository.md) | 1 サーバーでの複数リポジトリ管理（レジストリ・隔離・権限・ライフサイクル） |
+| [webui/](webui/README.md) | Web UI（`kasu-web`）とレビュー機能の仕様・実装計画 |
 
 ## ゴール
 
@@ -24,11 +25,11 @@ kasu は Anthropic の社内 VCS **Scion**（参考: <https://www.anthropic.com/
 4. 全てのリポジトリ問い合わせ（diff, blame, path history, merge-base, ancestry）を API として公開する。
 5. 1 つのサーバー（クラスタ）で **複数リポジトリ** をホストする。リポジトリ間で権限・ref・Git OID 空間・設定を分離しつつ、
    不変オブジェクトはストレージ上で共有する（06）。
+6. Web UI（`kasu-web`）で閲覧・書き込み・管理と、Changeset スタックのレビューを提供する（[webui/](webui/README.md)）。
 
 ## 非ゴール
 
 - Git の完全な代替（オフライン開発・分散レプリケーション・任意の ref 運用）。
-- 独自のコードレビュー UI（Scion における Antique 相当）。API フックのみ提供する。
 - Git LFS・submodule 内容の追跡（gitlink エントリ自体は往復一致のため表現する。LFS はロードマップ後半で検討）。
 - 初期段階での Spanner 級グローバル分散 DB。ストレージは trait で抽象化し、段階的に差し替える。
 

@@ -115,8 +115,7 @@ fn a_prepared_land_cannot_commit_into_a_deleted_repository() {
 /// changes, and every reported landing is in the ref log.
 #[test]
 fn concurrent_lands_never_commit_after_a_deletion() {
-    let mut total = 0;
-    for seed in 0..4 {
+    for _ in 0..4 {
         let f = fixture();
         let key = key(&f);
         let workers = 8;
@@ -130,6 +129,7 @@ fn concurrent_lands_never_commit_after_a_deletion() {
         let start = Arc::new(Barrier::new(workers + 1));
         let landed = Arc::new(AtomicUsize::new(0));
         let stop = Arc::new(AtomicBool::new(false));
+        let (committed, first_commit) = std::sync::mpsc::channel();
         let threads: Vec<_> = drafts
             .into_iter()
             .enumerate()
@@ -138,6 +138,7 @@ fn concurrent_lands_never_commit_after_a_deletion() {
                 let start = start.clone();
                 let landed = landed.clone();
                 let stop = stop.clone();
+                let committed = committed.clone();
                 std::thread::spawn(move || {
                     start.wait();
                     for (n, id) in drafts.into_iter().enumerate() {
@@ -161,6 +162,9 @@ fn concurrent_lands_never_commit_after_a_deletion() {
                                 if response.outcome == p::LandOutcome::Landed as i32 =>
                             {
                                 landed.fetch_add(1, Ordering::SeqCst);
+                                if n == 0 {
+                                    committed.send(()).unwrap();
+                                }
                             }
                             Ok(_) => {}
                             Err(error) => {
@@ -178,8 +182,11 @@ fn concurrent_lands_never_commit_after_a_deletion() {
                 })
             })
             .collect();
+        drop(committed);
         start.wait();
-        std::thread::sleep(std::time::Duration::from_millis(2 + seed * 3));
+        first_commit
+            .recv_timeout(std::time::Duration::from_secs(30))
+            .expect("no Land committed before deletion");
         f.backend
             .delete_repository(
                 AUTH,
@@ -194,12 +201,11 @@ fn concurrent_lands_never_commit_after_a_deletion() {
             thread.join().unwrap();
         }
         let log = f.store.tail(key.as_bytes(), 0, 10_000).unwrap();
+        assert!(!log.is_empty(), "no Land raced the deletion");
         assert_eq!(log.len(), at_deletion, "a ref changed after deletion");
         assert_eq!(log.len(), landed.load(Ordering::SeqCst));
-        total += log.len();
         // Purging removes the refs that did land.
         f.backend.purge_deleted_repositories(i64::MAX - 1).unwrap();
         assert!(f.store.list(key.as_bytes(), b"").unwrap().is_empty());
     }
-    assert!(total > 0, "no Land raced the deletion");
 }

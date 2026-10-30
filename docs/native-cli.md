@@ -35,6 +35,7 @@ Path arguments are relative to the repository root.
 | `checkout <ref or Changeset ID> <new directory>` | Resolves the base and creates the working copy, fetching only the needed Trees / Blobs |
 | `clone <server> <repo> [directory]` | Checks out the repository's default branch. The directory defaults to the last segment of the name |
 | `repo list [--prefix P]` / `repo create <name> [--default-branch B]` / `repo show <name>` | Lists, creates, and shows repositories via the [Admin API](multi-repository.md#admin-api) |
+| `review list [--state S]` / `review show <n>` / `review create --title T [--target R] [IDs…]` / `review vote <n> approve\|request-changes\|none [-m M]` / `review comment <n> <message>` / `review update <n> [--title T] [--close\|--reopen]` / `review rebase <n>` / `review submit <n> [--method rebase\|squash]` | [Reviews](review.md) of Changeset stacks (`--server`, `--repo` or the working copy). Without IDs, `create` proposes the working copy's current Changeset. `land` on a protected ref fails with a hint to use `review create` |
 | `status` / `diff` | Compares real files at startup. Detects regular files, executable bits, symlinks, deletions, and additions |
 | `status --watch` | Watches for changes with notify's FSEvents / inotify and reruns the full state comparison |
 | `commit -m <message>` | Checks Blob existence / streams uploads, and creates a Changeset on the server |

@@ -29,6 +29,8 @@ mod git_ssh;
 pub use git_ssh::*;
 
 mod accounts;
+mod delegate;
+pub use delegate::{ACT_AS, ACT_BINDING, ACT_USER, CLIENT_ADDR, Cidr, Delegate};
 mod admin;
 pub use accounts::*;
 pub use admin::*;
@@ -38,3 +40,10 @@ mod registry;
 pub use registry::{Registry, RepositoryConfig, RepositoryLimits};
 mod repositories_file;
 pub use repositories_file::*;
+
+mod identity;
+pub use identity::*;
+mod review;
+pub use review::*;
+mod archive;
+pub use archive::*;

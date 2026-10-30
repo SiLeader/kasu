@@ -3,6 +3,14 @@ all-features = true
 
 [advisories]
 version = 2
+ignore = [
+    # Unmaintained, no known vulnerability: syntect (kasu-web highlighting)
+    # decodes its bundled syntax and theme dumps with bincode 1.x.
+    { id = "RUSTSEC-2025-0141", reason = "syntect bundled dumps; no vulnerability" },
+    # Unmaintained, no known vulnerability: askama reads its compile-time
+    # configuration with basic-toml (build time only).
+    { id = "RUSTSEC-2026-0374", reason = "askama compile-time configuration only" },
+]
 
 [licenses]
 version = 2
@@ -11,6 +19,15 @@ allow = ["MIT", "Apache-2.0", "BSD-3-Clause", "Unicode-3.0", "Zlib", "CC0-1.0"]
 
 [licenses.private]
 ignore = true
+
+# File-level copyleft; used unmodified by ammonia (kasu-web's HTML sanitizer).
+[[licenses.exceptions]]
+name = "cssparser"
+allow = ["MPL-2.0"]
+
+[[licenses.exceptions]]
+name = "dtoa-short"
+allow = ["MPL-2.0"]
 
 [[licenses.exceptions]]
 name = "ring"

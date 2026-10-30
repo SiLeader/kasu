@@ -401,6 +401,9 @@ impl Backend {
         if !policy.allows_ref(&q.name) {
             return Err(Status::permission_denied("ref is not writable"));
         }
+        if let Some(message) = self.review_gate(&q.name) {
+            return Err(Status::permission_denied(message));
+        }
         let expected = q
             .expected
             .ok_or_else(|| Status::invalid_argument("expected ref state is required"))?;
@@ -466,7 +469,7 @@ impl Backend {
                     expected,
                     new,
                 }],
-                self.write_actor(b"api"),
+                &self.ref_actor(b"api", std::iter::once(q.name.as_slice())),
                 time,
             )
             .map_err(status)?;

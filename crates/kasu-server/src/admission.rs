@@ -43,6 +43,8 @@ pub struct ServerLimits {
     pub per_repository_active: Option<usize>,
     /// Requests one repository may queue (default: a quarter of `pending`).
     pub per_repository_pending: Option<usize>,
+    /// Concurrent requests of one delegate across every account it acts as.
+    pub per_delegate_active: Option<usize>,
 }
 impl Default for ServerLimits {
     fn default() -> Self {
@@ -59,6 +61,7 @@ impl Default for ServerLimits {
             idle_ms: 60000,
             per_repository_active: None,
             per_repository_pending: None,
+            per_delegate_active: None,
         }
     }
 }
@@ -72,6 +75,7 @@ impl ServerLimits {
             || !(1000..=3600000).contains(&self.idle_ms)
             || !(1..=self.active).contains(&self.repository_active())
             || !(1..=self.pending).contains(&self.repository_pending())
+            || !(1..=self.active).contains(&self.delegate_active())
             || [
                 self.client_rate_per_second,
                 self.client_burst,
@@ -92,6 +96,9 @@ impl ServerLimits {
     pub fn repository_pending(&self) -> usize {
         self.per_repository_pending
             .unwrap_or_else(|| (self.pending / 4).max(1))
+    }
+    pub fn delegate_active(&self) -> usize {
+        self.per_delegate_active.unwrap_or(self.active)
     }
     pub fn load(path: &std::path::Path) -> Result<Self, Status> {
         use std::io::Read;
@@ -129,6 +136,7 @@ pub(crate) struct Runtime {
     scrapes: Arc<Semaphore>,
     buckets: Mutex<BTreeMap<Identity, Bucket>>,
     repositories: Mutex<HashMap<RepoKey, Arc<RepositorySlots>>>,
+    delegates: Mutex<HashMap<u16, Arc<Semaphore>>>,
     /// Normalized names exported as metric labels; others aggregate as "other".
     pub metric_repositories: std::collections::BTreeSet<String>,
     repository_counters: Mutex<BTreeMap<String, [u64; 2]>>,
@@ -157,6 +165,7 @@ impl Runtime {
             limits,
             buckets: Mutex::new(BTreeMap::new()),
             repositories: Mutex::new(HashMap::new()),
+            delegates: Mutex::new(HashMap::new()),
             metric_repositories,
             repository_counters: Mutex::new(BTreeMap::new()),
             stats,
@@ -287,6 +296,20 @@ impl Runtime {
             .map_err(|_| Status::internal("admission lock failed"))? = Some(permit);
         Ok(())
     }
+    /// A slot of `delegate`'s concurrency limit, shared by every account it
+    /// acts as.
+    fn delegate_slot(&self, delegate: u16) -> Result<OwnedSemaphorePermit, Status> {
+        let slots = self
+            .delegates
+            .lock()
+            .map_err(|_| Status::internal("admission lock failed"))?
+            .entry(delegate)
+            .or_insert_with(|| Arc::new(Semaphore::new(self.limits.delegate_active())))
+            .clone();
+        slots
+            .try_acquire_owned()
+            .map_err(|_| Status::resource_exhausted("delegate concurrency limit exceeded"))
+    }
     fn bucket(&self, key: Identity, now: Instant) -> Result<Arc<Semaphore>, Status> {
         let client = matches!(key, Identity::Client(_));
         let (rate, burst) = if client {
@@ -374,6 +397,7 @@ impl Runtime {
         attempt.stats.active.fetch_add(1, Ordering::Relaxed);
         Ok(RequestLease(Arc::new(LeaseInner {
             _identity: Some(identity),
+            _delegate: None,
             active: Mutex::new(Some(active)),
             repository: Mutex::new(None),
             attempt,
@@ -389,6 +413,7 @@ impl Runtime {
         attempt.stats.active.fetch_add(1, Ordering::Relaxed);
         Ok(RequestLease(Arc::new(LeaseInner {
             _identity: None,
+            _delegate: None,
             active: Mutex::new(Some(permit)),
             repository: Mutex::new(None),
             attempt,
@@ -630,8 +655,21 @@ impl Drop for Attempt {
 }
 #[derive(Clone)]
 pub(crate) struct RequestLease(Arc<LeaseInner>);
+impl RequestLease {
+    /// Hold a delegate concurrency slot for the lifetime of the request.
+    fn with_delegate(self, slot: Option<OwnedSemaphorePermit>) -> Self {
+        match Arc::try_unwrap(self.0) {
+            Ok(mut inner) => {
+                inner._delegate = slot;
+                Self(Arc::new(inner))
+            }
+            Err(shared) => Self(shared),
+        }
+    }
+}
 struct LeaseInner {
     _identity: Option<OwnedSemaphorePermit>,
+    _delegate: Option<OwnedSemaphorePermit>,
     active: Mutex<Option<OwnedSemaphorePermit>>,
     repository: Mutex<Option<OwnedSemaphorePermit>>,
     attempt: Arc<Attempt>,
@@ -889,7 +927,7 @@ where
     fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.inner.poll_ready(cx)
     }
-    fn call(&mut self, request: Request<ReqB>) -> Self::Future {
+    fn call(&mut self, mut request: Request<ReqB>) -> Self::Future {
         let clone = self.inner.clone();
         let mut inner = std::mem::replace(&mut self.inner, clone);
         let state = self.state.clone();
@@ -921,7 +959,49 @@ where
                         IpAddr::V6(ip) => ip.to_ipv4_mapped().map(IpAddr::V4).unwrap_or(p),
                         _ => p,
                     });
-                let client_key = Identity::Client(peer);
+                // A verified delegate is admitted as the browser and the account
+                // it acts as, not as its own shared address.
+                let delegation = {
+                    let headers = request.headers();
+                    let header = |name: &str| {
+                        headers
+                            .get(name)
+                            .and_then(|v| v.to_str().ok())
+                            .map(str::to_owned)
+                    };
+                    state.verify_delegation(&header, peer)
+                };
+                let delegation = match delegation {
+                    Ok(delegation) => delegation,
+                    Err(status) => {
+                        attempt.finish(status.code() as usize);
+                        return Ok(reject(status, grpc));
+                    }
+                };
+                let mut delegate_slot = None;
+                let client_key = match &delegation {
+                    Some(verified) => {
+                        match axum::http::HeaderValue::from_str(&verified.authorization) {
+                            Ok(value) => {
+                                request.headers_mut().insert("authorization", value);
+                            }
+                            Err(_) => {
+                                let status = Status::internal("invalid delegated credential");
+                                attempt.finish(status.code() as usize);
+                                return Ok(reject(status, grpc));
+                            }
+                        }
+                        match state.runtime.delegate_slot(verified.delegation.delegate) {
+                            Ok(slot) => delegate_slot = Some(slot),
+                            Err(status) => {
+                                attempt.finish(status.code() as usize);
+                                return Ok(reject(status, grpc));
+                            }
+                        }
+                        Identity::Client(verified.client)
+                    }
+                    None => Identity::Client(peer),
+                };
                 let authorization = request
                     .headers()
                     .get("authorization")
@@ -951,7 +1031,7 @@ where
                     state.runtime.acquire(slots, attempt.clone()).await
                 };
                 let lease = match acquired {
-                    Ok(lease) => lease,
+                    Ok(lease) => lease.with_delegate(delegate_slot),
                     Err(status) => {
                         attempt.finish(status.code() as usize);
                         return Ok(reject(status, grpc));

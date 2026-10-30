@@ -10,8 +10,42 @@ fn save(root: &Path, target: &str, name: &str, data: &[u8]) -> io::Result<()> {
     fs::write(folder.join(name), data)
 }
 pub fn generate(root: &Path) -> io::Result<()> {
-    for name in ["pack", "pack_delta", "pktline", "protobuf", "native_api"] {
+    for name in [
+        "pack",
+        "pack_delta",
+        "pktline",
+        "protobuf",
+        "native_api",
+        "web_url",
+        "markdown",
+    ] {
         fs::create_dir_all(root.join(name))?;
+    }
+    for (name, data) in [
+        ("blob", "/team/app/-/blob/main/src/main.rs"),
+        ("encoded", "/team/app/-/tree/feature%2Fx/a%20b/%FF.txt"),
+        ("top", "/team/app"),
+        ("dash", "/a/-/-/x"),
+        ("encoded-slash-in-path", "/tepp/-/am/pp/re%2F/t"),
+        (
+            "encoded-slash-in-name",
+            "/tepp/-?am/pp/re%2F/tea/mteap/-/am/pp/r",
+        ),
+    ] {
+        save(root, "web_url", name, data.as_bytes())?;
+    }
+    for (name, data) in [
+        (
+            "links",
+            "[a](docs/a.md) ![i](i.png) <a href=\"javascript:x\">x</a>",
+        ),
+        (
+            "html",
+            "<script>x</script><img src=x onerror=y><svg onload=z>",
+        ),
+        ("table", "| a | b |\n|---|---|\n| <iframe> | `c` |"),
+    ] {
+        save(root, "markdown", name, data.as_bytes())?;
     }
     let mut empty = start(0);
     finish(&mut empty);

@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="bar">
+  <span class="grow muted">{{ size }}{% if executable %} · {{ page.t.s("Executable") }}{% endif %}{% if !git_oid.is_empty() %} · Git blob <span class="code">{{ git_oid }}</span>{% endif %}</span>
+  {% if let Some(toggle) = source_toggle %}<a class="button" href="{{ toggle.url }}">{{ toggle.label }}</a>{% endif %}
+  {% for action in actions %}<a class="button" href="{{ action.url }}">{{ action.label }}</a>{% endfor %}
+</div>
+{% if too_large %}<p class="notice">{{ page.t.s("The file is too large to display.") }}</p>{% endif %}
+{% if binary %}<p class="notice">{{ page.t.s("Binary file") }}</p>{% endif %}
+{% if let Some(target) = gitlink %}<p>{{ page.t.s("gitlink") }} <span class="code">{{ target }}</span></p>{% endif %}
+{% if let Some(link) = symlink %}<p>{{ page.t.s("Symbolic link to") }} {% if link.url.is_empty() %}<span class="code">{{ link.label }}</span>{% else %}<a class="code" href="{{ link.url }}">{{ link.label }}</a>{% endif %}</p>{% endif %}
+{% if let Some(image) = image %}<p><img src="{{ image }}" alt="{{ path }}"></p>{% endif %}
+{% if let Some(markdown) = markdown %}<article class="markdown">{{ markdown|safe }}</article>{% endif %}
+{% if !lines.is_empty() %}
+<div class="scroll"><table class="source">
+{% for line in lines %}<tr id="L{{ loop.index }}"><td class="ln"><a href="#L{{ loop.index }}">{{ loop.index }}</a></td><td class="code">{{ line|safe }}</td></tr>
+{% endfor %}</table></div>
+{% endif %}
+{% endblock %}

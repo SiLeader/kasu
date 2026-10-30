@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>{{ page.title }}{% if mode == "edit" || mode == "delete" %}: <span class="code">{{ path }}</span>{% endif %}</h1>
+{% if let Some(error) = error %}<p class="notice error" role="alert">{{ error }}</p>{% endif %}
+{% if !conflicts.is_empty() %}<p>{{ page.t.s("Conflicting paths") }}:</p><ul>{% for c in conflicts %}<li class="code">{{ c }}</li>{% endfor %}</ul>{% endif %}
+<form method="post" action="{{ action }}" class="stack"{% if mode == "upload" %} enctype="multipart/form-data"{% endif %}>
+{% include "edit_fields.html" %}
+{% if mode == "upload" %}
+<label>{{ page.t.s("Choose files") }}<input type="file" name="files" multiple required></label>
+<label class="inline"><input type="checkbox" name="overwrite" value="1"> {{ page.t.s("Overwrite existing files") }}</label>
+{% else if mode == "delete" %}
+<p class="notice">{{ page.t.s("Delete") }}: <span class="code">{{ path }}</span></p>
+{% else %}
+<label>{{ page.t.s("Path") }}<input type="text" name="path" value="{{ path }}" required{% if !path_editable %} readonly{% endif %}></label>
+<label>{{ page.t.s("Content") }}<textarea class="editor" name="content" spellcheck="false">
+{{ content }}</textarea></label>
+<div class="bar">
+  <label class="inline">{{ page.t.s("Line endings") }} <select name="line_endings"><option value="lf"{% if !crlf %} selected{% endif %}>LF</option><option value="crlf"{% if crlf %} selected{% endif %}>CRLF</option></select></label>
+  <label class="inline"><input type="checkbox" name="final_newline" value="1"{% if final_newline %} checked{% endif %}> final newline</label>
+  <label class="inline"><input type="checkbox" name="executable" value="1"{% if executable %} checked{% endif %}> {{ page.t.s("Executable") }}</label>
+</div>
+{% endif %}
+{% include "commit_fields.html" %}
+</form>
+{% endblock %}

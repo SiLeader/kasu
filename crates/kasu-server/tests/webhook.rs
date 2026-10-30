@@ -34,7 +34,10 @@ async fn sink_handler(
     headers: HeaderMap,
     body: Bytes,
 ) -> StatusCode {
-    assert_eq!(headers["X-GitHub-Event"], "push");
+    assert!(matches!(
+        headers["X-GitHub-Event"].to_str().unwrap(),
+        "push" | "kasu_review"
+    ));
     state.deliveries.lock().unwrap().push(Delivery {
         id: headers["X-GitHub-Delivery"].to_str().unwrap().into(),
         signature: headers["X-Hub-Signature-256"].to_str().unwrap().into(),
@@ -614,4 +617,66 @@ async fn oversized_body_is_not_acknowledged_and_worker_shuts_down() {
         .await
         .unwrap()
         .unwrap();
+}
+
+#[tokio::test]
+async fn review_events_are_delivered_from_the_review_log() {
+    let f = Fixture::new(0).await;
+    let backend = Arc::new(
+        Backend::new(
+            b"repo".to_vec(),
+            f.store.clone(),
+            f.blobs.clone(),
+            f.store.clone(),
+            None,
+        )
+        .with_reviews(f.store.clone()),
+    );
+    let written = f
+        .store
+        .write_review(
+            b"repo",
+            &ReviewWrite {
+                review: ReviewRow {
+                    number: 0,
+                    version: 1,
+                    state: REVIEW_OPEN,
+                    target: b"refs/heads/main".to_vec(),
+                    head: f.next.0.to_vec(),
+                    author: "alice".into(),
+                    data: Vec::new(),
+                },
+                expected_version: 0,
+                revision: None,
+                votes: vec![],
+                comments: vec![],
+                event: br#"{"kind":"create","actor":"alice","detail":{}}"#.to_vec(),
+                request: None,
+                ref_update: None,
+                time: 42,
+            },
+        )
+        .unwrap();
+    assert_eq!(written, ReviewWriteResult::Applied { number: 1 });
+    let dispatcher = WebhookDispatcher::new(backend, f.store.clone(), f.config.clone()).unwrap();
+    assert!(matches!(
+        dispatcher
+            .dispatch_once(0, WebhookStream::Review, 0)
+            .await
+            .unwrap(),
+        WebhookOutcome::Acknowledged(_)
+    ));
+    let payload = f.payload();
+    assert_eq!(payload["action"], "create");
+    assert_eq!(payload["actor"], "alice");
+    assert_eq!(payload["review"]["number"], 1);
+    assert_eq!(payload["review"]["state"], "open");
+    assert_eq!(payload["review"]["target"], "refs/heads/main");
+    assert!(matches!(
+        dispatcher
+            .dispatch_once(0, WebhookStream::Review, 0)
+            .await
+            .unwrap(),
+        WebhookOutcome::Idle
+    ));
 }

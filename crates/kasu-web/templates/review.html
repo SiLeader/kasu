@@ -1,0 +1,68 @@
+{% extends "layout.html" %}
+{% block content %}
+{% include "review_header.html" %}
+{% if let Some(notice) = notice %}<p class="notice error" role="alert">{{ notice }}</p>{% endif %}
+<article class="markdown">{{ description|safe }}</article>
+
+<h2>{{ page.t.s("Submit") }}</h2>
+<p>{{ page.t.s("Approvals") }}: {{ approvals }} {% if ready %}<span class="badge ok">ready</span>{% endif %}</p>
+{% if !unmet.is_empty() %}<ul>{% for u in unmet %}<li>{{ u }}</li>{% endfor %}</ul>{% endif %}
+{% if open %}
+<form method="post" action="{{ review.tabs[0].url }}/submit" class="bar">
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}"><input type="hidden" name="revision" value="{{ review.revision }}">
+  <select name="method" aria-label="{{ page.t.s("Method") }}">{% for (code, label) in methods %}<option value="{{ label }}">{{ label }}</option>{% endfor %}</select>
+  <button type="submit" class="primary"{% if !can_submit %} disabled{% endif %}>{{ page.t.s("Submit") }}</button>
+</form>
+{% if can_rebase %}<form method="post" action="{{ review.tabs[0].url }}/rebase" class="inline-form"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit">{{ page.t.s("Rebase onto target") }}</button></form>{% endif %}
+{% if let Some(edit) = edit_url %} <a class="button" href="{{ edit }}">{{ page.t.s("Add files") }}</a>{% endif %}
+{% endif %}
+
+<h2>{{ page.t.s("Votes") }}</h2>
+<table class="list">{% for (who, value, rev) in votes %}<tr><td>{{ who }}</td><td>{{ value }}</td><td class="muted">{{ rev }}</td></tr>{% endfor %}</table>
+
+<h2>{{ page.t.s("Comment") }}</h2>
+{% for thread in threads %}
+<div class="thread{% if thread.resolved %} resolved{% endif %}">
+  {% if !thread.location.is_empty() %}<div class="muted code">{{ thread.location }}</div>{% endif %}
+  <div class="comment"><span class="who">{{ thread.root.author }}</span> <span class="muted">{{ thread.root.when }}</span>{% if thread.root.draft %} <span class="badge warn">{{ page.t.s("Draft") }}</span>{% endif %}
+    {% if thread.root.deleted %}<em class="muted">{{ page.t.s("Deleted") }}</em>{% else %}{{ thread.root.body|safe }}{% endif %}
+    {% if thread.root.mine && !thread.root.deleted %}<form method="post" action="{{ review.tabs[0].url }}/edit-comment" class="inline-form"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="id" value="{{ thread.root.id }}"><input type="hidden" name="delete" value="1"><button type="submit" class="danger">{{ page.t.s("Delete") }}</button></form>{% endif %}
+  </div>
+  {% for reply in thread.replies %}<div class="comment"><span class="who">{{ reply.author }}</span> <span class="muted">{{ reply.when }}</span> {% if reply.deleted %}<em class="muted">{{ page.t.s("Deleted") }}</em>{% else %}{{ reply.body|safe }}{% endif %}</div>{% endfor %}
+  {% if can_vote && !thread.root.draft %}
+  <form method="post" action="{{ review.tabs[0].url }}/comment" class="bar"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="parent" value="{{ thread.root.id }}"><input type="text" name="body" required aria-label="{{ page.t.s("Reply") }}"><button type="submit">{{ page.t.s("Reply") }}</button></form>
+  <form method="post" action="{{ review.tabs[0].url }}/resolve" class="inline-form"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="id" value="{{ thread.root.id }}"><input type="hidden" name="resolved" value="{% if thread.resolved %}{% else %}1{% endif %}"><button type="submit">{% if thread.resolved %}{{ page.t.s("Unresolved") }}{% else %}{{ page.t.s("Resolve") }}{% endif %}</button></form>
+  {% endif %}
+</div>
+{% endfor %}
+{% if can_vote %}
+<form method="post" action="{{ review.tabs[0].url }}/publish" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="revision" value="{{ review.revision }}">
+  <label>{{ page.t.s("Add a comment") }}<textarea name="body"></textarea></label>
+  {% if drafts > 0 %}<p class="muted">{{ page.t.s("Draft") }}: {{ drafts }}</p>{% endif %}
+  <fieldset><legend>{{ page.t.s("Votes") }}</legend>
+    <label class="inline"><input type="radio" name="vote" value="" checked> —</label>
+    <label class="inline"><input type="radio" name="vote" value="approve"> {{ page.t.s("Approve") }}</label>
+    <label class="inline"><input type="radio" name="vote" value="request_changes"> {{ page.t.s("Request changes") }}</label>
+  </fieldset>
+  <div><button type="submit" class="primary">{{ page.t.s("Publish") }}</button></div>
+</form>
+{% endif %}
+{% if can_edit %}
+<h2>{{ page.t.s("Edit") }}</h2>
+<form method="post" action="{{ review.tabs[0].url }}/update" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="version" value="{{ review.version }}">
+  <label>{{ page.t.s("Title") }}<input type="text" name="title" value="{{ review.title }}" required maxlength="256"></label>
+  <div><button type="submit">{{ page.t.s("Save") }}</button></div>
+</form>
+<form method="post" action="{{ review.tabs[0].url }}/update" class="inline-form">
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="version" value="{{ review.version }}">
+  {% if open %}<input type="hidden" name="state" value="close"><button type="submit" class="danger">{{ page.t.s("Close review") }}</button>{% endif %}
+  {% if closed %}<input type="hidden" name="state" value="reopen"><button type="submit">{{ page.t.s("Reopen") }}</button>{% endif %}
+</form>
+{% endif %}
+
+<h2>Timeline</h2>
+<ul class="timeline">{% for (when, what) in timeline %}<li><span class="muted">{{ when }}</span> {{ what }}</li>{% endfor %}</ul>
+{% endblock %}

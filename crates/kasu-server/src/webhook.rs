@@ -148,6 +148,8 @@ struct Event {
     new: Option<GitOid>,
     actor: Vec<u8>,
     time: i64,
+    /// A review event: its review number and stored event.
+    review: Option<(u64, Vec<u8>)>,
 }
 impl Backend {
     fn changed_paths(&self, old: TreeId, new: TreeId) -> Result<Paths, Status> {
@@ -266,6 +268,7 @@ impl Backend {
                         new: commit_oid(log.new)?,
                         actor: log.actor,
                         time: log.time,
+                        review: None,
                     })
                 })
                 .transpose()?,
@@ -287,11 +290,74 @@ impl Backend {
                         new: direct(log.new),
                         actor: log.actor,
                         time: log.time,
+                        review: None,
                     }
                 }),
+            WebhookStream::Review => match &self.reviews {
+                None => None,
+                Some(reviews) => reviews
+                    .review_log(self.key(), cursor, 1)
+                    .map_err(status)?
+                    .into_iter()
+                    .next()
+                    .map(|event| Event {
+                        sequence: event.seq,
+                        name: Vec::new(),
+                        old: None,
+                        new: None,
+                        actor: Vec::new(),
+                        time: event.time,
+                        review: Some((event.number, event.data)),
+                    }),
+            },
         })
     }
+    /// The payload of a review event: what happened and the review's state.
+    fn review_body(
+        &self,
+        number: u64,
+        data: &[u8],
+        event: &Event,
+        config: &WebhookConfig,
+    ) -> Result<Vec<u8>, Status> {
+        let detail: serde_json::Value = serde_json::from_slice(data).unwrap_or_default();
+        let review = self
+            .reviews
+            .as_ref()
+            .and_then(|reviews| reviews.review(self.key(), number).ok().flatten());
+        let state = match review.as_ref().map(|r| r.state) {
+            Some(kasu_store::REVIEW_SUBMITTED) => "submitted",
+            Some(kasu_store::REVIEW_CLOSED) => "closed",
+            _ => "open",
+        };
+        let html = config.repository_url.trim_end_matches(".git");
+        let payload = json!({
+            "action": detail["kind"],
+            "actor": detail["actor"],
+            "detail": detail["detail"],
+            "review": {
+                "number": number,
+                "state": state,
+                "target": review.as_ref().map(|r| String::from_utf8_lossy(&r.target).into_owned()),
+                "author": review.as_ref().map(|r| r.author.clone()),
+                "version": review.as_ref().map(|r| r.version),
+            },
+            "repository": {"full_name": self.record().name.as_str(), "html_url": html},
+            "kasu": {"sequence": event.sequence, "time": event.time},
+        });
+        let body = serde_json::to_vec(&payload)
+            .map_err(|_| Status::internal("webhook serialization failed"))?;
+        if body.len() > config.max_payload_bytes {
+            return Err(Status::resource_exhausted(
+                "webhook body exceeds configured size limit",
+            ));
+        }
+        Ok(body)
+    }
     fn webhook_body(&self, event: &Event, config: &WebhookConfig) -> Result<Vec<u8>, Status> {
+        if let Some((number, data)) = &event.review {
+            return self.review_body(*number, data, event, config);
+        }
         if !event.name.starts_with(b"refs/") {
             return Ok(Vec::new());
         }
@@ -521,7 +587,14 @@ impl WebhookDispatcher {
                 .client
                 .post(endpoint.url.clone())
                 .header("content-type", "application/json")
-                .header("X-GitHub-Event", "push")
+                .header(
+                    "X-GitHub-Event",
+                    if stream == WebhookStream::Review {
+                        "kasu_review"
+                    } else {
+                        "push"
+                    },
+                )
                 .header("X-GitHub-Delivery", &id);
             if let Some(secret) = &endpoint.secret {
                 request = request.header(
@@ -576,7 +649,11 @@ impl WebhookDispatcher {
     pub async fn run(self: Arc<Self>, shutdown: tokio::sync::watch::Receiver<bool>) {
         let mut workers = tokio::task::JoinSet::new();
         for endpoint in 0..self.endpoints.len() {
-            for stream in [WebhookStream::Native, WebhookStream::Git] {
+            let mut streams = vec![WebhookStream::Native, WebhookStream::Git];
+            if self.backend.reviews.is_some() {
+                streams.push(WebhookStream::Review);
+            }
+            for stream in streams {
                 let dispatcher = self.clone();
                 let mut stop = shutdown.clone();
                 workers.spawn(async move {

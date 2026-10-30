@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="bar">
+  <nav class="grow">{% for f in filters %}<a href="{{ f.url }}"{% if f.on %} class="badge ok" aria-current="page"{% else %} class="badge"{% endif %}>{{ f.label }}</a> {% endfor %}</nav>
+  {% if let Some(create) = create %}<a class="button primary" href="{{ create }}">{{ page.t.s("New review") }}</a>{% endif %}
+</div>
+{% if rows.is_empty() %}<p class="muted">{{ page.t.s("No reviews.") }}</p>{% else %}
+<table class="list">
+<tr><th>#</th><th>{{ page.t.s("Title") }}</th><th>{{ page.t.s("Target") }}</th><th>{{ page.t.s("Author") }}</th><th>{{ page.t.s("State") }}</th><th>{{ page.t.s("Approvals") }}</th><th></th></tr>
+{% for row in rows %}
+<tr><td><a href="{{ row.url }}">#{{ row.number }}</a></td><td><a href="{{ row.url }}">{{ row.title }}</a></td><td class="code">{{ row.target }}</td><td>{{ row.author }}</td><td><span class="badge">{{ row.state }}</span></td><td>{{ row.approvals }}</td><td class="muted">{{ row.updated }}</td></tr>
+{% endfor %}
+</table>
+{% endif %}
+{% if let Some(next) = next %}<p><a href="{{ next }}">{{ page.t.s("Next") }} →</a></p>{% endif %}
+{% endblock %}

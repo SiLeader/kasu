@@ -33,6 +33,7 @@ ID は BLAKE3 の 32 バイト、Git OID は SHA-1 の 20 バイトです。パ�
 | `ReadFile` | File／Symlink の Entry と内容。gitlink の内容は取得しない |
 | `ListDir` | 直下の entry。空パスはルート。子 tree は ID で返す |
 | `FindChangesetByGitOid` | このリポジトリの Git OID 索引で commit を逆引き。見つからない場合は id なし |
+| `FindChangesetsByPrefix` | 16 進 ID が `prefix`（4〜64 桁）で始まるこのリポジトリの Changeset（最大 10 件。2 件以上なら曖昧）。短縮 ID に使う |
 
 `Log.limit` は 1〜1000 です。次ページには同じ start／path と返された cursor を渡します。
 cursor は第一親チェーンと path の変更点にも照合します。ref が動いても ID を指定したページング結果は変わりません。
@@ -62,6 +63,7 @@ Blame は rename 元の親パスも必要に応じて計算します。`PathRequ
 | `/v1/diff` | DiffRequest |
 | `/v1/blame` / `/v1/read-file` / `/v1/list-dir` | PathRequest |
 | `/v1/find-git-oid` | GitOidRequest |
+| `/v1/find-prefix` | PrefixRequest |
 
 例: `my-repo` の ref 一覧。
 

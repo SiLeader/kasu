@@ -41,6 +41,31 @@ fn endpoint(url: &str) -> Result<tonic::transport::Endpoint> {
         .connect_timeout(std::time::Duration::from_secs(10))
         .timeout(std::time::Duration::from_secs(30)))
 }
+/// Reviews on one server (kasu.v1.Review).
+pub struct Reviews {
+    pub client: kasu_proto::v1::review_client::ReviewClient<Channel>,
+    authorization: Option<MetadataValue<Ascii>>,
+}
+impl Reviews {
+    pub async fn connect(server: &str, token: Option<&str>) -> Result<Self> {
+        Ok(Self {
+            client: kasu_proto::v1::review_client::ReviewClient::new(
+                endpoint(server)?.connect().await?,
+            ),
+            authorization: token.map(kasu_object::bearer).transpose()?,
+        })
+    }
+    pub fn request<T>(&self, value: T) -> Request<T> {
+        let mut request = Request::new(value);
+        if let Some(value) = &self.authorization {
+            request
+                .metadata_mut()
+                .insert("authorization", value.clone());
+        }
+        kasu_telemetry::inject(request.metadata_mut());
+        request
+    }
+}
 /// Repository administration on one server (kasu.v1.Admin).
 pub struct Admin {
     pub client: AdminClient<Channel>,

@@ -30,6 +30,9 @@ impl Backend {
         if !policy.allows_ref(&command.name) {
             return Err(Status::permission_denied("ref is not writable"));
         }
+        if let Some(message) = self.review_gate(&command.name) {
+            return Err(Status::permission_denied(message));
+        }
         if command.old.is_none() && !policy.allows_create() {
             return Err(Status::permission_denied("ref creation is disabled"));
         }
@@ -156,13 +159,18 @@ impl Backend {
         let applied = match update {
             PreparedRef::Native(update) => matches!(
                 self.refs
-                    .compare_and_swap(self.key(), &[update], self.write_actor(b"git-push"), time)
+                    .compare_and_swap(
+                        self.key(),
+                        std::slice::from_ref(&update),
+                        &self.ref_actor(b"git-push", std::iter::once(update.name.as_slice())),
+                        time,
+                    )
                     .map_err(status)?,
                 CasResult::Applied(_)
             ),
             PreparedRef::Git(update) => matches!(
                 self.refs
-                    .compare_git(self.key(), &[update], self.write_actor(b"git-push"), time)
+                    .compare_git(self.key(), &[update], &self.write_actor(b"git-push"), time)
                     .map_err(status)?,
                 GitCasResult::Applied(_)
             ),
@@ -206,7 +214,7 @@ impl Backend {
             self.key(),
             &native,
             &git,
-            self.write_actor(b"git-push"),
+            &self.ref_actor(b"git-push", native.iter().map(|u| u.name.as_slice())),
             time,
         ) {
             Ok(RefPublicationResult::Applied { .. }) => None,

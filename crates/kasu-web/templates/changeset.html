@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>{{ heading }}</h1>
+{% if filtered %}<span class="badge warn">{{ page.t.s("Directory-limited view") }}</span>{% endif %}
+{% for note in notes %}<p class="notice">{{ note }}</p>{% endfor %}
+<pre class="markdown">{{ message }}</pre>
+<table class="list">
+{% for (role, who) in people %}<tr><th>{{ role }}</th><td>{{ who }}</td></tr>{% endfor %}
+<tr><th>{{ page.t.s("Parents") }}</th><td>{% for parent in parents %}<a class="code" href="{{ parent.url }}">{{ parent.label }}</a> {% endfor %}</td></tr>
+{% if !git.is_empty() %}<tr><th>{{ page.t.s("Git commit") }}</th><td class="code">{{ git }}</td></tr>{% endif %}
+{% if !reviews.is_empty() %}<tr><th>{{ page.t.s("Reviews") }}</th><td>{% for review in reviews %}<a href="{{ review.url }}">{{ review.label }}</a> {% endfor %}</td></tr>{% endif %}
+</table>
+<div class="bar">{% for action in actions %}<a class="button{% if action.on %} primary{% endif %}" href="{{ action.url }}">{{ action.label }}</a>{% endfor %}</div>
+{% include "diff_files.html" %}
+{% endblock %}

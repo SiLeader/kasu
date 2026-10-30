@@ -125,11 +125,15 @@ async fn an_overloaded_repository_does_not_delay_other_repositories() {
     let accounts = ["busy", "quiet"]
         .into_iter()
         .map(|who| RepositoryAccount {
+            create_repositories: vec![],
+            display_name: None,
+            email: None,
             name: who.into(),
             token: format!("{who}-pat"),
             write_policy: None,
             read_directories: None,
             grants: vec![RepositoryGrant {
+                admin: false,
                 repositories: vec![RepoPattern::parse(&format!("team/{who}")).unwrap()],
                 write_policy: None,
                 read_directories: None,

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="{{ page.lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ page.title }} · kasu</title>
+<link rel="stylesheet" href="{{ page.css }}">
+<link rel="icon" href="{{ page.favicon }}" type="image/svg+xml">
+<script type="module" src="{{ page.js }}"></script>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/"><img src="{{ page.favicon }}" alt="">kasu</a>
+  <nav aria-label="account">
+    <a href="/-/preferences">{{ page.t.s("Preferences") }}</a>
+    {% if let Some(account) = page.account %}
+    <span class="badge">{{ account }}</span>
+    <a href="/-/logout">{{ page.t.s("Log out") }}</a>
+    {% else %}{% if page.login %}<a href="/-/login">{{ page.t.s("Log in") }}</a>{% endif %}{% endif %}
+  </nav>
+</header>
+<main>
+{% if let Some(nav) = page.repo %}
+<div class="bar">
+  <div class="crumbs grow">
+    <a href="{{ nav.top }}">{{ nav.name }}</a>{% for crumb in nav.crumbs %} / {% if crumb.url.is_empty() %}{{ crumb.label }}{% else %}<a href="{{ crumb.url }}">{{ crumb.label }}</a>{% endif %}{% endfor %}
+    {% for badge in nav.badges %} <span class="badge warn">{{ badge }}</span>{% endfor %}
+  </div>
+  {% if let Some(rev) = nav.rev %}
+  <span class="badge" title="{{ rev.short }}">{{ rev.label }}</span>
+  <a href="{{ rev.permalink }}" data-permalink class="code">{{ rev.short }}</a>
+  <a href="{{ rev.switch }}">⇄</a>
+  {% endif %}
+  {% if !nav.clone.is_empty() %}
+  <details><summary>{{ page.t.s("Clone") }}</summary>
+    {% for url in nav.clone %}<div><span class="muted">{{ url.label }}</span> <input type="text" readonly value="{{ url.url }}" aria-label="{{ url.label }}"> <button type="button" data-copy="{{ url.url }}">⧉</button></div>{% endfor %}
+  </details>
+  {% endif %}
+</div>
+<nav class="tabs" aria-label="repository">
+  {% for tab in nav.tabs %}<a href="{{ tab.url }}"{% if tab.on %} class="on" aria-current="page"{% endif %}>{{ tab.label }}</a>{% endfor %}
+</nav>
+{% endif %}
+{% for notice in page.notices %}<div class="notice" role="status">{{ notice }}</div>{% endfor %}
+{% block content %}{% endblock %}
+</main>
+<footer>kasu</footer>
+</body>
+</html>

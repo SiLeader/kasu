@@ -30,6 +30,7 @@ hmac = "0.12.1"
 sha2 = "0.10.9"
 jiff = "0.2"
 hex.workspace = true
+getrandom.workspace = true
 tracing.workspace = true
 tower = { version = "0.5", features = ["util"] }
 http-body = "1"
