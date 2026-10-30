@@ -477,14 +477,14 @@ async fn repository_administration_follows_admin_grants_and_create_patterns() {
     )
     .await;
     assert_eq!(status, StatusCode::FORBIDDEN);
-    // Secrets outside KASU_WEBHOOK_SECRET_DIR are refused for non-operators.
+    // Only operators may configure webhook endpoints.
     let (status, _) = alice(
         "/v1/admin/update-repository",
         serde_json::json!({"name": "team/app", "expected_config_version": version + 1,
             "config_json": r#"{"webhooks":[{"id":"x","url":"https://hook.example/","secret_file":"/etc/shadow"}]}"#}),
     )
     .await;
-    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert_eq!(status, StatusCode::FORBIDDEN);
     let (status, _) = alice(
         "/v1/admin/rename-repository",
         serde_json::json!({"name": "team/app", "new_name": "other/app"}),
