@@ -36,6 +36,133 @@ fn form_fields(page: &Response) -> Vec<(String, String)> {
 }
 
 #[tokio::test]
+async fn content_edits_preserve_whitespace_in_existing_paths() {
+    let h = Harness::delegated(&["team/app"]).await;
+    h.commit("team/app", &[(b" notes.txt ", Some(b"old"))], "init")
+        .await;
+    let alice = h.login("alice").await;
+    let url = "/team/app/-/edit/main/%20notes.txt%20";
+    let form = h.get(url, Some(&alice)).await;
+    assert_eq!(form.status, StatusCode::OK);
+    let mut fields = form_fields(&form);
+    fields.extend([
+        ("path".into(), form.field("path")),
+        ("content".into(), "edited".into()),
+        ("message".into(), "Edit content only".into()),
+        ("destination".into(), "direct".into()),
+    ]);
+    let pairs: Vec<_> = fields
+        .iter()
+        .map(|(a, b)| (a.as_str(), b.as_str()))
+        .collect();
+    let saved = h.post(url, Some(&alice), &pairs).await;
+    assert_eq!(saved.status, StatusCode::SEE_OTHER, "{}", saved.text());
+    assert_eq!(
+        read(&h, &alice, "/team/app/-/raw/main/%20notes.txt%20").await,
+        b"edited"
+    );
+    assert_eq!(
+        h.get("/team/app/-/raw/main/notes.txt", Some(&alice))
+            .await
+            .status,
+        StatusCode::NOT_FOUND
+    );
+}
+
+#[tokio::test]
+async fn multipart_upload_streams_large_and_empty_files_within_the_configured_limit() {
+    use axum::{body::Body, http::Request};
+    use kasu_proto::v1 as p;
+    let h = Harness::start(
+        &["team/app"],
+        |b| {
+            b.with_binding_key(vec![9; 32])
+                .unwrap()
+                .with_repository_accounts(accounts())
+                .unwrap()
+                .with_delegates(vec![delegate()])
+                .unwrap()
+        },
+        |c| {
+            c.delegate_token = Some("web-delegate".into());
+            c.file.limits.upload_bytes = 20 * 1024 * 1024;
+        },
+    )
+    .await;
+    h.commit("team/app", &[(b"a", Some(b"a"))], "init").await;
+    let alice = h.login("alice").await;
+    let url = "/team/app/-/upload/main";
+    let form = h.get(url, Some(&alice)).await;
+    assert_eq!(form.status, StatusCode::OK);
+    let mut fields = form_fields(&form);
+    fields.extend([
+        ("message".into(), "Upload large and empty files".into()),
+        ("destination".into(), "direct".into()),
+    ]);
+    let boundary = "kasu-upload-test";
+    let mut body = Vec::new();
+    for (name, value) in fields {
+        body.extend_from_slice(
+            format!(
+                "--{boundary}\r\nContent-Disposition: form-data; name=\"{name}\"\r\n\r\n{value}\r\n"
+            )
+            .as_bytes(),
+        );
+    }
+    let large: Vec<u8> = (0..17 * 1024 * 1024 + 3).map(|i| (i % 251) as u8).collect();
+    for (name, data) in [
+        ("large.bin", large.as_slice()),
+        ("empty.txt", b"".as_slice()),
+    ] {
+        body.extend_from_slice(format!("--{boundary}\r\nContent-Disposition: form-data; name=\"files\"; filename=\"{name}\"\r\nContent-Type: application/octet-stream\r\n\r\n").as_bytes());
+        body.extend_from_slice(data);
+        body.extend_from_slice(b"\r\n");
+    }
+    body.extend_from_slice(format!("--{boundary}--\r\n").as_bytes());
+    let saved = h
+        .send(
+            Request::post(url)
+                .header(
+                    "content-type",
+                    format!("multipart/form-data; boundary={boundary}"),
+                )
+                .header("origin", ORIGIN)
+                .header("cookie", alice.cookie())
+                .body(Body::from(body))
+                .unwrap(),
+        )
+        .await;
+    assert_eq!(saved.status, StatusCode::SEE_OTHER, "{}", saved.text());
+    let backend = h
+        .backend
+        .scope(
+            Some("Bearer operator"),
+            b"team/app",
+            kasu_server::Mode::Read,
+        )
+        .unwrap();
+    let tip = main_tip(&h, "team/app").target.unwrap();
+    for (name, expected) in [
+        (b"large.bin".as_slice(), large.as_slice()),
+        (b"empty.txt", b"".as_slice()),
+    ] {
+        let file = backend
+            .read_file(p::PathRequest {
+                repo: b"team/app".to_vec(),
+                id: tip.0.to_vec(),
+                path: name.to_vec(),
+                ..Default::default()
+            })
+            .unwrap();
+        assert_eq!(file.content.len(), expected.len());
+        assert_eq!(
+            kasu_core::ObjectId::hash(&file.content),
+            kasu_core::ObjectId::hash(expected)
+        );
+    }
+}
+
+#[tokio::test]
 async fn editing_preserves_line_endings_and_double_submission_lands_once() {
     let h = Harness::delegated(&["team/app"]).await;
     h.commit(

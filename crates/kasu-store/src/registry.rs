@@ -24,7 +24,7 @@ pub struct RepositoryRecord {
     pub config: Vec<u8>,
     pub created_by: Vec<u8>,
     pub created_at: i64,
-    /// Fingerprint of the creating request, used to replay idempotent creates.
+    /// Creating request fingerprint; forks also append their initial target.
     pub creation_key: Vec<u8>,
     pub deleted_at: i64,
     /// Mutable rows and indexes of a Deleting repository have been removed.

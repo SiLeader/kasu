@@ -40,6 +40,10 @@ pub trait Store: Send + Sync {
     /// Whether the upstream confirmed that `repo` (a normalized name) has `key`.
     fn member(&self, repo: &[u8], key: Key) -> Result<bool, Status>;
     fn add_member(&self, repo: &[u8], key: Key) -> Result<(), Status>;
+    /// Check membership and its repository identity atomically.
+    fn member_scoped(&self, repo: &[u8], identity: &str, key: Key) -> Result<bool, Status>;
+    /// Add membership only if the stored identity still matches the fetch.
+    fn add_member_scoped(&self, repo: &[u8], identity: &str, key: Key) -> Result<(), Status>;
     /// Record the upstream identity of `repo`. A different identity means the
     /// name now belongs to another repository, so its memberships are dropped.
     fn identify(&self, repo: &[u8], identity: &str) -> Result<(), Status>;
@@ -83,6 +87,12 @@ impl MemoryStore {
             .lock()
             .map_err(|_| Status::internal("memory cache lock failed"))
     }
+    fn add_member_locked(state: &mut Memory, repo: &[u8], key: Key) {
+        state.members.insert((repo.to_vec(), key), ());
+        while state.members.len() > MAX_MEMORY_MEMBERS {
+            state.members.pop_front();
+        }
+    }
 }
 impl Store for MemoryStore {
     fn member(&self, repo: &[u8], key: Key) -> Result<bool, Status> {
@@ -94,10 +104,24 @@ impl Store for MemoryStore {
     }
     fn add_member(&self, repo: &[u8], key: Key) -> Result<(), Status> {
         let mut state = self.lock()?;
-        state.members.insert((repo.to_vec(), key), ());
-        while state.members.len() > MAX_MEMORY_MEMBERS {
-            state.members.pop_front();
+        Self::add_member_locked(&mut state, repo, key);
+        Ok(())
+    }
+    fn member_scoped(&self, repo: &[u8], identity: &str, key: Key) -> Result<bool, Status> {
+        let mut state = self.lock()?;
+        Ok(
+            state.identities.get(repo).map(String::as_str) == Some(identity)
+                && state.members.to_back(&(repo.to_vec(), key)).is_some(),
+        )
+    }
+    fn add_member_scoped(&self, repo: &[u8], identity: &str, key: Key) -> Result<(), Status> {
+        let mut state = self.lock()?;
+        if state.identities.get(repo).map(String::as_str) != Some(identity) {
+            return Err(Status::aborted(
+                "repository identity changed during object fetch",
+            ));
         }
+        Self::add_member_locked(&mut state, repo, key);
         Ok(())
     }
     fn identify(&self, repo: &[u8], identity: &str) -> Result<(), Status> {
@@ -285,8 +309,8 @@ pub struct Layer {
     breaker: Mutex<Breaker>,
     counters: Counters,
 }
-/// Fills are coalesced per repository: each needs its own confirmation.
-type FlightKey = (Vec<u8>, Key);
+/// Names can be reused while an older repository's fetch is still in flight.
+type FlightKey = (Vec<u8>, String, Key);
 struct FlightGuard {
     layer: Arc<Layer>,
     key: FlightKey,
@@ -441,11 +465,16 @@ impl Layer {
     /// `repo` is a normalized repository name.
     pub async fn get(self: &Arc<Self>, repo: &[u8], key: Key) -> Result<Frame, Status> {
         self.counters.requests.fetch_add(1, Ordering::Relaxed);
-        self.validate_repository(repo).await?;
-        self.get_validated(repo, key).await
+        let identity = self.validate_repository(repo).await?;
+        self.get_validated(repo, &identity, key).await
     }
     async fn validate_repository(&self, repo: &[u8]) -> Result<String, Status> {
-        let identity = self.upstream.repository_identity(repo).await?;
+        let identity = tokio::time::timeout(
+            self.limits.upstream_timeout,
+            self.upstream.repository_identity(repo),
+        )
+        .await
+        .map_err(|_| Status::deadline_exceeded("repository identity upstream timed out"))??;
         let store = self.store.clone();
         let repo = repo.to_vec();
         let identity_for_store = identity.clone();
@@ -454,14 +483,19 @@ impl Layer {
             .map_err(|_| Status::internal("object cache identity worker failed"))??;
         Ok(identity)
     }
-    async fn get_validated(self: &Arc<Self>, repo: &[u8], key: Key) -> Result<Frame, Status> {
-        if self.store.member(repo, key)?
+    async fn get_validated(
+        self: &Arc<Self>,
+        repo: &[u8],
+        identity: &str,
+        key: Key,
+    ) -> Result<Frame, Status> {
+        if self.store.member_scoped(repo, identity, key)?
             && let Some(bytes) = self.store.hot(key)?
         {
             self.counters.hits.fetch_add(1, Ordering::Relaxed);
             return Ok(bytes);
         }
-        let flight_key = (repo.to_vec(), key);
+        let flight_key = (repo.to_vec(), identity.to_owned(), key);
         let (flight, spawn) = {
             let mut flights = self
                 .flights
@@ -491,9 +525,10 @@ impl Layer {
                 done: false,
             };
             let repo = repo.to_vec();
+            let identity = identity.to_owned();
             tokio::spawn(
                 async move {
-                    let result = layer.fill(&repo, key).await;
+                    let result = layer.fill(&repo, &identity, key).await;
                     if result.is_err() {
                         layer.counters.errors.fetch_add(1, Ordering::Relaxed);
                     }
@@ -529,7 +564,7 @@ impl Layer {
         }
         Ok(value.bytes)
     }
-    async fn fill(&self, repo: &[u8], key: Key) -> FlightResult {
+    async fn fill(&self, repo: &[u8], identity: &str, key: Key) -> FlightResult {
         let _permit =
             tokio::time::timeout(self.limits.queue_timeout, self.work.clone().acquire_owned())
                 .await
@@ -540,8 +575,9 @@ impl Layer {
                 .map_err(|_| Status::unavailable("object layer stopping"))?;
         let store = self.store.clone();
         let member = repo.to_vec();
+        let expected_identity = identity.to_owned();
         let cached = kasu_telemetry::blocking(move || {
-            if store.member(&member, key)? {
+            if store.member_scoped(&member, &expected_identity, key)? {
                 store.get(key)
             } else {
                 Ok(None)
@@ -586,17 +622,20 @@ impl Layer {
         // layer. Otherwise a full or unavailable disk would repeatedly fetch
         // the same cold objects despite every client request failing.
         let result = async {
-            let (bytes, identity) = result?;
+            let (bytes, fetched_identity) = result?;
+            if fetched_identity.as_deref() != Some(identity) {
+                return Err(Status::aborted(
+                    "repository identity changed during object fetch",
+                ));
+            }
             let bytes = Arc::new(bytes);
             let store = self.store.clone();
             let value = bytes.clone();
             let member = repo.to_vec();
+            let identity = identity.to_owned();
             kasu_telemetry::blocking(move || {
-                if let Some(identity) = identity {
-                    store.identify(&member, &identity)?;
-                }
                 store.put(key, value)?;
-                store.add_member(&member, key)
+                store.add_member_scoped(&member, &identity, key)
             })
             .await
             .map_err(|_| Status::internal("object cache write worker failed"))??;
@@ -631,6 +670,16 @@ impl Service {
             .max_encoding_message_size(CHUNK_BYTES + 1024);
         kasu_telemetry::GrpcLayer.layer(inner)
     }
+    fn permit(&self) -> Result<tokio::sync::OwnedSemaphorePermit, Status> {
+        self.layer
+            .requests
+            .clone()
+            .try_acquire_owned()
+            .map_err(|_| {
+                self.layer.counters.rejected.fetch_add(1, Ordering::Relaxed);
+                Status::resource_exhausted("object stream concurrency limit")
+            })
+    }
     async fn stream<T: Send + 'static>(
         &self,
         q: Request<p::ObjectRequest>,
@@ -661,24 +710,17 @@ impl Service {
         if ids.iter().copied().collect::<BTreeSet<_>>().len() != ids.len() {
             return Err(Status::invalid_argument("duplicate object ID"));
         }
-        let permit = self
-            .layer
-            .requests
-            .clone()
-            .try_acquire_owned()
-            .map_err(|_| {
-                self.layer.counters.rejected.fetch_add(1, Ordering::Relaxed);
-                Status::resource_exhausted("object stream concurrency limit")
-            })?;
+        let permit = self.permit()?;
         let identity = self.layer.validate_repository(&repo).await?;
         let (tx, rx) = tokio::sync::mpsc::channel(2);
         let layer = self.layer.clone();
+        let stream_identity = identity.clone();
         tokio::spawn(
             async move {
                 let _permit = permit;
                 for id in ids {
                     let result =
-                        tokio::select! {_=tx.closed()=>return,r=layer.get_validated(&repo,Key{kind,id})=>r};
+                        tokio::select! {_=tx.closed()=>return,r=layer.get_validated(&repo,&stream_identity,Key{kind,id})=>r};
                     let bytes = match result {
                         Ok(bytes) => bytes,
                         Err(error) => {
@@ -756,6 +798,7 @@ impl Objects for Service {
         let repo = normalize(&q.into_inner().repo)
             .filter(|repo| self.layer.serves(repo))
             .ok_or_else(|| Status::not_found("repository not found"))?;
+        let _permit = self.permit()?;
         let identity = self.layer.validate_repository(&repo).await?;
         let mut response = Response::new(p::RepositoryIdentityResponse { identity });
         response

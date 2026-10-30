@@ -548,7 +548,7 @@ fn file_change(path: &[u8], content: &[u8], executable: bool) -> p::FileChange {
     }
 }
 fn checked_path(text: &str) -> Result<Vec<u8>> {
-    let path = text.trim().trim_matches('/').as_bytes().to_vec();
+    let path = text.trim_matches('/').as_bytes().to_vec();
     kasu_core::RepoPath::new(path.clone())
         .map_err(|_| WebError::BadRequest("invalid path".into()))?;
     Ok(path)
@@ -811,18 +811,25 @@ async fn land(
     {
         return Err(WebError::BadRequest("a name and email are required".into()));
     }
-    let uploads: Vec<p::BlobUpload> = commit
-        .blobs
-        .iter()
-        .map(|data| p::BlobUpload {
-            repo: repo.bytes(),
-            id: kasu_core::ObjectId::hash(data).0.to_vec(),
-            offset: 0,
-            data: data.clone(),
-            last: true,
-        })
-        .collect();
-    if !uploads.is_empty() {
+    if !commit.blobs.is_empty() {
+        const CHUNK_BYTES: usize = 64 * 1024;
+        let repository = repo.bytes();
+        let uploads = commit.blobs.into_iter().flat_map(move |data| {
+            let id = kasu_core::ObjectId::hash(&data);
+            let repository = repository.clone();
+            (0..data.len().max(1))
+                .step_by(CHUNK_BYTES)
+                .map(move |offset| {
+                    let end = (offset + CHUNK_BYTES).min(data.len());
+                    p::BlobUpload {
+                        repo: repository.clone(),
+                        id: id.0.to_vec(),
+                        offset: offset as u64,
+                        data: data[offset..end].to_vec(),
+                        last: end == data.len(),
+                    }
+                })
+        });
         ctx.upstream()
             .writer()
             .upload_blobs(ctx.wreq(tokio_stream::iter(uploads)))

@@ -141,7 +141,7 @@ CreateChangeset の親と blob、Merge / Rebase の入力、receive-pack の thi
 | `UpdateRepository` | `/v1/admin/update-repository` | `expected_config_version` の CAS で `config_json`・`state`・`default_branch` を変更 |
 | `RenameRepository` | `/v1/admin/rename-repository` | `RepoKey` は不変。`keep_alias` で旧名を alias として残します |
 | `DeleteRepository` | `/v1/admin/delete-repository` | `DELETING` へ遷移。データの削除は非同期です |
-| `ForkRepository` | `/v1/admin/fork-repository` | 指定 ref から到達可能な履歴・tree・blob・raw Git オブジェクトの所属を新しいキーに追加（本文はコピーしません）。同じ冪等キーの再送で中断から再開します。フォーク元と同じ commit は同じ Git OID です |
+| `ForkRepository` | `/v1/admin/fork-repository` | 指定 ref から到達可能な履歴・tree・blob・raw Git オブジェクトの所属を新しいキーに追加（本文はコピーしません）。選択したブランチを既定にします。同じ冪等キーの再送では、元ブランチが変わっても初回に記録した対象から再開します。フォーク元と同じ commit は同じ Git OID です |
 | `GetRepositoryUsage` | `/v1/admin/repository-usage` | ネイティブ ref から到達可能なオブジェクトの論理サイズ。ref の状態ごとにキャッシュします。共有オブジェクトは各リポジトリで全量を数えます |
 
 運用者はすべての操作ができます。アカウントは grant に基づいて管理できます。

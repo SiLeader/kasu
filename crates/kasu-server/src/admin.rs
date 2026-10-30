@@ -632,62 +632,117 @@ impl Backend {
             }
         }
         kasu_git::validate_branch_name(&q.r#ref).map_err(status)?;
-        let target = self
-            .refs
-            .resolve(source.key.as_bytes(), &q.r#ref)
-            .map_err(status)?
-            .target
-            .ok_or_else(|| Status::not_found("source ref not found"))?;
         if q.idempotency_key.len() > 256 {
             return Err(Status::invalid_argument(
                 "idempotency key exceeds 256 bytes",
             ));
         }
-        let creation_key = fingerprint(&[
-            b"kasu.admin.fork.v1",
+        let request_key = fingerprint(&[
+            b"kasu.admin.fork.v2",
             &q.idempotency_key,
             source.key.as_bytes(),
             &q.r#ref,
-            &target.0,
             new.normalized().as_bytes(),
         ]);
-        let now = now_seconds();
-        let mut record =
-            RepositoryRecord::new(RepoKey::generate().map_err(status)?, new, &actor, now);
-        record.default_branch = source.default_branch.clone();
-        record.git_commit_rule = source.git_commit_rule;
-        record.creation_key = creation_key.clone();
-        let store = self.registry.store();
-        let (record, replayed) = match store.create_repository(&record).map_err(status)? {
-            RepositoryWrite::NameTaken if !q.idempotency_key.is_empty() => {
-                let existing = self
-                    .lookup(&q.new_name)
-                    .map_err(|_| Status::already_exists("repository name is taken"))?;
-                if existing.creation_key != creation_key {
-                    return Err(Status::already_exists("repository name is taken"));
-                }
-                (existing, true)
+        let source_target = || {
+            self.refs
+                .resolve(source.key.as_bytes(), &q.r#ref)
+                .map_err(status)?
+                .target
+                .ok_or_else(|| Status::not_found("source ref not found"))
+        };
+        let replay = |record: RepositoryRecord| -> Result<_, Status> {
+            if let Some(raw) = record.creation_key.strip_prefix(request_key.as_slice())
+                && let Ok(target) = <[u8; 32]>::try_from(raw)
+            {
+                return Ok((record, ChangesetId(target), true));
             }
-            write => (self.written(write)?, false),
+            // Older records stored only a fingerprint containing the source tip.
+            if record.creation_key.len() == 32 {
+                let fork_tip = self
+                    .refs
+                    .resolve(record.key.as_bytes(), &q.r#ref)
+                    .map_err(status)?
+                    .target;
+                let source_tip = self
+                    .refs
+                    .resolve(source.key.as_bytes(), &q.r#ref)
+                    .map_err(status)?
+                    .target;
+                for target in [fork_tip, source_tip].into_iter().flatten() {
+                    if record.creation_key
+                        == fingerprint(&[
+                            b"kasu.admin.fork.v1",
+                            &q.idempotency_key,
+                            source.key.as_bytes(),
+                            &q.r#ref,
+                            &target.0,
+                            new.normalized().as_bytes(),
+                        ])
+                    {
+                        return Ok((record, target, true));
+                    }
+                }
+            }
+            Err(Status::already_exists("repository name is taken"))
+        };
+        let existing = if q.idempotency_key.is_empty() {
+            None
+        } else {
+            match self.lookup(&q.new_name) {
+                Ok(record) => Some(record),
+                Err(error) if error.code() == tonic::Code::NotFound => None,
+                Err(error) => return Err(error),
+            }
+        };
+        let now = now_seconds();
+        let store = self.registry.store();
+        let (record, target, replayed) = match existing {
+            Some(record) => replay(record)?,
+            None => {
+                let target = source_target()?;
+                let mut record = RepositoryRecord::new(
+                    RepoKey::generate().map_err(status)?,
+                    new.clone(),
+                    &actor,
+                    now,
+                );
+                record.default_branch = q.r#ref[b"refs/heads/".len()..].to_vec();
+                record.git_commit_rule = source.git_commit_rule;
+                // Persist the initial target with the request fingerprint in the
+                // registry transaction, before copying any objects or refs.
+                record.creation_key = [request_key.as_slice(), &target.0].concat();
+                match store.create_repository(&record).map_err(status)? {
+                    RepositoryWrite::NameTaken if !q.idempotency_key.is_empty() => {
+                        replay(self.lookup(&q.new_name)?)?
+                    }
+                    write => (self.written(write)?, target, false),
+                }
+            }
         };
         self.fork_objects(&source, &record.key, target)?;
         let current = self
             .refs
             .resolve(record.key.as_bytes(), &q.r#ref)
             .map_err(status)?;
-        if current.target.is_none() {
-            self.refs
-                .compare_and_swap(
-                    record.key.as_bytes(),
-                    &[RefUpdate {
-                        name: q.r#ref.clone(),
-                        expected: RefState::default(),
-                        new: Some(target),
-                    }],
-                    &actor,
-                    now,
-                )
-                .map_err(status)?;
+        if current == RefState::default()
+            && !matches!(
+                self.refs
+                    .compare_and_swap(
+                        record.key.as_bytes(),
+                        &[RefUpdate {
+                            name: q.r#ref.clone(),
+                            expected: RefState::default(),
+                            new: Some(target),
+                        }],
+                        &actor,
+                        now,
+                    )
+                    .map_err(status)?,
+                kasu_store::CasResult::Applied(_)
+            )
+        {
+            return Err(Status::aborted("fork ref changed concurrently; retry"));
         }
         let mut response = self.describe(credential, &record);
         response.replayed = replayed;

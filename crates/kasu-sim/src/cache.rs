@@ -301,6 +301,22 @@ impl Store for WriteFault {
     fn add_member(&self, repo: &[u8], key: Key) -> std::result::Result<(), Status> {
         self.inner.add_member(repo, key)
     }
+    fn member_scoped(
+        &self,
+        repo: &[u8],
+        identity: &str,
+        key: Key,
+    ) -> std::result::Result<bool, Status> {
+        self.inner.member_scoped(repo, identity, key)
+    }
+    fn add_member_scoped(
+        &self,
+        repo: &[u8],
+        identity: &str,
+        key: Key,
+    ) -> std::result::Result<(), Status> {
+        self.inner.add_member_scoped(repo, identity, key)
+    }
     fn identify(&self, repo: &[u8], identity: &str) -> std::result::Result<(), Status> {
         self.inner.identify(repo, identity)
     }

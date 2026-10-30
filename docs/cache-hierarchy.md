@@ -72,7 +72,7 @@ It can also be used to migrate existing working copies. Over Unix sockets, the r
 There is no fallback that reconnects to another upstream or the server when the daemon / cache fails.
 
 `--repo` is an optional allow list that can be repeated. When omitted, every repository is handled.
-Frames are shared across repositories, but only `(repo, id)` pairs whose membership in that repository the upstream has confirmed
+Frames are shared across repositories, but only `(repo, repository identity, kind, id)` entries whose membership the upstream has confirmed
 are hits ([multiple repositories](multi-repository.md#clients)).
 
 ## Load Limits
@@ -86,11 +86,12 @@ Each process uses the following defaults, applied to the total of all downstream
 | `--pending` | 128 | Distinct incomplete objects. Excess is rejected immediately |
 | `--qps` | 20 | Paces upstream fetch starts at fixed intervals |
 | `--queue-timeout-ms` | 1000 | Deadline for waiting for a fill slot |
-| `--upstream-timeout-ms` | 5000 | Deadline for fetching one object from the upstream |
+| `--upstream-timeout-ms` | 5000 | Deadline for each upstream repository identity lookup or object fetch |
 | `--cooldown-ms` | 1000 | Breaker time after 3 consecutive failures of upstream fetch or post-fetch storage |
 | cache `--memory-bytes` | 67108864 | Total compressed frames kept in the LRU |
 
-Incomplete requests for the same kind / ID are combined into one with singleflight.
+Incomplete requests for the same repository name, repository identity, kind, and ID are combined into one with singleflight.
+Reusing a deleted repository's name does not share its in-flight requests or restore its old memberships.
 Even if the first requester disconnects, the bounded fill continues for other requesters and for cache storage.
 After the breaker time, only one probe is allowed, and processing resumes if it has recovered. There is no automatic retry.
 When the cache stops, the daemon's existing disk hits still work, but cold misses fail.

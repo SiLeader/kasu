@@ -140,7 +140,7 @@ are all resolved only through membership in the target repository.
 | `UpdateRepository` | `/v1/admin/update-repository` | Changes `config_json`, `state`, and `default_branch` with a CAS on `expected_config_version` |
 | `RenameRepository` | `/v1/admin/rename-repository` | `RepoKey` is unchanged. `keep_alias` keeps the old name as an alias |
 | `DeleteRepository` | `/v1/admin/delete-repository` | Transitions to `DELETING`. Data deletion is asynchronous |
-| `ForkRepository` | `/v1/admin/fork-repository` | Adds membership of the history, trees, blobs, and raw Git objects reachable from the given ref to a new key (bodies are not copied). Resending with the same idempotency key resumes after interruption. Commits shared with the source have the same Git OIDs |
+| `ForkRepository` | `/v1/admin/fork-repository` | Adds membership of the history, trees, blobs, and raw Git objects reachable from the given ref to a new key (bodies are not copied). The selected branch becomes the default. Resending with the same idempotency key resumes from the initially recorded target even if the source branch changes. Commits shared with the source have the same Git OIDs |
 | `GetRepositoryUsage` | `/v1/admin/repository-usage` | Logical size of objects reachable from native refs. Cached per ref state. Shared objects are counted in full for each repository |
 
 Operators may do everything. Accounts may administer through their grants:

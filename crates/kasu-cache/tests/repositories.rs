@@ -1,4 +1,4 @@
-use kasu_cache::{Key, Layer, Limits, MemoryStore, Store};
+use kasu_cache::{DiskStore, Key, Layer, Limits, MemoryStore, Service, Store};
 use kasu_core::{ObjectId, RepoKey, RepoName, RepositoryState};
 use kasu_object::{Client, Kind, Layer as Role};
 use kasu_proto::v1::{
@@ -19,6 +19,24 @@ use tonic::{Request, Response, Status};
 struct Counted {
     inner: ObjectService,
     calls: Arc<AtomicUsize>,
+    blob_gate: Option<Arc<Gate>>,
+    identity_gate: Option<Arc<Gate>>,
+}
+struct Gate {
+    started: tokio::sync::Notify,
+    resume: tokio::sync::Semaphore,
+}
+impl Gate {
+    fn new() -> Arc<Self> {
+        Arc::new(Self {
+            started: tokio::sync::Notify::new(),
+            resume: tokio::sync::Semaphore::new(0),
+        })
+    }
+    async fn wait(&self) {
+        self.started.notify_one();
+        let _permit = self.resume.acquire().await.unwrap();
+    }
 }
 #[tonic::async_trait]
 impl Objects for Counted {
@@ -35,12 +53,19 @@ impl Objects for Counted {
         q: Request<p::ObjectRequest>,
     ) -> Result<Response<Self::GetBlobsStream>, Status> {
         self.calls.fetch_add(1, Ordering::SeqCst);
-        self.inner.get_blobs(q).await
+        let response = self.inner.get_blobs(q).await?;
+        if let Some(gate) = &self.blob_gate {
+            gate.wait().await;
+        }
+        Ok(response)
     }
     async fn get_repository_identity(
         &self,
         q: Request<p::RepositoryIdentityRequest>,
     ) -> Result<Response<p::RepositoryIdentityResponse>, Status> {
+        if let Some(gate) = &self.identity_gate {
+            gate.wait().await;
+        }
         self.inner.get_repository_identity(q).await
     }
 }
@@ -97,6 +122,8 @@ async fn frames_are_shared_but_served_only_after_per_repository_confirmation() {
     let counted = Counted {
         inner: ObjectService::new(Arc::new(backend)),
         calls: calls.clone(),
+        blob_gate: None,
+        identity_gate: None,
     };
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let url = format!("http://{}", listener.local_addr().unwrap());
@@ -181,4 +208,176 @@ async fn frames_are_shared_but_served_only_after_per_repository_confirmation() {
     .unwrap();
     assert!(limited.serves(b"team/a"));
     assert!(!limited.serves(b"team/b"));
+}
+
+async fn serve(service: Counted) -> (String, tokio::task::JoinHandle<()>) {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let url = format!("http://{}", listener.local_addr().unwrap());
+    let task = tokio::spawn(async move {
+        tonic::transport::Server::builder()
+            .add_service(ObjectsServer::new(service))
+            .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener))
+            .await
+            .unwrap();
+    });
+    (url, task)
+}
+
+#[tokio::test]
+async fn reused_names_do_not_share_inflight_objects_or_restore_stale_membership() {
+    for disk in [false, true] {
+        let temp = tempfile::tempdir().unwrap();
+        let meta = Arc::new(SqliteStore::memory().unwrap());
+        let blobs = Arc::new(FsBlobStore::open(temp.path().join("objects")).unwrap());
+        let old = create(&meta, "repo");
+        let repo = Repository {
+            meta: meta.as_ref(),
+            blobs: blobs.as_ref(),
+        };
+        let blob = repo.put_blob(b"old repository content").unwrap();
+        repo.associate_blob(old.as_bytes(), blob).unwrap();
+        let backend = Arc::new(
+            Backend::with_registry(
+                meta.clone(),
+                blobs.clone(),
+                meta.clone(),
+                meta.clone(),
+                Some("user".into()),
+            )
+            .with_object_token("server-hop".into())
+            .unwrap(),
+        );
+        let gate = Gate::new();
+        let (url, server) = serve(Counted {
+            inner: ObjectService::new(backend.clone()),
+            calls: Arc::new(AtomicUsize::new(0)),
+            blob_gate: Some(gate.clone()),
+            identity_gate: None,
+        })
+        .await;
+        let store: Arc<dyn Store> = if disk {
+            Arc::new(DiskStore::open(&temp.path().join("cache")).unwrap())
+        } else {
+            Arc::new(MemoryStore::new(1024))
+        };
+        let layer = Layer::new(
+            Role::Cache,
+            vec![],
+            "daemon-hop",
+            "server-hop",
+            Client::connect(&url, Some("server-hop"), Some(Role::Server))
+                .await
+                .unwrap(),
+            store.clone(),
+            Limits {
+                qps: 10_000,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let key = Key {
+            kind: Kind::Blob,
+            id: ObjectId(blob.0),
+        };
+        let pending = {
+            let layer = layer.clone();
+            tokio::spawn(async move { layer.get(b"repo", key).await })
+        };
+        tokio::time::timeout(Duration::from_secs(2), gate.started.notified())
+            .await
+            .unwrap();
+        let mut record = meta.repository(&old).unwrap().unwrap();
+        record.state = RepositoryState::Deleting;
+        meta.update_repository(&record, "deleted", b"test", 2)
+            .unwrap();
+        let new = create(&meta, "repo");
+        backend.registry().invalidate(&old);
+        let result = tokio::time::timeout(Duration::from_secs(2), layer.get(b"repo", key)).await;
+        gate.resume.add_permits(1);
+        let old_result = pending.await.unwrap();
+        server.abort();
+        let _ = server.await;
+        assert_eq!(result.unwrap().unwrap_err().code(), tonic::Code::NotFound);
+        assert_eq!(old_result.unwrap_err().code(), tonic::Code::Aborted);
+        assert_eq!(
+            store.identity(b"repo").unwrap(),
+            Some(ObjectId::hash(new.as_bytes()).to_string())
+        );
+        assert!(!store.member(b"repo", key).unwrap());
+        assert_eq!(layer.stats().coalesced, 0);
+    }
+}
+
+#[tokio::test]
+async fn identity_requests_time_out_and_release_shared_rpc_capacity() {
+    let temp = tempfile::tempdir().unwrap();
+    let meta = Arc::new(SqliteStore::memory().unwrap());
+    let blobs = Arc::new(FsBlobStore::open(temp.path()).unwrap());
+    let backend = Backend::new(
+        b"repo".to_vec(),
+        meta.clone(),
+        blobs,
+        meta,
+        Some("user".into()),
+    )
+    .with_object_token("server-hop".into())
+    .unwrap();
+    let gate = Gate::new();
+    let (url, server) = serve(Counted {
+        inner: ObjectService::new(Arc::new(backend)),
+        calls: Arc::new(AtomicUsize::new(0)),
+        blob_gate: None,
+        identity_gate: Some(gate.clone()),
+    })
+    .await;
+    let layer = Layer::new(
+        Role::Cache,
+        vec![],
+        "daemon-hop",
+        "server-hop",
+        Client::connect(&url, Some("server-hop"), Some(Role::Server))
+            .await
+            .unwrap(),
+        Arc::new(MemoryStore::new(1024)),
+        Limits {
+            streams: 1,
+            upstream_timeout: Duration::from_millis(200),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    let service = Service::new(layer);
+    let request = || {
+        let mut q = Request::new(p::RepositoryIdentityRequest {
+            repo: b"repo".to_vec(),
+        });
+        q.metadata_mut()
+            .insert("authorization", kasu_object::bearer("daemon-hop").unwrap());
+        q
+    };
+    let pending = {
+        let service = service.clone();
+        let q = request();
+        tokio::spawn(async move { service.get_repository_identity(q).await })
+    };
+    tokio::time::timeout(Duration::from_secs(2), gate.started.notified())
+        .await
+        .unwrap();
+    assert_eq!(
+        service
+            .get_repository_identity(request())
+            .await
+            .unwrap_err()
+            .code(),
+        tonic::Code::ResourceExhausted
+    );
+    let result = tokio::time::timeout(Duration::from_secs(2), pending)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(result.unwrap_err().code(), tonic::Code::DeadlineExceeded);
+    gate.resume.add_permits(1);
+    assert!(service.get_repository_identity(request()).await.is_ok());
+    server.abort();
+    let _ = server.await;
 }

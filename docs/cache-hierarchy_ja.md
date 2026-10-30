@@ -72,7 +72,7 @@ checkout では選択した URL を保存し、それ以降のコマンドでは
 daemon／cache の障害時に他の上位や server へ接続し直す fallback はありません。
 
 `--repo` は省略可能で、複数指定できる許可リストです。省略するとすべてのリポジトリを扱います。
-frame はリポジトリ間で共有しますが、上位がそのリポジトリでの所属を確認した `(repo, id)` だけを
+frame はリポジトリ間で共有しますが、上位が所属を確認した `(repo, repository identity, kind, id)` だけを
 ヒットにします（[マルチリポジトリ](multi-repository_ja.md#クライアント)）。
 
 ## 負荷の上限
@@ -86,11 +86,12 @@ frame はリポジトリ間で共有しますが、上位がそのリポジト�
 | `--pending` | 128 | 異なる未完了オブジェクト。超過は即時拒否 |
 | `--qps` | 20 | 上位への取得開始を一定間隔に制限 |
 | `--queue-timeout-ms` | 1000 | fill 枠の待機期限 |
-| `--upstream-timeout-ms` | 5000 | 上位の1オブジェクト取得期限 |
+| `--upstream-timeout-ms` | 5000 | 上位への repository identity 確認またはオブジェクト取得それぞれの期限 |
 | `--cooldown-ms` | 1000 | 上位取得または取得後の保存が3回連続失敗した後の遮断時間 |
 | cache の `--memory-bytes` | 67108864 | LRU に保持する圧縮 frame の合計 |
 
-同じ kind／ID の未完了要求は singleflight で1回にまとめます。
+同じリポジトリ名・repository identity・kind・ID の未完了要求は singleflight で1回にまとめます。
+削除したリポジトリの名前を再利用しても、古い未完了要求を共有したり古い所属情報を復元したりしません。
 最初の要求者が切断しても、他の要求者と cache 保存のために有界な fill を継続します。
 遮断時間後は1回の probe だけを許可し、復旧していれば再開します。自動再試行はしません。
 cache が停止すると daemon の既存ディスクヒットは使えますが、cold miss は失敗します。

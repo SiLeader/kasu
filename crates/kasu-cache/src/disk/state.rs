@@ -1031,6 +1031,31 @@ impl Store for DiskStore {
         let conn = self.guard(false)?;
         self.add_member_locked(&conn, repo, key)
     }
+    fn member_scoped(&self, repo: &[u8], identity: &str, key: Key) -> Result<bool, Status> {
+        let conn = self.guard(false)?;
+        conn.query_row(
+            "SELECT EXISTS(SELECT 1 FROM members JOIN identities USING(repo) WHERE repo=?1 AND identity=?2 AND kind=?3 AND id=?4)",
+            params![repo, identity, key.kind.name(), key.id.to_string()],
+            |r| r.get(0),
+        )
+        .map_err(io)
+    }
+    fn add_member_scoped(&self, repo: &[u8], identity: &str, key: Key) -> Result<(), Status> {
+        let conn = self.guard(true)?;
+        let matches: bool = conn
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM identities WHERE repo=?1 AND identity=?2)",
+                params![repo, identity],
+                |r| r.get(0),
+            )
+            .map_err(io)?;
+        if !matches {
+            return Err(Status::aborted(
+                "repository identity changed during object fetch",
+            ));
+        }
+        self.add_member_locked(&conn, repo, key)
+    }
     fn identify(&self, repo: &[u8], identity: &str) -> Result<(), Status> {
         let mut conn = self.guard(false)?;
         self.identify_locked(&mut conn, repo, identity)

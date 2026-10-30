@@ -489,6 +489,12 @@ impl Store for FailingWrites {
     fn add_member(&self, repo: &[u8], key: Key) -> Result<(), Status> {
         self.inner.add_member(repo, key)
     }
+    fn member_scoped(&self, repo: &[u8], identity: &str, key: Key) -> Result<bool, Status> {
+        self.inner.member_scoped(repo, identity, key)
+    }
+    fn add_member_scoped(&self, repo: &[u8], identity: &str, key: Key) -> Result<(), Status> {
+        self.inner.add_member_scoped(repo, identity, key)
+    }
     fn identify(&self, repo: &[u8], identity: &str) -> Result<(), Status> {
         self.inner.identify(repo, identity)
     }

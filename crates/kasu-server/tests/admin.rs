@@ -558,6 +558,12 @@ async fn forks_share_objects_keep_git_oids_and_diverge_independently() {
             &[(b"c", b"3")],
         )
         .await;
+    let (status, replay) = f
+        .call(Some("operator"), "/v1/admin/fork-repository", &fork())
+        .await;
+    assert_eq!(status, StatusCode::OK, "{replay}");
+    assert_eq!(replay["replayed"], true);
+    assert_eq!(replay["key"], forked["key"]);
     let (status, _) = f
         .call(
             Some("operator"),
@@ -569,8 +575,20 @@ async fn forks_share_objects_keep_git_oids_and_diverge_independently() {
         )
         .await;
     assert_eq!(status, StatusCode::NOT_FOUND);
-    f.commit("operator", "fork/app", Some(second), &[(b"d", b"4")])
+    let fork_tip = f
+        .commit("operator", "fork/app", Some(second), &[(b"d", b"4")])
         .await;
+    let (status, _) = f
+        .call(Some("operator"), "/v1/admin/fork-repository", &fork())
+        .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(
+        f.store
+            .resolve(f.record("fork/app").key.as_bytes(), b"refs/heads/main")
+            .unwrap()
+            .target,
+        Some(ChangesetId(fork_tip.try_into().unwrap()))
+    );
     let (status, usage) = f
         .call(
             Some("operator"),
@@ -591,6 +609,224 @@ async fn forks_share_objects_keep_git_oids_and_diverge_independently() {
         )
         .await;
     assert_eq!(cached, usage);
+}
+
+#[tokio::test]
+async fn fork_uses_the_selected_branch_as_its_default() {
+    let f = Fixture::new(&["source"]);
+    let id = f.commit("operator", "source", None, &[(b"a", b"1")]).await;
+    let target = ChangesetId(id.try_into().unwrap());
+    f.store
+        .compare_and_swap(
+            f.record("source").key.as_bytes(),
+            &[RefUpdate {
+                name: b"refs/heads/release".to_vec(),
+                expected: RefState::default(),
+                new: Some(target),
+            }],
+            b"test",
+            2,
+        )
+        .unwrap();
+    let (status, response) = f
+        .call(
+            Some("operator"),
+            "/v1/admin/fork-repository",
+            &p::ForkRepositoryRequest {
+                source: "source".into(),
+                r#ref: b"refs/heads/release".to_vec(),
+                new_name: "fork".into(),
+                idempotency_key: b"release-fork".to_vec(),
+            },
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{response}");
+    assert_eq!(bytes(&response["default_branch"]), b"release");
+    let record = f.record("fork");
+    assert_eq!(
+        f.store
+            .resolve(record.key.as_bytes(), &record.head())
+            .unwrap()
+            .target,
+        Some(target)
+    );
+    let (status, advertisement) = f
+        .get(
+            Some("operator"),
+            "/fork.git/info/refs?service=git-upload-pack",
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK);
+    let advertisement = String::from_utf8(advertisement).unwrap();
+    assert!(advertisement.contains(" HEAD\0"));
+    assert!(advertisement.contains("symref=HEAD:refs/heads/release"));
+}
+
+#[tokio::test]
+async fn interrupted_fork_resumes_the_original_target_after_restart_and_source_update() {
+    use std::sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    };
+    struct FailAssociation {
+        inner: Arc<SqliteStore>,
+        fail: AtomicBool,
+    }
+    impl MetaStore for FailAssociation {
+        fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
+            self.inner.get(key)
+        }
+        fn put_if_absent(&self, key: &[u8], value: &[u8]) -> Result<()> {
+            if key.starts_with(b"repo/changeset/v1/") && self.fail.swap(false, Ordering::SeqCst) {
+                return Err(Error::Storage("injected fork interruption".into()));
+            }
+            self.inner.put_if_absent(key, value)
+        }
+    }
+    let mut f = Fixture::new(&["source"]);
+    let initial = f.commit("operator", "source", None, &[(b"a", b"1")]).await;
+    f.state = Arc::new(Backend::with_registry(
+        Arc::new(FailAssociation {
+            inner: f.store.clone(),
+            fail: AtomicBool::new(true),
+        }),
+        f.blobs.clone(),
+        f.store.clone(),
+        f.store.clone(),
+        Some("operator".into()),
+    ));
+    let request = p::ForkRepositoryRequest {
+        source: "source".into(),
+        r#ref: b"refs/heads/main".to_vec(),
+        new_name: "fork".into(),
+        idempotency_key: b"interrupted-fork".to_vec(),
+    };
+    let (status, _) = f
+        .call(Some("operator"), "/v1/admin/fork-repository", &request)
+        .await;
+    assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+    let record = f.record("fork");
+    assert_eq!(
+        f.store
+            .resolve(record.key.as_bytes(), &record.head())
+            .unwrap(),
+        RefState::default()
+    );
+    f.state = Arc::new(Backend::with_registry(
+        f.store.clone(),
+        f.blobs.clone(),
+        f.store.clone(),
+        f.store.clone(),
+        Some("operator".into()),
+    ));
+    f.commit("operator", "source", Some(initial.clone()), &[(b"a", b"2")])
+        .await;
+    let (status, response) = f
+        .call(Some("operator"), "/v1/admin/fork-repository", &request)
+        .await;
+    assert_eq!(status, StatusCode::OK, "{response}");
+    assert_eq!(response["replayed"], true);
+    assert_eq!(bytes(&response["key"]), record.key.as_bytes());
+    assert_eq!(
+        f.store
+            .resolve(record.key.as_bytes(), &record.head())
+            .unwrap()
+            .target,
+        Some(ChangesetId(initial.try_into().unwrap()))
+    );
+    let mut other = request.clone();
+    other.idempotency_key = b"different-fork".to_vec();
+    assert_eq!(
+        f.call(Some("operator"), "/v1/admin/fork-repository", &other)
+            .await
+            .0,
+        StatusCode::CONFLICT
+    );
+    other = request.clone();
+    other.r#ref = b"refs/heads/other".to_vec();
+    assert_eq!(
+        f.call(Some("operator"), "/v1/admin/fork-repository", &other)
+            .await
+            .0,
+        StatusCode::CONFLICT
+    );
+    for repository in ["source", "fork"] {
+        let key = f.record(repository).key;
+        let expected = f.store.resolve(key.as_bytes(), b"refs/heads/main").unwrap();
+        assert!(matches!(
+            f.store
+                .compare_and_swap(
+                    key.as_bytes(),
+                    &[RefUpdate {
+                        name: b"refs/heads/main".to_vec(),
+                        expected,
+                        new: None
+                    }],
+                    b"test",
+                    3,
+                )
+                .unwrap(),
+            CasResult::Applied(_)
+        ));
+        let (status, response) = f
+            .call(Some("operator"), "/v1/admin/fork-repository", &request)
+            .await;
+        assert_eq!(status, StatusCode::OK, "{response}");
+        assert_eq!(response["replayed"], true);
+        assert!(
+            f.store
+                .resolve(key.as_bytes(), b"refs/heads/main")
+                .unwrap()
+                .target
+                .is_none()
+        );
+    }
+}
+
+#[tokio::test]
+async fn legacy_fork_fingerprints_remain_replayable_after_source_updates() {
+    let f = Fixture::new(&["source"]);
+    let initial = f.commit("operator", "source", None, &[(b"a", b"1")]).await;
+    let request = p::ForkRepositoryRequest {
+        source: "source".into(),
+        r#ref: b"refs/heads/main".to_vec(),
+        new_name: "fork".into(),
+        idempotency_key: b"legacy-fork".to_vec(),
+    };
+    let (status, forked) = f
+        .call(Some("operator"), "/v1/admin/fork-repository", &request)
+        .await;
+    assert_eq!(status, StatusCode::OK, "{forked}");
+    let mut encoded = Encoder::default();
+    for part in [
+        b"kasu.admin.fork.v1".as_slice(),
+        &request.idempotency_key,
+        f.record("source").key.as_bytes(),
+        &request.r#ref,
+        &initial,
+        b"fork",
+    ] {
+        encoded.bytes(part);
+    }
+    f.update("fork", |record| {
+        record.creation_key = ObjectId::hash(&encoded.0).0.to_vec()
+    });
+    f.state.registry().invalidate(&f.record("fork").key);
+    f.commit("operator", "source", Some(initial.clone()), &[(b"a", b"2")])
+        .await;
+    let (status, response) = f
+        .call(Some("operator"), "/v1/admin/fork-repository", &request)
+        .await;
+    assert_eq!(status, StatusCode::OK, "{response}");
+    assert_eq!(response["replayed"], true);
+    assert_eq!(response["key"], forked["key"]);
+    assert_eq!(
+        f.store
+            .resolve(f.record("fork").key.as_bytes(), b"refs/heads/main")
+            .unwrap()
+            .target,
+        Some(ChangesetId(initial.try_into().unwrap()))
+    );
 }
 
 #[test]

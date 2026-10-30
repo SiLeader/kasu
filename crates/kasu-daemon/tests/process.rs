@@ -305,6 +305,10 @@ async fn bounded_disk_refills_after_eviction_survives_restart_and_retains_only_m
             response
                 .metadata_mut()
                 .insert("x-kasu-object-layer", "cache".parse().unwrap());
+            response.metadata_mut().insert(
+                kasu_object::REPOSITORY_HEADER,
+                "fixture-repository".parse().unwrap(),
+            );
             Ok(response)
         }
         async fn get_repository_identity(
