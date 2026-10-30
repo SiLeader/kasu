@@ -11,6 +11,14 @@ pub struct Backend {
     pub(crate) runtime: Arc<crate::admission::Runtime>,
     pub(crate) projection_accounts: Arc<Vec<crate::ProjectionAccount>>,
     pub(crate) repository_accounts: Arc<Vec<crate::RepositoryAccount>>,
+    pub(crate) delegates: Arc<Vec<crate::Delegate>>,
+    pub(crate) binding_key: Arc<Vec<u8>>,
+    pub(crate) delegation_nonce: Arc<[u8; 32]>,
+    /// The audit annotation of a delegated request (delegate and user).
+    pub(crate) via: Option<Arc<Vec<u8>>>,
+    /// The account a request is authorized as, for review attribution.
+    pub(crate) principal: Option<crate::auth::Credential>,
+    pub(crate) reviews: Option<Arc<dyn kasu_store::ReviewStore>>,
     /// The (account, grant) whose write policy applies to this request.
     pub(crate) writer_grant: Option<(usize, usize)>,
     pub(crate) read_scope: Option<Arc<crate::read_scope::ReadScope>>,
@@ -78,10 +86,21 @@ impl Backend {
         let stats = Arc::new(crate::admission::ServerStats::default());
         let runtime = crate::admission::Runtime::new(crate::ServerLimits::default(), stats.clone());
         let refs = Arc::new(crate::observed_refs::ObservedRefs { inner: refs, stats });
+        let random = || {
+            let mut bytes = [0u8; 32];
+            getrandom::fill(&mut bytes).expect("the operating system provides randomness");
+            bytes
+        };
         Self {
             runtime,
             projection_accounts: Arc::new(Vec::new()),
             repository_accounts: Arc::new(Vec::new()),
+            delegates: Arc::new(Vec::new()),
+            binding_key: Arc::new(random().to_vec()),
+            delegation_nonce: Arc::new(random()),
+            via: None,
+            principal: None,
+            reviews: None,
             writer_grant: None,
             read_scope: None,
             registry: Arc::new(crate::Registry::new(
@@ -552,6 +571,28 @@ impl Backend {
         }
         Ok(p::FindChangesetResponse {
             id: id.map(|id| id.0.to_vec()),
+        })
+    }
+}
+impl Backend {
+    pub fn find_changesets_by_prefix(
+        &self,
+        q: p::PrefixRequest,
+    ) -> Result<p::PrefixResponse, tonic::Status> {
+        self.repo(&q.repo)?;
+        if !(4..=64).contains(&q.prefix.len()) {
+            return Err(tonic::Status::invalid_argument(
+                "a changeset ID prefix has 4..64 hex digits",
+            ));
+        }
+        let ids = self
+            .ops()
+            .ctx
+            .repo
+            .changesets_with_prefix(self.key(), &q.prefix, 10)
+            .map_err(status)?;
+        Ok(p::PrefixResponse {
+            ids: ids.into_iter().map(|id| id.0.to_vec()).collect(),
         })
     }
 }

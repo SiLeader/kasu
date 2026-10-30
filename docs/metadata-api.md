@@ -33,6 +33,7 @@ For creation, merging, and ref updates through `kasu.v1.Writer` on the same gRPC
 | `ReadFile` | Entry and content of a File / Symlink. Gitlink contents are not fetched |
 | `ListDir` | Immediate entries. An empty path is the root. Child trees are returned by ID |
 | `FindChangesetByGitOid` | Reverse lookup of a commit through this repository's Git OID index. No id when not found |
+| `FindChangesetsByPrefix` | Changesets of this repository whose hex ID starts with `prefix` (4–64 hex digits), at most 10; more than one means the prefix is ambiguous. Used for short IDs |
 
 `Log.limit` is 1–1000. For the next page, pass the same start / path and the returned cursor.
 The cursor is also checked against the first-parent chain and the path's change points. Paging by ID is unaffected by ref movement.
@@ -62,6 +63,7 @@ Field names are snake_case as in protobuf. Omitted fields use their default valu
 | `/v1/diff` | DiffRequest |
 | `/v1/blame` / `/v1/read-file` / `/v1/list-dir` | PathRequest |
 | `/v1/find-git-oid` | GitOidRequest |
+| `/v1/find-prefix` | PrefixRequest |
 
 Example: list refs of `my-repo`.
 

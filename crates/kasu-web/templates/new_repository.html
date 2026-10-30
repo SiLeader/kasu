@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>{{ page.t.s("New repository") }}</h1>
+{% if let Some(error) = error %}<p class="notice error" role="alert">{{ error }}</p>{% endif %}
+<form method="post" action="/-/new" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+  <label>{{ page.t.s("Name") }}<input type="text" name="name" value="{{ name }}" required pattern="[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)*"></label>
+  {% if !patterns.is_empty() %}<p class="muted">{% for p in patterns %}<span class="code">{{ p }}</span> {% endfor %}</p>{% endif %}
+  <label>{{ page.t.s("Default branch") }}<input type="text" name="default_branch" value="{{ branch }}" required></label>
+  <div><button type="submit" class="primary">{{ page.t.s("Create repository") }}</button></div>
+</form>
+{% endblock %}

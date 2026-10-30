@@ -113,6 +113,30 @@ SSH worker は接続ごとに起動するため、次の接続から更新を読
 restrict,command="/opt/kasu/kasu-git-ssh /srv/kasu demo /etc/kasu/secrets/deploy-bot.pat" ssh-ed25519 AAAA... deploy-bot
 ```
 
+## 管理権限・プロフィール・delegate
+
+grant に `"admin": true` を付けると、一致するリポジトリを管理（設定、状態、改名、削除）できます。アカウントの `create_repositories`（名前の glob）は、作成・改名後の名前・フォーク先として使える名前を表します。詳しくは [複数リポジトリ](multi-repository_ja.md#admin-api) を参照してください。
+`display_name` と `email` は任意のプロフィール項目（256 bytes 以下、`<`・`>`・改行を含まない）で、[Web UI](web-ui_ja.md) で作るコミットの署名の既定値になります。
+
+同じファイルで **delegate** を宣言します。kasu-web のように、自分では何も読めず、要求ごとにアカウントとして振る舞う主体です。
+
+```json
+"delegates": [
+  { "name": "kasu-web", "token_file": "secrets/kasu-web.pat", "act_as": ["*"], "allow_admin": true,
+    "allow_unbound": false, "anonymous_account": "public-reader", "trusted_peers": ["10.0.20.0/24"] }
+]
+```
+
+| フィールド | 意味 |
+|---|---|
+| `act_as` | 代理できるアカウント名の glob。運用者と射影アカウントは対象外 |
+| `allow_admin` | 代理要求が Admin API でリポジトリを変更できるか |
+| `allow_unbound` | `kasu-act-binding` のない要求（リバースプロキシ認証）を受け付けるか |
+| `anonymous_account` | 匿名の訪問者が代理するアカウント。`act_as` に含まれなくてよく、常に読み取り専用 |
+| `trusted_peers` | delegate の接続を受け付ける送信元（CIDR）。空なら制限なし（警告をログに出す） |
+
+代理要求は `authorization: Bearer <delegate token>`、`kasu-act-as: <account>` と、任意で `kasu-act-binding`（PAT でサインインしたときに `Identity.WhoAmI` が返した binding の 16 進）、`kasu-act-user`（監査用の名前、256 bytes 以下）、`kasu-client-addr`（ブラウザのアドレス）を持ちます。アカウントの欠落・未知・`act_as` 外、信頼しないピア、アカウントの現在の PAT と一致しない binding は `UNAUTHENTICATED` で拒否します。`kasu-act-as` のない delegate token では何も読めません。それ以外は、匿名アカウントが読み取り専用に固定される点を除き、そのアカウントの直接の要求とまったく同じに認可・帰属（ref log の actor、Land のキー、レビューの作者）・admission されます。ref log の `via` 列に delegate と利用者を記録します。binding は `KASU_BINDING_KEY_FILE`（32 bytes 以上、全レプリカで共通）を鍵とした PAT の鍵付きハッシュで、未設定ならプロセスごとにランダムな鍵を使います。delegate token は他のすべての資格情報と異なる必要があります。
+
 ## 設定の上限
 
 - accounts は1〜256件。名前は1〜128 bytes で、設定内・射影アカウント間で重複不可。

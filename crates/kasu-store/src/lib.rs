@@ -17,6 +17,8 @@ pub use registry::*;
 mod tree_membership;
 mod webhook;
 pub use webhook::*;
+mod review;
+pub use review::*;
 
 pub use fs::FsBlobStore;
 use kasu_core::{
@@ -32,6 +34,10 @@ pub trait MetaStore: Send + Sync {
     /// Only indexes of deleted repositories are discarded this way.
     fn delete_prefix(&self, _prefix: &[u8], _limit: usize) -> Result<usize> {
         Err(invalid("backend does not support prefix deletion"))
+    }
+    /// Up to `limit` keys that start with `prefix`, in key order.
+    fn scan_prefix(&self, _prefix: &[u8], _limit: usize) -> Result<Vec<Vec<u8>>> {
+        Err(invalid("backend does not support prefix scans"))
     }
 }
 /// The exclusive upper bound of keys with `prefix`, or None when unbounded.
@@ -108,7 +114,23 @@ pub struct RefLog {
     pub old: Option<ChangesetId>,
     pub new: Option<ChangesetId>,
     pub actor: Vec<u8>,
+    /// The delegate (and its user) that acted for `actor`; empty otherwise.
+    pub via: Vec<u8>,
     pub time: i64,
+}
+/// The `actor` argument of ref writes may carry the delegate that acted for
+/// the account: `actor NUL via`. Stores keep the parts in separate columns.
+pub fn delegated_actor(actor: &[u8], via: &[u8]) -> Vec<u8> {
+    let mut value = actor.to_vec();
+    value.push(0);
+    value.extend(via);
+    value
+}
+pub(crate) fn actor_parts(actor: &[u8]) -> (&[u8], Option<&[u8]>) {
+    match actor.iter().position(|b| *b == 0) {
+        Some(at) => (&actor[..at], Some(&actor[at + 1..])),
+        None => (actor, None),
+    }
 }
 #[derive(Clone, Copy, Debug)]
 pub struct RefCapabilities {
@@ -219,6 +241,45 @@ impl Repository<'_> {
         self.meta
             .put_if_absent(&Self::membership_key(repo, id), &[])
     }
+    /// Changesets of `repo` whose hex ID starts with `prefix` (at most `limit`).
+    pub fn changesets_with_prefix(
+        &self,
+        repo: &[u8],
+        prefix: &str,
+        limit: usize,
+    ) -> Result<Vec<ChangesetId>> {
+        if prefix.is_empty() || prefix.len() > 64 || !prefix.bytes().all(|b| b.is_ascii_hexdigit())
+        {
+            return Err(invalid("invalid changeset ID prefix"));
+        }
+        let mut encoded = kasu_core::Encoder::default();
+        encoded.bytes(repo);
+        let base = format!("repo/changeset/v1/{}/", ObjectId::hash(&encoded.0));
+        let key = format!("{base}{}", prefix.to_ascii_lowercase());
+        self.meta
+            .scan_prefix(key.as_bytes(), limit)?
+            .into_iter()
+            .map(|key| {
+                let hex = key
+                    .strip_prefix(base.as_bytes())
+                    .ok_or_else(|| invalid("unexpected membership key"))?;
+                let bytes = std::str::from_utf8(hex)
+                    .ok()
+                    .and_then(|h| {
+                        (0..h.len())
+                            .step_by(2)
+                            .map(|i| u8::from_str_radix(h.get(i..i + 2)?, 16).ok())
+                            .collect::<Option<Vec<u8>>>()
+                    })
+                    .ok_or_else(|| invalid("corrupt membership key"))?;
+                Ok(ChangesetId(
+                    bytes
+                        .try_into()
+                        .map_err(|_| invalid("corrupt membership key"))?,
+                ))
+            })
+            .collect()
+    }
     pub fn require_membership(&self, repo: &[u8], id: ChangesetId) -> Result<()> {
         if self.meta.get(&Self::membership_key(repo, id))?.is_none() {
             return Err(Error::NotFound(format!("changeset {id} in repository")));
@@ -295,6 +356,7 @@ pub struct GitRefLog {
     pub old: Option<kasu_core::GitRef>,
     pub new: Option<kasu_core::GitRef>,
     pub actor: Vec<u8>,
+    pub via: Vec<u8>,
     pub time: i64,
 }
 #[derive(Clone, Debug, Eq, PartialEq)]

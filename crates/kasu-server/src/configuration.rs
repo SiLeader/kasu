@@ -130,9 +130,18 @@ pub fn load_backend(
             .with_projection_accounts(crate::load_projection_accounts(&PathBuf::from(path))?)?;
     }
     if let Some(path) = std::env::var_os("KASU_ACCOUNTS_FILE") {
-        backend = backend
-            .with_repository_accounts(crate::load_repository_accounts(&PathBuf::from(path))?)?;
+        let path = PathBuf::from(path);
+        backend = backend.with_repository_accounts(crate::load_repository_accounts(&path)?)?;
+        backend = backend.with_delegates(crate::load_delegates(&path)?)?;
     }
+    if let Some(path) = std::env::var_os("KASU_BINDING_KEY_FILE") {
+        backend = backend.with_binding_key(std::fs::read(path)?)?;
+    } else if !backend.delegates.is_empty() {
+        tracing::warn!(
+            "KASU_BINDING_KEY_FILE is unset; Web UI sessions end when this server restarts and differ between replicas"
+        );
+    }
+    backend = backend.with_reviews(database.clone());
     if let Some(path) = std::env::var_os("KASU_SERVER_LIMITS_FILE") {
         backend = backend.with_limits(crate::ServerLimits::load(&PathBuf::from(path))?)?;
     }
@@ -152,6 +161,13 @@ pub fn load_backend(
     }
     if let Some(retention) = seconds("KASU_DELETED_REF_LOG_RETENTION_SECS")? {
         lifecycle.ref_log_retention = std::time::Duration::from_secs(retention);
+    }
+    if let Some(dir) = std::env::var_os("KASU_WEBHOOK_SECRET_DIR") {
+        let dir = PathBuf::from(dir);
+        if !dir.is_absolute() {
+            return Err("KASU_WEBHOOK_SECRET_DIR must be absolute".into());
+        }
+        lifecycle.webhook_secret_dir = Some(dir);
     }
     if std::env::var_os("KASU_REPOSITORIES_FILE").is_some() {
         lifecycle.config_source = Some(crate::ConfigSource::from_env()?);

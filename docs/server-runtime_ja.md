@@ -39,6 +39,7 @@ curl --fail -H "Authorization: Bearer $KASU_TOKEN" http://127.0.0.1:50080/metric
 | `pending` | 1–65536 | 待機リクエストの上限 |
 | `per_repository_active` | 1–`active` | 1 リポジトリの同時処理数（既定 `active` の半分）。リポジトリ設定の `limits.active` でさらに絞れます |
 | `per_repository_pending` | 1–`pending` | 1 リポジトリの待機数（既定 `pending` の 1/4） |
+| `per_delegate_active` | 1–`active` | 1 つの [delegate](repository-accounts_ja.md#管理権限プロフィールdelegate) が代理する全アカウント合計の同時実行数（既定 `active`） |
 | `queue_timeout_ms` | 1–30000 | 同時実行枠を待つ最大時間 |
 | `client_rate_per_second`, `client_burst` | 各1–1000000 | 接続元 IP の token bucket の補充速度と容量 |
 | `token_rate_per_second`, `token_burst` | 各1–1000000 | 認証主体の token bucket の補充速度と容量 |
@@ -71,6 +72,8 @@ reverse proxy の信頼設定はこの実装に含みません。これはリク
 混んでいるリポジトリが `active` を占有して他のリポジトリを止めることはありません
 （[公平性](multi-repository_ja.md#多テナント運用)）。リポジトリ単位の計測は
 `KASU_METRICS_REPOSITORIES` に挙げたリポジトリだけをラベルにし、それ以外は `other` に集約します。
+
+検証済みの代理要求（Web UI など）は、ブラウザと代理対象アカウントとして admission されます。共有される delegate のアドレスではなく `kasu-client-addr` のクライアント bucket と、そのアカウントの bucket を消費し、さらに `per_delegate_active` の枠を 1 つ使います。`kasu-client-addr` は検証済みの代理要求でのみ解釈します。
 
 ## 計測の意味
 

@@ -1,8 +1,14 @@
 use crate::*;
 use std::{path::Path, sync::Arc};
 
-pub trait DatabaseStore: MetaStore + GitRefStore + WebhookStore + RepositoryStore {}
-impl<T: MetaStore + GitRefStore + WebhookStore + RepositoryStore> DatabaseStore for T {}
+pub trait DatabaseStore:
+    MetaStore + GitRefStore + WebhookStore + RepositoryStore + ReviewStore
+{
+}
+impl<T: MetaStore + GitRefStore + WebhookStore + RepositoryStore + ReviewStore> DatabaseStore
+    for T
+{
+}
 
 pub struct Storage {
     pub database: Arc<dyn DatabaseStore>,

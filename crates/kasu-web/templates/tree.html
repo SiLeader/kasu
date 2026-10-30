@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block content %}
+{% if let Some(empty) = empty %}
+<h1>{{ page.t.s("Empty repository") }}</h1>
+<p>{{ page.t.s("This repository is empty.") }}</p>
+{% for url in empty.clone %}<pre class="code">git clone {{ url.url }}</pre>{% endfor %}
+{% if let Some(create) = empty.create %}<p><a class="button primary" href="{{ create }}">{{ page.t.s("Create the first file") }}</a></p>{% endif %}
+{% else %}
+<div class="bar">
+  {% if filtered %}<span class="badge warn">{{ page.t.s("Directory-limited view") }}</span>{% endif %}
+  {% if let Some(latest) = latest %}
+  <span class="grow muted">{{ page.t.s("Latest change") }}: <a href="{{ latest.url }}" class="code">{{ latest.short }}</a> {{ latest.summary }} — {{ latest.author }}, <time datetime="{{ latest.iso }}" data-relative>{{ latest.when }}</time></span>
+  {% else %}<span class="grow"></span>{% endif %}
+  {% for action in actions %}<a class="button" href="{{ action.url }}">{{ action.label }}</a>{% endfor %}
+</div>
+<table class="list" id="entries"{% if let Some(url) = latest_url %} data-latest="{{ url }}"{% endif %}>
+{% for row in rows %}
+<tr><td>{{ row.icon }} {% if row.url.is_empty() %}{{ row.name }}{% else %}<a href="{{ row.url }}">{{ row.name }}</a>{% endif %}</td><td class="muted">{{ row.note }}</td>
+<td class="muted">{% if let Some(latest) = row.latest %}<a class="code" href="{{ latest.url }}">{{ latest.short }}</a> {{ latest.summary }}{% endif %}</td>
+<td class="num muted">{% if let Some(latest) = row.latest %}<time datetime="{{ latest.iso }}" data-relative>{{ latest.when }}</time>{% endif %}</td></tr>
+{% endfor %}
+</table>
+{% if let Some(url) = latest_url %}<p><a href="{{ url }}">{{ page.t.s("Latest change") }} →</a></p>{% endif %}
+{% if let Some(count) = truncated %}<p class="notice">{{ count }} entries; the first entries are shown.</p>{% endif %}
+{% if let Some(readme) = readme %}<h2>README</h2><article class="markdown">{{ readme|safe }}</article>{% endif %}
+{% endif %}
+{% endblock %}

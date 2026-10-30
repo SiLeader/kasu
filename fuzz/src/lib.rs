@@ -1,5 +1,6 @@
 //! Bounded harnesses used both by libFuzzer and deterministic corpus replay.
 pub mod api;
+pub mod web;
 pub mod wire;
 use kasu_core::{GitKind, GitOid};
 use kasu_git::{RawObject, ReceiveLimits, decode_received_pack};

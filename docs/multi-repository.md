@@ -79,6 +79,7 @@ Unregistered repositories are created with new keys; registered repositories mis
 | `webhooks` | Endpoints notified of this repository's ref changes. Relative `secret_file` paths are based on the file's location |
 | `limits` | This repository's concurrency and queue size. Capped by the server-wide `per_repository_*` |
 | `default_branch` | Git HEAD symref and the webhook `default_branch` |
+| `review` | Protected refs and approval rules; see [reviews](review.md). Omitted, nothing is protected |
 
 With `KASU_REPOSITORIES_SOURCE=file` (the default), the file is authoritative, and changes to settings / default branch through the Admin API are rejected.
 With `registry`, the file is used only to create unregistered repositories, and settings are managed through the Admin API.
@@ -134,7 +135,7 @@ are all resolved only through membership in the target repository.
 | RPC | HTTP | Description |
 |---|---|---|
 | `CreateRepository` | `/v1/admin/create-repository` | Creates with an unborn HEAD. Resending with the same `idempotency_key` and contents gives `replayed=true` |
-| `GetRepository` | `/v1/admin/get-repository` | Only repositories visible to the caller. `config_json` is returned only to operators |
+| `GetRepository` | `/v1/admin/get-repository` | Only repositories visible to the caller. `config_json` is returned only to operators and accounts with `admin` on the repository |
 | `ListRepositories` | `/v1/admin/list-repositories` | Paging with `prefix` and `cursor` (default 100, max 1000) |
 | `UpdateRepository` | `/v1/admin/update-repository` | Changes `config_json`, `state`, and `default_branch` with a CAS on `expected_config_version` |
 | `RenameRepository` | `/v1/admin/rename-repository` | `RepoKey` is unchanged. `keep_alias` keeps the old name as an alias |
@@ -142,7 +143,16 @@ are all resolved only through membership in the target repository.
 | `ForkRepository` | `/v1/admin/fork-repository` | Adds membership of the history, trees, blobs, and raw Git objects reachable from the given ref to a new key (bodies are not copied). Resending with the same idempotency key resumes after interruption. Commits shared with the source have the same Git OIDs |
 | `GetRepositoryUsage` | `/v1/admin/repository-usage` | Logical size of objects reachable from native refs. Cached per ref state. Shared objects are counted in full for each repository |
 
-Create, update, rename, delete, and fork require operator credentials.
+Operators may do everything. Accounts may administer through their grants:
+
+| Operation | Account requirement |
+|---|---|
+| `CreateRepository` | The name matches the account's `create_repositories` |
+| `UpdateRepository`, `DeleteRepository` | The grant that applies to the repository has `admin: true` |
+| `RenameRepository` | `admin` on the repository and the new name matches `create_repositories` |
+| `ForkRepository` | Unrestricted read access to the source and the new name matches `create_repositories` |
+
+Repository configuration never widens server-wide policy. Because `webhooks[].secret_file` names a file on the server, non-operators may only name files below `KASU_WEBHOOK_SECRET_DIR` (an absolute directory; relative names are resolved against it, `..` is rejected); without it they cannot set secret files. Delegated requests ([Web UI](web-ui.md)) administer only when the delegate has `allow_admin`; anonymous delegation never does.
 Conflicts return `AlreadyExists` / `Aborted` (HTTP 409).
 
 ## Deletion and Storage Reclamation

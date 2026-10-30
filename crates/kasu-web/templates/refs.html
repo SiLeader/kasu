@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block content %}
+<form method="get" class="bar" role="search"><input type="search" name="q" value="{{ filter }}" aria-label="filter"><button type="submit">🔍</button></form>
+{% for group in groups %}{% if !group.rows.is_empty() %}
+<h2>{{ group.title }}</h2>
+<table class="list">
+{% for row in group.rows %}
+<tr>
+<td><a href="{{ row.url }}">{{ row.name }}</a>{% if row.protected %} <span class="badge warn">{{ page.t.s("Protected") }}</span>{% endif %}</td>
+<td><a class="code" href="{{ row.tip_url }}">{{ row.tip }}</a></td>
+<td class="muted">{{ row.when }}</td>
+<td>{% if let Some(delete) = row.delete %}<form method="post" class="inline-form"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="delete"><input type="hidden" name="ref" value="{{ row.full }}"><input type="hidden" name="target" value="{{ delete.0 }}"><input type="hidden" name="version" value="{{ delete.1 }}"><button type="submit" class="danger">{{ page.t.s("Delete") }}</button></form>{% endif %}</td>
+</tr>
+{% endfor %}
+</table>
+{% endif %}{% endfor %}
+{% if can_create %}
+<h2>{{ page.t.s("Create branch") }}</h2>
+<form method="post" class="bar">
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="create">
+  <label>{{ page.t.s("Branch name") }} <input type="text" name="name" required></label>
+  <label>{{ page.t.s("Starting point") }} <input type="text" name="from" value="{{ default_from }}" required></label>
+  <button type="submit" class="primary">{{ page.t.s("Create") }}</button>
+</form>
+{% endif %}
+{% endblock %}

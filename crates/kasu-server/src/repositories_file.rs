@@ -41,6 +41,8 @@ struct Entry {
     webhooks: Vec<WebhookEndpoint>,
     #[serde(default)]
     limits: RepositoryLimits,
+    #[serde(default)]
+    review: Option<crate::ReviewPolicy>,
 }
 /// One declared repository.
 #[derive(Clone, Debug, PartialEq)]
@@ -89,6 +91,7 @@ pub fn load_repositories_file(path: &Path) -> Result<Vec<DeclaredRepository>, St
                 write_policy: entry.write_policy,
                 webhooks,
                 limits: entry.limits,
+                review: entry.review,
             };
             config.validate()?;
             Ok(DeclaredRepository {

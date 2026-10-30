@@ -38,6 +38,7 @@ Set `per_identity_active` at or below `active`.
 | `pending` | 1–65536 | Maximum waiting requests |
 | `per_repository_active` | 1–`active` | Concurrency for one repository (default half of `active`). The repository setting `limits.active` can narrow it further |
 | `per_repository_pending` | 1–`pending` | Waiting requests for one repository (default 1/4 of `pending`) |
+| `per_delegate_active` | 1–`active` | Concurrent requests of one [delegate](repository-accounts.md#administration-profiles-and-delegates) across every account it acts as (default `active`) |
 | `queue_timeout_ms` | 1–30000 | Maximum time to wait for a concurrency slot |
 | `client_rate_per_second`, `client_burst` | 1–1000000 each | Refill rate and capacity of the per-client-IP token bucket |
 | `token_rate_per_second`, `token_burst` | 1–1000000 each | Refill rate and capacity of the per-principal token bucket |
@@ -70,6 +71,8 @@ Requests waiting for a repository slot give back the server-wide execution slot 
 A busy repository never occupies `active` and stalls other repositories
 ([fairness](multi-repository.md#multi-tenant-operation)). Per-repository metrics use labels only for repositories
 listed in `KASU_METRICS_REPOSITORIES`; everything else is aggregated into `other`.
+
+A verified delegated request (for example from the Web UI) is admitted as the browser and the account it acts as: it consumes the client bucket of `kasu-client-addr` (not of the shared delegate address) and the bucket of that account, plus one `per_delegate_active` slot. `kasu-client-addr` is honored only on verified delegated requests.
 
 ## What Is Measured
 

@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="bar">
+  <h1 class="grow">{{ page.t.s("Repositories") }}</h1>
+  {% if can_create %}<a class="button primary" href="/-/new">{{ page.t.s("New repository") }}</a>{% endif %}
+</div>
+<form method="get" action="/" class="bar" role="search">
+  <input type="search" name="prefix" value="{{ prefix }}" placeholder="team-a/" aria-label="prefix">
+  <button type="submit">🔍</button>
+</form>
+<table class="list">
+{% for item in items %}
+<tr><td><a href="{{ item.url }}">{{ item.name }}</a>{% if !item.badge.is_empty() %} <span class="badge warn">{{ item.badge }}</span>{% endif %}</td></tr>
+{% endfor %}
+</table>
+{% if let Some(next) = next %}<p><a href="{{ next }}">{{ page.t.s("Next") }} →</a></p>{% endif %}
+{% endblock %}

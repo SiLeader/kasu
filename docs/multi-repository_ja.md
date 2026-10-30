@@ -80,6 +80,7 @@ legacy リポジトリは、`grants` を持たない旧形式のアカウント�
 | `webhooks` | このリポジトリの ref 変更を通知する endpoint。`secret_file` の相対パスはファイルの場所が基準です |
 | `limits` | このリポジトリの同時実行数・待機数。サーバー全体の `per_repository_*` が上限です |
 | `default_branch` | Git の HEAD symref と webhook の `default_branch` |
+| `review` | 保護 ref と承認ルール。[レビュー](review_ja.md) を参照。省略時は何も保護しない |
 
 `KASU_REPOSITORIES_SOURCE=file`（既定）ではファイルが正で、Admin API による設定・既定 branch の変更は拒否します。
 `registry` ではファイルは未登録リポジトリの作成だけに使い、設定は Admin API で管理します。
@@ -135,7 +136,7 @@ CreateChangeset の親と blob、Merge / Rebase の入力、receive-pack の thi
 | RPC | HTTP | 説明 |
 |---|---|---|
 | `CreateRepository` | `/v1/admin/create-repository` | unborn HEAD で作成。`idempotency_key` を同じ内容で再送すると `replayed=true` |
-| `GetRepository` | `/v1/admin/get-repository` | 呼び出し元に見えるリポジトリだけ。`config_json` は運用者にだけ返します |
+| `GetRepository` | `/v1/admin/get-repository` | 呼び出し元に見えるリポジトリだけ。`config_json` は運用者と、そのリポジトリに `admin` を持つアカウントにだけ返します |
 | `ListRepositories` | `/v1/admin/list-repositories` | `prefix` と `cursor` でページング（既定 100 件、最大 1000 件） |
 | `UpdateRepository` | `/v1/admin/update-repository` | `expected_config_version` の CAS で `config_json`・`state`・`default_branch` を変更 |
 | `RenameRepository` | `/v1/admin/rename-repository` | `RepoKey` は不変。`keep_alias` で旧名を alias として残します |
@@ -143,7 +144,16 @@ CreateChangeset の親と blob、Merge / Rebase の入力、receive-pack の thi
 | `ForkRepository` | `/v1/admin/fork-repository` | 指定 ref から到達可能な履歴・tree・blob・raw Git オブジェクトの所属を新しいキーに追加（本文はコピーしません）。同じ冪等キーの再送で中断から再開します。フォーク元と同じ commit は同じ Git OID です |
 | `GetRepositoryUsage` | `/v1/admin/repository-usage` | ネイティブ ref から到達可能なオブジェクトの論理サイズ。ref の状態ごとにキャッシュします。共有オブジェクトは各リポジトリで全量を数えます |
 
-作成・更新・改名・削除・フォークは運用者の資格情報が必要です。
+運用者はすべての操作ができます。アカウントは grant に基づいて管理できます。
+
+| 操作 | アカウントに必要なもの |
+|---|---|
+| `CreateRepository` | 名前がアカウントの `create_repositories` に一致 |
+| `UpdateRepository`、`DeleteRepository` | リポジトリに適用される grant に `admin: true` |
+| `RenameRepository` | リポジトリへの `admin` と、新しい名前が `create_repositories` に一致 |
+| `ForkRepository` | 元リポジトリを制限なく読めることと、新しい名前が `create_repositories` に一致 |
+
+リポジトリ設定でサーバー全体のポリシーを広げることはできません。`webhooks[].secret_file` はサーバー上のファイルを指すため、運用者以外は `KASU_WEBHOOK_SECRET_DIR`（絶対パスのディレクトリ。相対名はその下で解決し、`..` は拒否）配下のファイルだけを指定できます。未設定なら秘密ファイルは指定できません。委譲された要求（[Web UI](web-ui_ja.md)）は delegate に `allow_admin` がある場合だけ管理でき、匿名の代理は管理できません。
 衝突は `AlreadyExists` / `Aborted`（HTTP 409）で返します。
 
 ## 削除とストレージ回収

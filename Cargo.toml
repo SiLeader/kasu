@@ -17,7 +17,7 @@ hex = "0.4"
 getrandom = "0.3"
 thiserror = "2"
 sha1 = "0.10"
-zstd = "0.13"
+zstd = "0.14"
 rusqlite = { version = "0.38", features = ["bundled"] }
 tempfile = "3"
 proptest = "1"

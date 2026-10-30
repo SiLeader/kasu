@@ -50,6 +50,10 @@ URL / key changes apply to resends after a restart, but bodies already finalized
 A down endpoint does not block other endpoints. Later items in the same queue wait until it succeeds.
 Deliveries pending at server shutdown are resent at the next startup.
 
+## Review Events
+
+When the server stores reviews, every repository endpoint also receives review events from the durable `review_log` (a third cursor next to the native and Git ref streams) with `X-GitHub-Event: kasu_review`. The body has `action` (`create`, `revision`, `rebase`, `update`, `publish`, `resolve`, `unresolve`, `submit`), `actor`, `detail`, the review's `number`, `state`, `target`, `author` and `version`, the repository, and `kasu.sequence` / `kasu.time`. Delivery, signatures and retries are the same as for pushes. See [reviews](review.md).
+
 ## Body and Limits
 
 The body includes create / update / force / delete, old / new OIDs, commits, and paths changed relative to the first parent.

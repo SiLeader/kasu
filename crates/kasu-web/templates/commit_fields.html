@@ -1,0 +1,18 @@
+<label>{{ page.t.s("Commit message") }}<textarea name="message" rows="4" required>{{ message }}</textarea></label>
+<div class="bar">
+  <label>{{ page.t.s("Sign-off name") }}<input type="text" name="author_name" value="{{ author_name }}" required></label>
+  <label>{{ page.t.s("Email") }}<input type="text" name="author_email" value="{{ author_email }}" required></label>
+</div>
+<fieldset><legend>{{ page.t.s("Destination") }}</legend>
+  {% if !review_number.is_empty() %}
+  <label class="inline"><input type="radio" name="destination" value="revision" checked> {{ page.t.s("Add to this review as a new revision") }} #{{ review_number }}</label>
+  {% else %}
+  <label class="inline"><input type="radio" name="destination" value="direct"{% if destination == "direct" %} checked{% endif %}{% if !direct_allowed %} disabled{% endif %}> {{ page.t.s("Land directly on this branch") }} <span class="code">{{ branch }}</span>{% if !direct_allowed %} <span class="badge warn">{{ page.t.s("Review required") }}</span>{% endif %}</label>
+  <label class="inline"><input type="radio" name="destination" value="branch"{% if destination == "branch" %} checked{% endif %}> {{ page.t.s("Create a new branch and land there") }} <input type="text" name="new_branch" value="{{ new_branch }}" aria-label="{{ page.t.s("Branch name") }}"></label>
+  {% if review_allowed %}<label class="inline"><input type="radio" name="destination" value="review"{% if destination == "review" %} checked{% endif %}> {{ page.t.s("Create a review") }}</label>{% endif %}
+  {% endif %}
+</fieldset>
+<div class="bar">
+  <button type="submit" class="primary">{% if retry %}{{ page.t.s("Retry") }}{% else %}{{ page.t.s("Commit changes") }}{% endif %}</button>
+  <a href="{{ cancel }}">{{ page.t.s("Cancel") }}</a>
+</div>

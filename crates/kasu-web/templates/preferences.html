@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>{{ page.t.s("Preferences") }}</h1>
+<form method="post" action="/-/preferences" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label>{{ page.t.s("Language") }}
+    <select name="lang">
+      <option value=""{% if lang.is_empty() %} selected{% endif %}>Auto</option>
+      <option value="en"{% if lang == "en" %} selected{% endif %}>English</option>
+      <option value="ja"{% if lang == "ja" %} selected{% endif %}>日本語</option>
+    </select></label>
+  <label>{{ page.t.s("Time zone") }}<input type="text" name="tz" value="{{ tz }}" placeholder="Asia/Tokyo"></label>
+  <fieldset><legend>{{ page.t.s("Diff view") }}</legend>
+    <label class="inline"><input type="radio" name="diff" value="unified"{% if !split %} checked{% endif %}> {{ page.t.s("Unified") }}</label>
+    <label class="inline"><input type="radio" name="diff" value="split"{% if split %} checked{% endif %}> {{ page.t.s("Side by side") }}</label>
+  </fieldset>
+  <div><button type="submit" class="primary">{{ page.t.s("Save") }}</button></div>
+</form>
+{% endblock %}

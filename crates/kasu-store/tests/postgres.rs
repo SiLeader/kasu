@@ -423,3 +423,175 @@ fn postgres_tls_verifies_the_configured_ca_and_refuses_untrusted_certificates() 
     store.put_if_absent(&key, b"verified TLS").unwrap();
     assert_eq!(store.get(&key).unwrap(), Some(b"verified TLS".to_vec()));
 }
+
+fn review_write(number: u64, version: u64, head: &[u8]) -> ReviewWrite {
+    ReviewWrite {
+        review: ReviewRow {
+            number,
+            version,
+            state: REVIEW_OPEN,
+            target: b"refs/heads/main".to_vec(),
+            head: head.to_vec(),
+            author: "alice".into(),
+            data: b"data".to_vec(),
+        },
+        expected_version: version - 1,
+        revision: (number == 0).then(|| ReviewRevisionRow {
+            revision: 1,
+            data: b"r1".to_vec(),
+        }),
+        votes: vec![],
+        comments: vec![],
+        event: b"event".to_vec(),
+        request: None,
+        ref_update: None,
+        time: 1,
+    }
+}
+
+#[test]
+#[ignore = "requires KASU_TEST_POSTGRES"]
+fn reviews_share_transactions_with_refs_and_serialize_writers() {
+    let store = Arc::new(open());
+    let repo = repo("review");
+    assert_eq!(
+        store
+            .write_review(&repo, &review_write(0, 1, b"a"))
+            .unwrap(),
+        ReviewWriteResult::Applied { number: 1 }
+    );
+    assert_eq!(
+        store
+            .write_review(&repo, &review_write(0, 1, b"a"))
+            .unwrap(),
+        ReviewWriteResult::Duplicate(1)
+    );
+    assert_eq!(
+        store
+            .write_review(&repo, &review_write(1, 3, b"a"))
+            .unwrap(),
+        ReviewWriteResult::VersionMismatch
+    );
+    let mut keyed = review_write(0, 1, b"b");
+    keyed.request = Some(ReviewRequestRecord {
+        account: "alice".into(),
+        key: b"k".to_vec(),
+        fingerprint: b"f".to_vec(),
+        response: vec![],
+    });
+    assert_eq!(
+        store.write_review(&repo, &keyed).unwrap(),
+        ReviewWriteResult::Applied { number: 2 }
+    );
+    assert_eq!(
+        store.write_review(&repo, &keyed).unwrap(),
+        ReviewWriteResult::Replayed {
+            response: 2u64.to_be_bytes().to_vec()
+        }
+    );
+    keyed.request.as_mut().unwrap().fingerprint = b"g".to_vec();
+    assert!(store.write_review(&repo, &keyed).is_err());
+
+    // A Submit-like write: ref CAS, ref log with via, and review state at once.
+    let mut submit = review_write(1, 2, b"a");
+    submit.review.state = REVIEW_SUBMITTED;
+    submit.ref_update = Some(ReviewRefUpdate {
+        update: RefUpdate {
+            name: b"refs/heads/main".to_vec(),
+            expected: RefState {
+                target: None,
+                version: 3,
+            },
+            new: Some(ChangesetId([9; 32])),
+        },
+        actor: delegated_actor(b"alice", b"kasu-web:alice@example.com"),
+    });
+    assert_eq!(
+        store.write_review(&repo, &submit).unwrap(),
+        ReviewWriteResult::RefMismatch(RefState::default())
+    );
+    assert_eq!(store.review(&repo, 1).unwrap().unwrap().version, 1);
+    submit.ref_update.as_mut().unwrap().update.expected = RefState::default();
+    assert_eq!(
+        store.write_review(&repo, &submit).unwrap(),
+        ReviewWriteResult::Applied { number: 1 }
+    );
+    assert_eq!(
+        store.resolve(&repo, b"refs/heads/main").unwrap().target,
+        Some(ChangesetId([9; 32]))
+    );
+    let log = store.tail(&repo, 0, 10).unwrap();
+    assert_eq!(
+        (log[0].actor.as_slice(), log[0].via.as_slice()),
+        (
+            b"alice".as_slice(),
+            b"kasu-web:alice@example.com".as_slice()
+        )
+    );
+
+    // Concurrent writers on one review: exactly one wins each version.
+    let barrier = Arc::new(Barrier::new(8));
+    let wins = Arc::new(AtomicUsize::new(0));
+    let threads: Vec<_> = (0..8)
+        .map(|i| {
+            let (store, repo, barrier, wins) =
+                (store.clone(), repo.clone(), barrier.clone(), wins.clone());
+            std::thread::spawn(move || {
+                let mut write = review_write(2, 2, b"b");
+                write.comments = vec![ReviewCommentRow {
+                    id: i + 1,
+                    author: "bob".into(),
+                    draft: true,
+                    data: vec![],
+                }];
+                barrier.wait();
+                if store.write_review(&repo, &write).unwrap()
+                    == (ReviewWriteResult::Applied { number: 2 })
+                {
+                    wins.fetch_add(1, Ordering::SeqCst);
+                }
+            })
+        })
+        .collect();
+    threads.into_iter().for_each(|t| t.join().unwrap());
+    assert_eq!(wins.load(Ordering::SeqCst), 1);
+    assert_eq!(store.review_comments(&repo, 2).unwrap().len(), 1);
+    let listed = store
+        .list_reviews(
+            &repo,
+            &ReviewFilter {
+                state: Some(REVIEW_OPEN),
+                ..Default::default()
+            },
+            0,
+            10,
+        )
+        .unwrap();
+    assert_eq!(listed.iter().map(|r| r.number).collect::<Vec<_>>(), [2]);
+    assert_eq!(store.review_revisions(&repo, 1).unwrap().len(), 1);
+    assert!(store.review_log(&repo, 0, 100).unwrap().len() >= 4);
+    // Prefix scans back short Changeset IDs.
+    let key = format!("scan/{}/", String::from_utf8_lossy(&repo));
+    store
+        .put_if_absent(format!("{key}abc1").as_bytes(), b"")
+        .unwrap();
+    store
+        .put_if_absent(format!("{key}abd2").as_bytes(), b"")
+        .unwrap();
+    assert_eq!(
+        store
+            .scan_prefix(format!("{key}ab").as_bytes(), 10)
+            .unwrap()
+            .len(),
+        2
+    );
+    assert_eq!(
+        store
+            .scan_prefix(format!("{key}abc").as_bytes(), 10)
+            .unwrap()
+            .len(),
+        1
+    );
+    assert!(store.purge_reviews(&repo, 1000).unwrap() > 0);
+    assert!(store.review(&repo, 1).unwrap().is_none());
+}

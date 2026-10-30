@@ -133,6 +133,21 @@ pub(crate) enum Credential {
     Account(usize),
     /// The cache → server object hop credential.
     Hop,
+    /// A delegate acting as a repository account.
+    Delegated(crate::delegate::Delegation),
+}
+impl Credential {
+    /// The repository account whose grants apply.
+    pub(crate) fn account(self) -> Option<usize> {
+        match self {
+            Self::Account(index) => Some(index),
+            Self::Delegated(d) => Some(d.account),
+            _ => None,
+        }
+    }
+    pub(crate) fn anonymous_delegation(self) -> bool {
+        matches!(self, Self::Delegated(d) if d.anonymous)
+    }
 }
 /// What a scoped request may do once its repository is resolved.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -156,6 +171,7 @@ impl Backend {
             Credential::Operator => Some(Identity::Operator),
             Credential::Hop => Some(Identity::Hop),
             Credential::Account(index) => Some(Identity::Account(index as u16)),
+            Credential::Delegated(d) => Some(Identity::Account(d.account as u16)),
             Credential::Projection(index) => Some(Identity::Projection(index as u16)),
         })
     }
@@ -220,6 +236,9 @@ impl Backend {
             return Ok(Credential::Anonymous);
         }
         let header = authorization.ok_or_else(|| Status::unauthenticated("token required"))?;
+        if let Some(credential) = self.delegated(header) {
+            return credential;
+        }
         if header.len() > 8192 {
             return Err(Status::unauthenticated("invalid credentials"));
         }
@@ -344,7 +363,9 @@ impl Backend {
     ) -> Result<Self, Status> {
         let credential = self.native_credential(authorization, mode)?;
         let repository = self.resolve(repo)?;
-        self.scope_resolved(credential, repository, repo, mode)
+        let mut scoped = self.scope_resolved(credential, repository, repo, mode)?;
+        scoped.via = self.delegation_via(authorization).map(Arc::new);
+        Ok(scoped)
     }
     pub(crate) async fn scoped(
         self: &Arc<Self>,
@@ -354,7 +375,8 @@ impl Backend {
     ) -> Result<Arc<Self>, Status> {
         let credential = self.native_credential(authorization, mode)?;
         let repository = self.resolve_async(repo).await?;
-        let scoped = self.scope_resolved(credential, repository, repo, mode)?;
+        let mut scoped = self.scope_resolved(credential, repository, repo, mode)?;
+        scoped.via = self.delegation_via(authorization).map(Arc::new);
         Ok(Arc::new(scoped.admit().await?))
     }
     fn native_credential(
@@ -366,8 +388,12 @@ impl Backend {
             Credential::Projection(_) => Err(Status::permission_denied(
                 "projection credentials require a Git projection endpoint",
             )),
+            Credential::Delegated(d) if d.anonymous && mode == Mode::Write => {
+                Err(Status::permission_denied("anonymous access is read-only"))
+            }
             // Independent of the repository, so it reveals nothing about one.
             Credential::Account(account)
+            | Credential::Delegated(crate::delegate::Delegation { account, .. })
                 if mode == Mode::Write
                     && self.repository_accounts[account]
                         .grants
@@ -403,7 +429,8 @@ impl Backend {
                     return Err(not_found());
                 }
             }
-            Credential::Account(account) => {
+            Credential::Account(account)
+            | Credential::Delegated(crate::delegate::Delegation { account, .. }) => {
                 let grant_index = self.repository_accounts[account]
                     .grant_for(record, self.legacy.as_ref())
                     .ok_or_else(not_found)?;
@@ -436,6 +463,7 @@ impl Backend {
         if mode == Mode::Write && !record.state.writable() {
             return Err(Status::failed_precondition("repository is read-only"));
         }
+        scoped.principal = Some(credential);
         scoped.repo = Some(Arc::new(RepoContext {
             repo: repository,
             requested: requested.to_vec(),
@@ -464,9 +492,13 @@ impl Backend {
         ) -> bool {
             path.is_some_and(|path| dirs.any(|d| below(path.as_bytes(), d.as_bytes())))
         }
+        if receiving && credential.anonymous_delegation() {
+            return Err(Status::permission_denied("anonymous access is read-only"));
+        }
         match credential {
             Credential::Anonymous | Credential::Operator | Credential::Hop => {}
-            Credential::Account(account) => {
+            Credential::Account(account)
+            | Credential::Delegated(crate::delegate::Delegation { account, .. }) => {
                 let grant_index = self.repository_accounts[account]
                     .grant_for(record, self.legacy.as_ref())
                     .ok_or_else(not_found)?;
@@ -501,6 +533,7 @@ impl Backend {
                 }
             }
         }
+        scoped.principal = Some(credential);
         scoped.repo = Some(Arc::new(RepoContext {
             repo: repository,
             requested: repo.to_vec(),

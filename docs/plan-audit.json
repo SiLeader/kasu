@@ -3,12 +3,18 @@
   "audited_at": "2026-10-26T11:40:50.007043+09:00",
   "basis": "元の docs/plan の機能・受け入れ条件を基準に監査。履歴の実験は記録時ソースの証拠であり、現在の全外部サービスでの再実行とは区別する。",
   "plan_sha256": {
-    "docs/plan/01-architecture.md": "ab682cc33ae3341cd2ba00606b8a3b0ccb24683c5d2163650ff6990aa398462c",
-    "docs/plan/02-data-model.md": "1223bfd5432d6620ab69e6db3bfcfb6eaec7079b237a0ceb6cc1891bccd2e696",
-    "docs/plan/03-protocols-and-api.md": "f430ed5a17cc65737992211edce23e7a2013e3b1b97e2f3799203a2a65a62db3",
-    "docs/plan/04-git-compat.md": "af7b2de54e4d8942460109df91fcb2818c7d4ae4b945e364d115700523be8364",
-    "docs/plan/05-roadmap.md": "1dd5c9b4a752e0ede2d26a39984080b88f6dc81f320194a955f7a0a9b6b852c2",
-    "docs/plan/README.md": "37b74d3684e93b0b39a0b849db89b51848ba0b699e798fa3334e78ec0e223642"
+    "docs/plan/01-architecture.md": "3f9eb1ed54fcd1bff3aa04acbd5064339f986ab1a8699e379d62e5a815c85775",
+    "docs/plan/02-data-model.md": "79e273607031938a08b18f199cb713e2adae1dd72643dcbb4412c98561f3037d",
+    "docs/plan/03-protocols-and-api.md": "8c373e3195141fa2753e0c1b6174c12e2e4c832e1ff8d8de45f6eb32d98cec97",
+    "docs/plan/04-git-compat.md": "3dc26711db28e84e494b8d88fff68eb5c1f8c9775a64aca20cb6e43b7dccc3e8",
+    "docs/plan/05-roadmap.md": "4a01ad137495e2863fb15039324cc0cee2fb4e332743c4e1460a47762a6ef1f9",
+    "docs/plan/README.md": "2fe6b5bdd8ddc5d3607a40cd7370d89376109bb9fbef905121ae3ac37aec8e8b",
+    "docs/plan/webui/README.md": "c09608ad8979dd2209c1cf8e5481895194f10053b1db34195cb8cd85683f7330",
+    "docs/plan/webui/01-architecture.md": "37a9c9382f3e46c90e8e6a35849d023adcd5141cd7ed07ed92781369962a5a47",
+    "docs/plan/webui/02-auth.md": "d037a9e98db94e304a8969cd33cf2eb1960bcd1d0d74f6a410db2f3a1c46d026",
+    "docs/plan/webui/03-screens.md": "1500fda77252427305e72057ad9739b012da6b0485e0dfc78c889f70de42cafe",
+    "docs/plan/webui/04-review.md": "c24a37860d6a326d97d50da1030e6e4c743c8f7b0df1484a6fc32e59a7b10c5f",
+    "docs/plan/webui/05-roadmap.md": "81b7cfad1944d31118be11073638ef2304bb5760d6127254d9c9f99354695720"
   },
   "requirements": [
     {
@@ -591,6 +597,146 @@
         "docs/benchmarks/gitops-pack.md"
       ],
       "scope": "Git SHA256、CDC、到達 bitmap 等は明示された将来検討。SHA1 wire の現時点での安全性保証は含めない。"
+    },
+    {
+      "id": "webui-foundation",
+      "plan": "webui/01-architecture.md;webui/05-roadmap.md#W0",
+      "requirement": "kasu-web 独立プロセス・axum/askama/埋め込みアセット・i18n・gRPC 上流とエラー写像・共通 404・セキュリティヘッダー・healthz/readyz/metrics",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-web/src/lib.rs",
+        "crates/kasu-web/src/upstream.rs",
+        "crates/kasu-web/src/routes/mod.rs",
+        "crates/kasu-web/src/i18n.rs"
+      ],
+      "evidence": [
+        "docs/web-ui.md",
+        "crates/kasu-web/tests/browse.rs"
+      ],
+      "scope": "in-process kasu-server（TCP gRPC）+ kasu-web、release バイナリ（PostgreSQL）とヘッドレス Chrome/Firefox、10 万 Changeset 負荷。手動確認チェックリストは Chrome 156・Firefox 158・WebKitGTK 2.52 で実施（Safari はサポート対象外）"
+    },
+    {
+      "id": "webui-delegation",
+      "plan": "webui/02-auth.md;webui/05-roadmap.md#W1",
+      "requirement": "delegates・委譲メタデータ検証・binding・匿名代理の読み取り専用・admission (kasu-client-addr / per_delegate_active)・ref_log via・Identity API・PAT ログイン/セッション/プロキシ/匿名/CSRF",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-server/src/delegate.rs",
+        "crates/kasu-server/src/identity.rs",
+        "crates/kasu-server/src/admission.rs",
+        "crates/kasu-web/src/auth/mod.rs"
+      ],
+      "evidence": [
+        "docs/repository-accounts.md",
+        "crates/kasu-server/tests/delegation.rs",
+        "crates/kasu-web/tests/security.rs",
+        "docs/web-ui.md"
+      ],
+      "scope": "in-process kasu-server（TCP gRPC）+ kasu-web、release バイナリ（PostgreSQL）とヘッドレス Chrome/Firefox、10 万 Changeset 負荷"
+    },
+    {
+      "id": "webui-browse",
+      "plan": "webui/03-screens.md#閲覧;webui/05-roadmap.md#W2",
+      "requirement": "一覧・tree・blob・raw・blame・log・changeset・compare・refs・Git OID、rev/path URL 往復、diff・ハイライト・Markdown・表示上限・HTTP キャッシュ・アカウント別 LRU",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-web/src/routes/browse.rs",
+        "crates/kasu-web/src/rev.rs",
+        "crates/kasu-web/src/render/diff.rs",
+        "crates/kasu-web/src/cache.rs"
+      ],
+      "evidence": [
+        "docs/web-ui.md",
+        "crates/kasu-web/tests/browse.rs",
+        "crates/kasu-web/tests/security.rs"
+      ],
+      "scope": "in-process kasu-server（TCP gRPC）+ kasu-web、release バイナリ（PostgreSQL）とヘッドレス Chrome/Firefox、10 万 Changeset 負荷"
+    },
+    {
+      "id": "webui-write",
+      "plan": "webui/03-screens.md#web-からの書き込み;webui/05-roadmap.md#W3",
+      "requirement": "編集・新規・アップロード・削除→UploadBlobs/CreateChangeset/Land、branch 作成・削除、冪等キー、Conflict 時の再編集",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-web/src/routes/write.rs"
+      ],
+      "evidence": [
+        "crates/kasu-web/tests/write.rs",
+        "docs/web-ui.md"
+      ],
+      "scope": "in-process kasu-server（TCP gRPC）+ kasu-web、release バイナリ（PostgreSQL）とヘッドレス Chrome/Firefox、10 万 Changeset 負荷"
+    },
+    {
+      "id": "webui-admin",
+      "plan": "webui/02-auth.md#管理権限の拡張;webui/05-roadmap.md#W4",
+      "requirement": "grant admin・create_repositories・config_json の管理者返却・KASU_WEBHOOK_SECRET_DIR・設定画面",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-server/src/admin.rs",
+        "crates/kasu-web/src/routes/admin.rs"
+      ],
+      "evidence": [
+        "docs/multi-repository.md",
+        "crates/kasu-server/tests/delegation.rs",
+        "crates/kasu-web/tests/review.rs",
+        "docs/web-ui.md"
+      ],
+      "scope": "in-process kasu-server（TCP gRPC）+ kasu-web、release バイナリ（PostgreSQL）とヘッドレス Chrome/Firefox、10 万 Changeset 負荷"
+    },
+    {
+      "id": "webui-review-server",
+      "plan": "webui/04-review.md;webui/05-roadmap.md#W5",
+      "requirement": "ReviewStore (SQLite/PostgreSQL)・kasu.v1.Review・review ポリシー・承認判定と指紋・Submit (REBASE/SQUASH, 1 Tx)・RebaseReview・保護 ref の強制 (Land/UpdateRef/receive-pack)・削除時の消去",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-server/src/review.rs",
+        "crates/kasu-store/src/review.rs",
+        "crates/kasu-store/src/sqlite/review.rs",
+        "crates/kasu-store/src/postgres/review.rs"
+      ],
+      "evidence": [
+        "docs/review.md",
+        "crates/kasu-server/tests/review.rs",
+        "crates/kasu-sim/tests/review_submit.rs",
+        "docs/web-ui.md"
+      ],
+      "scope": "SQLite と実 PostgreSQL 18 で検証（crates/kasu-store/tests/postgres.rs、release バイナリでの Submit まで）"
+    },
+    {
+      "id": "webui-review-ui",
+      "plan": "webui/04-review.md#画面w6;webui/05-roadmap.md#W6",
+      "requirement": "レビュー一覧・作成・概要・files (リビジョン比較・行コメント下書き・古いコメントの再配置)・changesets・投票・Submit・追従・Web 編集からのリビジョン追加",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-web/src/routes/review.rs"
+      ],
+      "evidence": [
+        "crates/kasu-web/tests/review.rs",
+        "docs/web-ui.md"
+      ],
+      "scope": "in-process kasu-server（TCP gRPC）+ kasu-web、release バイナリ（PostgreSQL）とヘッドレス Chrome/Firefox、10 万 Changeset 負荷"
+    },
+    {
+      "id": "webui-extensions",
+      "plan": "webui/05-roadmap.md#W7",
+      "requirement": "entry ごとの最終変更（遅延読み込み・上限付き）・tar.gz/zip アーカイブ（Archive ストリーミング RPC）・レビューイベントの Webhook 配信（review_log を outbox に）・kasu review CLI・短縮 Changeset ID（前方一致索引）・CODEOWNERS 相当のパス別承認者",
+      "state": "implemented",
+      "implementation": [
+        "crates/kasu-server/src/archive.rs",
+        "crates/kasu-server/src/webhook.rs",
+        "crates/kasu-cli/src/main.rs",
+        "crates/kasu-store/src/lib.rs",
+        "crates/kasu-server/src/review.rs",
+        "crates/kasu-web/src/routes/browse.rs"
+      ],
+      "evidence": [
+        "crates/kasu-web/tests/browse.rs",
+        "crates/kasu-server/tests/webhook.rs",
+        "crates/kasu-cli/tests/review.rs",
+        "crates/kasu-server/tests/review.rs",
+        "docs/web-ui.md"
+      ],
+      "scope": "コード検索は全文索引が必要なため検討のみ（Web UI の非ゴールのまま）"
     }
   ],
   "security_deferred": [
@@ -609,7 +755,8 @@
     "GitHub 上での各 CI/nightly workflow 実行確認",
     "本番 collector・非同期 workflow の trace 連結・クラスタ全体 quota",
     "大容量/多数 node/クラウド HA と災害復旧・実 disk-full/電源断",
-    "任意 Git heuristic の網羅的 parity と追加 filter の必要性評価"
+    "任意 Git heuristic の網羅的 parity と追加 filter の必要性評価",
+    "Web UI のコード検索（全文索引）の要否検討"
   ],
   "current_regression": {
     "summary": "docs/verification/plan-regression/summary.json",

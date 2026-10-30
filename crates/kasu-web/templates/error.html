@@ -1,0 +1,6 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>{{ heading }}</h1>
+{% if !detail.is_empty() %}<p class="notice error">{{ detail }}</p>{% endif %}
+<p><a href="/">{{ page.t.s("Repositories") }}</a></p>
+{% endblock %}

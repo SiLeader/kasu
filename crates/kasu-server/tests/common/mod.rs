@@ -42,7 +42,8 @@ impl Fixture {
             store.clone(),
             Some("operator".into()),
         )
-        .with_registry_ttl(std::time::Duration::from_millis(1));
+        .with_registry_ttl(std::time::Duration::from_millis(1))
+        .with_reviews(store.clone());
         Self {
             _dir: dir,
             store,

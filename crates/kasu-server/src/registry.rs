@@ -25,6 +25,9 @@ pub struct RepositoryConfig {
     pub webhooks: Vec<crate::WebhookEndpoint>,
     #[serde(skip_serializing_if = "RepositoryLimits::is_empty")]
     pub limits: RepositoryLimits,
+    /// Protected refs and approval rules; None protects nothing.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub review: Option<crate::ReviewPolicy>,
 }
 /// Per-repository admission, capped by `ServerLimits::per_repository_*`.
 #[derive(Clone, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
@@ -69,6 +72,9 @@ impl RepositoryConfig {
             crate::accounts::validate_policy(policy)?;
         }
         crate::webhook::validate_endpoints(&self.webhooks, true)?;
+        if let Some(review) = &self.review {
+            review.validate()?;
+        }
         if self.limits.active.is_some_and(|n| !(1..=4096).contains(&n))
             || self
                 .limits

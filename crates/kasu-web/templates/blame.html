@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="bar"><span class="grow"></span>
+{% for toggle in toggles %}<a class="button{% if toggle.on %} primary{% endif %}" href="{{ toggle.url }}">{{ toggle.label }}</a>{% endfor %}
+</div>
+{% if too_large %}<p class="notice">{{ page.t.s("The file is too large to display.") }}</p>{% else %}
+<div class="scroll"><table class="source blame">
+{% for group in groups %}
+{% for (number, code) in group.lines %}
+<tr id="L{{ number }}"{% if loop.first %} class="start"{% endif %}>
+<td class="origin">{% if loop.first %}<a class="code" href="{{ group.origin.url }}">{{ group.origin.short }}</a> {{ group.origin.author }} <span class="muted">{{ group.origin.when }}</span><br>{{ group.origin.summary }}{% if !group.previous.is_empty() %} <a href="{{ group.previous }}" title="blame before this change">↶</a>{% endif %}{% endif %}</td>
+<td class="ln"><a href="#L{{ number }}">{{ number }}</a></td><td class="code">{{ code|safe }}</td></tr>
+{% endfor %}
+{% endfor %}
+</table></div>
+{% endif %}
+{% endblock %}

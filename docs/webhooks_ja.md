@@ -50,6 +50,10 @@ URL・鍵の変更は再起動後の再送にも適用しますが、すでに�
 停止中の endpoint は他の endpoint を止めません。同じキューの後続は成功まで待ちます。
 サーバー終了時の未確定配信は次回起動時に再送します。
 
+## レビューイベント
+
+サーバーがレビューを保存している場合、各リポジトリの endpoint には永続的な `review_log` からのレビューイベントも届きます（ネイティブ ref・Git ref のストリームに並ぶ 3 つ目の cursor）。`X-GitHub-Event` は `kasu_review` です。本文は `action`（`create`、`revision`、`rebase`、`update`、`publish`、`resolve`、`unresolve`、`submit`）、`actor`、`detail`、レビューの `number`・`state`・`target`・`author`・`version`、リポジトリ、`kasu.sequence`・`kasu.time` を持ちます。配信・署名・再送は push と同じです。[レビュー](review_ja.md) を参照してください。
+
 ## 本文と上限
 
 作成・更新・force・削除、旧／新 OID、commit、第一親との差分パスを含めます。

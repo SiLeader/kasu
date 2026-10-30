@@ -4,12 +4,15 @@ use kasu_core::Result;
 pub enum WebhookStream {
     Native,
     Git,
+    /// Review events from `review_log`.
+    Review,
 }
 impl WebhookStream {
     pub fn code(self) -> i64 {
         match self {
             Self::Native => 0,
             Self::Git => 1,
+            Self::Review => 2,
         }
     }
 }

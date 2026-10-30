@@ -1,6 +1,6 @@
 use kasu_server::{
-    AdminService, ConfigSource, MetadataService, ObjectService, WebhookConfig, WebhookSupervisor,
-    WriteService, http_router,
+    AdminService, ArchiveService, ConfigSource, IdentityService, MetadataService, ObjectService,
+    ReviewService, WebhookConfig, WebhookSupervisor, WriteService, http_router,
 };
 use std::{ffi::OsString, path::PathBuf, sync::Arc};
 
@@ -111,7 +111,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_service(ObjectService::new(backend.clone()).into_server())
         .add_service(WriteService::new(backend.clone()).into_server())
         .add_service(MetadataService::new(backend.clone()).into_server())
-        .add_service(AdminService::new(backend.clone()).into_server());
+        .add_service(AdminService::new(backend.clone()).into_server())
+        .add_service(IdentityService::new(backend.clone()).into_server())
+        .add_service(ReviewService::new(backend.clone()).into_server())
+        .add_service(ArchiveService::new(backend.clone()).into_server());
     let result: Result<(), Box<dyn std::error::Error>> = tokio::select! {
         result=grpc_service.serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(grpc_listener))=>result.map_err(Into::into),
         result=axum::serve(http,http_router(backend).into_make_service_with_connect_info::<std::net::SocketAddr>())=>result.map_err(Into::into),

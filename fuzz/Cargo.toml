@@ -21,6 +21,7 @@ kasu-store = { path = "../crates/kasu-store" }
 kasu-git = { path = "../crates/kasu-git" }
 kasu-proto = { path = "../crates/kasu-proto" }
 kasu-server = { path = "../crates/kasu-server" }
+kasu-web = { path = "../crates/kasu-web" }
 prost = "0.14"
 tonic = "0.14"
 flate2 = "1"
@@ -61,6 +62,22 @@ required-features = ["fuzzing"]
 [[bin]]
 name = "native_api"
 path = "fuzz_targets/native_api.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]
+
+[[bin]]
+name = "web_url"
+path = "fuzz_targets/web_url.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]
+
+[[bin]]
+name = "markdown"
+path = "fuzz_targets/markdown.rs"
 test = false
 doc = false
 bench = false

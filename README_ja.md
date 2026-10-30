@@ -74,6 +74,15 @@ git -c http.extraHeader='Authorization: Bearer dev-token' clone http://127.0.0.1
 ./target/debug/kasu repo list
 ```
 
+ブラウザで閲覧するには、認証なしのサーバーの隣で Web UI を起動します（開発用。アカウント・delegate・サインインは [Web UI ガイド](docs/web-ui_ja.md) を参照）。
+
+```sh
+cargo run -p kasu-server -- /path/to/kasu-data &
+mkdir -p dev && head -c 32 /dev/urandom > dev/session.key
+KASU_WEB_SERVER=http://127.0.0.1:50051 KASU_WEB_SESSION_KEY_FILE=dev/session.key \
+KASU_WEB_PUBLIC_URL=http://127.0.0.1:50090 cargo run -p kasu-web
+```
+
 名前の規則、既存データの移行（`kasu-server migrate-registry`）、リポジトリ単位の grant と設定、Admin API、削除、フォークは [マルチリポジトリ](docs/multi-repository_ja.md) を参照してください。
 
 ## ドキュメントと実装状況
@@ -85,6 +94,7 @@ git -c http.extraHeader='Authorization: Bearer dev-token' clone http://127.0.0.1
 | アーキテクチャ・データモデル | [設計・実装計画](docs/plan/README.md) |
 | working copy | [ネイティブ CLI](docs/native-cli_ja.md)、[仮想 checkout](docs/virtual-checkout_ja.md) |
 | ネイティブ API | [Metadata](docs/metadata-api_ja.md)、[書き込み](docs/write-api_ja.md)、[Objects](docs/object-api_ja.md)、[Land](docs/land_ja.md) |
+| Web UI とレビュー | [Web UI](docs/web-ui_ja.md)、[レビューと保護 ref](docs/review_ja.md) |
 | Git 互換機能 | [取り込み](docs/git-import_ja.md)、[読み取り](docs/git-read_ja.md)、[push](docs/git-push_ja.md)、[SSH](docs/git-ssh_ja.md)、[外部 LFS](docs/git-lfs_ja.md) |
 | マルチリポジトリ | [レジストリ・grant・Admin API・ライフサイクル](docs/multi-repository_ja.md) |
 | アクセス制御・射影 | [アカウント](docs/repository-accounts_ja.md)、[ディレクトリ読み取り](docs/directory-read-acl_ja.md)、[Git 射影](docs/git-projection_ja.md)、[射影アカウント](docs/projection-accounts_ja.md) |

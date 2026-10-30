@@ -115,8 +115,11 @@ pub struct RepositoryGrant {
     pub write_policy: Option<WritePolicy>,
     /// Some restricts native reads to these directories.
     pub read_directories: Option<Vec<RepoPath>>,
+    /// Repository administration (settings, state, rename, deletion).
+    pub admin: bool,
 }
 // A credential is deliberately not Debug. None grants repository reads only.
+#[derive(Default)]
 pub struct RepositoryAccount {
     pub name: String,
     pub token: String,
@@ -125,8 +128,19 @@ pub struct RepositoryAccount {
     pub write_policy: Option<WritePolicy>,
     pub read_directories: Option<Vec<RepoPath>>,
     pub grants: Vec<RepositoryGrant>,
+    /// Names this account may create, rename to or fork to.
+    pub create_repositories: Vec<RepoPattern>,
+    /// Profile defaults for signatures written through the Web UI.
+    pub display_name: Option<String>,
+    pub email: Option<String>,
 }
 impl RepositoryAccount {
+    pub(crate) fn may_create(&self, name: &RepoName) -> bool {
+        let record = RepositoryRecord::new(RepoKey::legacy(name), name.clone(), b"", 0);
+        self.create_repositories
+            .iter()
+            .any(|p| p.matches(&record, None))
+    }
     pub(crate) fn grant(&self, index: usize) -> &RepositoryGrant {
         &self.grants[index]
     }
@@ -154,6 +168,23 @@ impl RepositoryAccount {
 #[serde(deny_unknown_fields)]
 struct Config {
     accounts: Vec<AccountFile>,
+    #[serde(default)]
+    delegates: Vec<DelegateFile>,
+}
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DelegateFile {
+    name: String,
+    token_file: PathBuf,
+    act_as: Vec<String>,
+    #[serde(default)]
+    allow_admin: bool,
+    #[serde(default)]
+    allow_unbound: bool,
+    #[serde(default)]
+    anonymous_account: Option<String>,
+    #[serde(default)]
+    trusted_peers: Vec<String>,
 }
 #[derive(serde::Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -168,6 +199,12 @@ struct AccountFile {
     read_directories_hex: Option<Vec<String>>,
     #[serde(default)]
     grants: Option<Vec<GrantFile>>,
+    #[serde(default)]
+    create_repositories: Vec<String>,
+    #[serde(default)]
+    display_name: Option<String>,
+    #[serde(default)]
+    email: Option<String>,
 }
 #[derive(serde::Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -181,6 +218,8 @@ struct GrantFile {
     read_directories: Option<Vec<String>>,
     #[serde(default)]
     read_directories_hex: Option<Vec<String>>,
+    #[serde(default)]
+    admin: bool,
 }
 fn yes() -> bool {
     true
@@ -207,7 +246,7 @@ fn directories(
     }
     Ok(restricted.then_some(dirs))
 }
-pub fn load_repository_accounts(path: &Path) -> Result<Vec<RepositoryAccount>, Status> {
+fn read_config(path: &Path) -> Result<Config, Status> {
     use std::io::Read;
     let mut bytes = Vec::new();
     std::fs::File::open(path)
@@ -218,8 +257,38 @@ pub fn load_repository_accounts(path: &Path) -> Result<Vec<RepositoryAccount>, S
             "repository account configuration exceeds limit",
         ));
     }
-    let config: Config = serde_json::from_slice(&bytes)
-        .map_err(|_| Status::invalid_argument("invalid repository account configuration"))?;
+    serde_json::from_slice(&bytes)
+        .map_err(|_| Status::invalid_argument("invalid repository account configuration"))
+}
+/// The delegates declared next to the accounts in `KASU_ACCOUNTS_FILE`.
+pub fn load_delegates(path: &Path) -> Result<Vec<crate::Delegate>, Status> {
+    read_config(path)?
+        .delegates
+        .into_iter()
+        .map(|d| {
+            Ok(crate::Delegate {
+                token: kasu_object::read_token(
+                    &path
+                        .parent()
+                        .unwrap_or_else(|| Path::new("."))
+                        .join(d.token_file),
+                )?,
+                name: d.name,
+                act_as: d.act_as,
+                allow_admin: d.allow_admin,
+                allow_unbound: d.allow_unbound,
+                anonymous_account: d.anonymous_account,
+                trusted_peers: d
+                    .trusted_peers
+                    .iter()
+                    .map(|c| crate::Cidr::parse(c))
+                    .collect::<Result<_, _>>()?,
+            })
+        })
+        .collect()
+}
+pub fn load_repository_accounts(path: &Path) -> Result<Vec<RepositoryAccount>, Status> {
+    let config = read_config(path)?;
     if config.accounts.is_empty() || config.accounts.len() > 256 {
         return Err(Status::invalid_argument(
             "expected 1..256 repository accounts",
@@ -262,6 +331,7 @@ pub fn load_repository_accounts(path: &Path) -> Result<Vec<RepositoryAccount>, S
                                     g.read_directories,
                                     g.read_directories_hex,
                                 )?,
+                                admin: g.admin,
                             })
                         })
                         .collect::<Result<_, Status>>()?
@@ -273,6 +343,13 @@ pub fn load_repository_accounts(path: &Path) -> Result<Vec<RepositoryAccount>, S
                 write_policy: a.write_policy,
                 read_directories,
                 grants,
+                create_repositories: a
+                    .create_repositories
+                    .iter()
+                    .map(|p| RepoPattern::parse(p))
+                    .collect::<Result<_, _>>()?,
+                display_name: a.display_name,
+                email: a.email,
             })
         })
         .collect()
@@ -330,6 +407,7 @@ impl Backend {
                     repositories: vec![RepoPattern::Legacy],
                     write_policy: account.write_policy.take(),
                     read_directories: account.read_directories.take(),
+                    admin: false,
                 });
             } else if account.write_policy.is_some() || account.read_directories.is_some() {
                 return Err(Status::invalid_argument(
@@ -341,6 +419,11 @@ impl Backend {
                     .grants
                     .iter()
                     .any(|g| g.repositories.is_empty() || g.repositories.len() > 128)
+                || account.create_repositories.len() > 128
+                || [&account.display_name, &account.email].iter().any(|v| {
+                    v.as_ref()
+                        .is_some_and(|v| v.len() > 256 || v.contains(['\n', '\0', '<', '>']))
+                })
             {
                 return Err(Status::invalid_argument("expected 1..128 bounded grants"));
             }
@@ -385,7 +468,7 @@ impl Backend {
             .and_then(|r| r.repo.config.write_policy.as_ref())
     }
     /// Server ∧ repository ∧ account: narrower settings never widen broader ones.
-    fn policies(&self) -> impl Iterator<Item = &WritePolicy> {
+    pub(crate) fn policies(&self) -> impl Iterator<Item = &WritePolicy> {
         std::iter::once(&self.write_policy)
             .chain(self.repository_policy())
             .chain(self.account_policy())
@@ -408,10 +491,16 @@ impl Backend {
     pub(crate) fn allows_path(&self, path: &[u8]) -> bool {
         self.read_allows(path) && self.policies().all(|p| p.allows_path(path))
     }
-    pub(crate) fn write_actor<'a>(&'a self, fallback: &'a [u8]) -> &'a [u8] {
-        self.write_principal()
+    /// The ref_log actor, annotated with the delegate that acted for it.
+    pub(crate) fn write_actor(&self, fallback: &[u8]) -> Vec<u8> {
+        let actor = self
+            .write_principal()
             .map(str::as_bytes)
-            .unwrap_or(fallback)
+            .unwrap_or(fallback);
+        match &self.via {
+            Some(via) => kasu_store::delegated_actor(actor, via),
+            None => actor.to_vec(),
+        }
     }
     pub(crate) fn write_principal(&self) -> Option<&str> {
         self.writer_grant
@@ -439,6 +528,7 @@ mod tests {
             token: token.into(),
             write_policy: Some(WritePolicy::default()),
             grants: vec![],
+            ..Default::default()
         }
     }
     fn projection(token: &str) -> crate::ProjectionAccount {

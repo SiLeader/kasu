@@ -1,5 +1,6 @@
 use crate::*;
 mod registry;
+mod review;
 mod webhook;
 use rusqlite::{Connection, OptionalExtension, TransactionBehavior, params};
 use std::{
@@ -36,6 +37,20 @@ impl SqliteStore {
         connection
             .execute_batch(registry::SCHEMA)
             .map_err(storage_error)?;
+        connection
+            .execute_batch(review::SCHEMA)
+            .map_err(storage_error)?;
+        for table in ["ref_log", "git_ref_log"] {
+            let columns: Vec<String> = connection
+                .prepare(&format!("SELECT name FROM pragma_table_info('{table}')"))
+                .and_then(|mut s| s.query_map([], |r| r.get(0))?.collect())
+                .map_err(storage_error)?;
+            if !columns.iter().any(|c| c == "via") {
+                connection
+                    .execute_batch(&format!("ALTER TABLE {table} ADD COLUMN via BLOB"))
+                    .map_err(storage_error)?;
+            }
+        }
         Ok(Self {
             connection: Mutex::new(connection),
         })
@@ -97,6 +112,23 @@ impl MetaStore for SqliteStore {
         }
         Ok(())
     }
+    fn scan_prefix(&self, prefix: &[u8], limit: usize) -> Result<Vec<Vec<u8>>> {
+        let conn = self.lock()?;
+        let mut stmt = conn
+            .prepare("SELECT key FROM immutable WHERE key>=?1 AND (?2 IS NULL OR key<?2) ORDER BY key LIMIT ?3")
+            .map_err(storage_error)?;
+        let rows = stmt
+            .query_map(
+                params![
+                    prefix,
+                    prefix_end(prefix),
+                    limit.min(i64::MAX as usize) as i64
+                ],
+                |r| r.get(0),
+            )
+            .map_err(storage_error)?;
+        rows.map(|r| r.map_err(storage_error)).collect()
+    }
     fn delete_prefix(&self, prefix: &[u8], limit: usize) -> Result<usize> {
         if prefix.is_empty() {
             return Err(invalid("refusing to delete every immutable key"));
@@ -155,13 +187,14 @@ impl RefStore for SqliteStore {
             tx.execute("INSERT INTO refs(repo,name,target,version) VALUES (?,?,?,?) ON CONFLICT(repo,name) DO UPDATE SET target=excluded.target,version=excluded.version",
                 params![repo, commit.name, new.0.as_slice(), version as i64]).map_err(storage_error)?;
             tx.execute(
-                "INSERT INTO ref_log(repo,name,old,new,actor,time) VALUES (?,?,?,?,?,?)",
+                "INSERT INTO ref_log(repo,name,old,new,actor,via,time) VALUES (?,?,?,?,?,?,?)",
                 params![
                     repo,
                     commit.name,
                     actual.target.map(|id| id.0.to_vec()),
                     new.0.as_slice(),
-                    actor,
+                    actor_parts(actor).0,
+                    actor_parts(actor).1,
                     time
                 ],
             )
@@ -262,8 +295,16 @@ impl RefStore for SqliteStore {
             let new = update.new.map(|id| id.0.to_vec());
             tx.execute("INSERT INTO refs(repo,name,target,version) VALUES (?,?,?,?) ON CONFLICT(repo,name) DO UPDATE SET target=excluded.target,version=excluded.version", params![repo, update.name, new, state.version as i64]).map_err(storage_error)?;
             tx.execute(
-                "INSERT INTO ref_log(repo,name,old,new,actor,time) VALUES (?,?,?,?,?,?)",
-                params![repo, update.name, old, new, actor, time],
+                "INSERT INTO ref_log(repo,name,old,new,actor,via,time) VALUES (?,?,?,?,?,?,?)",
+                params![
+                    repo,
+                    update.name,
+                    old,
+                    new,
+                    actor_parts(actor).0,
+                    actor_parts(actor).1,
+                    time
+                ],
             )
             .map_err(storage_error)?;
         }
@@ -273,7 +314,7 @@ impl RefStore for SqliteStore {
     }
     fn tail(&self, repo: &[u8], after: u64, limit: usize) -> Result<Vec<RefLog>> {
         let conn = self.lock()?;
-        let mut stmt = conn.prepare("SELECT seq,name,old,new,actor,time FROM ref_log WHERE repo=? AND seq>? ORDER BY seq LIMIT ?").map_err(storage_error)?;
+        let mut stmt = conn.prepare("SELECT seq,name,old,new,actor,time,COALESCE(via,X'') FROM ref_log WHERE repo=? AND seq>? ORDER BY seq LIMIT ?").map_err(storage_error)?;
         let rows = stmt
             .query_map(
                 params![
@@ -289,18 +330,20 @@ impl RefStore for SqliteStore {
                         r.get::<_, Option<Vec<u8>>>(3)?,
                         r.get(4)?,
                         r.get(5)?,
+                        r.get(6)?,
                     ))
                 },
             )
             .map_err(storage_error)?;
         rows.map(|row| {
-            let (seq, name, old, new, actor, time) = row.map_err(storage_error)?;
+            let (seq, name, old, new, actor, time, via) = row.map_err(storage_error)?;
             Ok(RefLog {
                 seq: u64::try_from(seq).map_err(|_| invalid("negative log sequence"))?,
                 name,
                 old: target(old)?,
                 new: target(new)?,
                 actor,
+                via,
                 time,
             })
         })
@@ -424,8 +467,16 @@ impl GitRefStore for SqliteStore {
             let new = update.new.map(|id| id.0.to_vec());
             tx.execute("INSERT INTO refs(repo,name,target,version) VALUES (?,?,?,?) ON CONFLICT(repo,name) DO UPDATE SET target=excluded.target,version=excluded.version", params![repo,update.name,new,state.version as i64]).map_err(storage_error)?;
             tx.execute(
-                "INSERT INTO ref_log(repo,name,old,new,actor,time) VALUES (?,?,?,?,?,?)",
-                params![repo, update.name, old, new, actor, time],
+                "INSERT INTO ref_log(repo,name,old,new,actor,via,time) VALUES (?,?,?,?,?,?,?)",
+                params![
+                    repo,
+                    update.name,
+                    old,
+                    new,
+                    actor_parts(actor).0,
+                    actor_parts(actor).1,
+                    time
+                ],
             )
             .map_err(storage_error)?;
         }
@@ -434,8 +485,16 @@ impl GitRefStore for SqliteStore {
             let new = update.new.as_ref().map(Canonical::encode);
             tx.execute("INSERT INTO git_refs(repo,name,value,version) VALUES (?,?,?,?) ON CONFLICT(repo,name) DO UPDATE SET value=excluded.value,version=excluded.version",params![repo,update.name,new,state.version as i64]).map_err(storage_error)?;
             tx.execute(
-                "INSERT INTO git_ref_log(repo,name,old,new,actor,time) VALUES (?,?,?,?,?,?)",
-                params![repo, update.name, old, new, actor, time],
+                "INSERT INTO git_ref_log(repo,name,old,new,actor,via,time) VALUES (?,?,?,?,?,?,?)",
+                params![
+                    repo,
+                    update.name,
+                    old,
+                    new,
+                    actor_parts(actor).0,
+                    actor_parts(actor).1,
+                    time
+                ],
             )
             .map_err(storage_error)?;
         }
@@ -523,8 +582,16 @@ impl GitRefStore for SqliteStore {
             let new = update.new.as_ref().map(Canonical::encode);
             tx.execute("INSERT INTO git_refs(repo,name,value,version) VALUES (?,?,?,?) ON CONFLICT(repo,name) DO UPDATE SET value=excluded.value,version=excluded.version",params![repo,update.name,new,state.version as i64]).map_err(storage_error)?;
             tx.execute(
-                "INSERT INTO git_ref_log(repo,name,old,new,actor,time) VALUES (?,?,?,?,?,?)",
-                params![repo, update.name, old, new, actor, time],
+                "INSERT INTO git_ref_log(repo,name,old,new,actor,via,time) VALUES (?,?,?,?,?,?,?)",
+                params![
+                    repo,
+                    update.name,
+                    old,
+                    new,
+                    actor_parts(actor).0,
+                    actor_parts(actor).1,
+                    time
+                ],
             )
             .map_err(storage_error)?;
         }
@@ -533,7 +600,7 @@ impl GitRefStore for SqliteStore {
     }
     fn tail_git(&self, repo: &[u8], after: u64, limit: usize) -> Result<Vec<GitRefLog>> {
         let conn = self.lock()?;
-        let mut stmt = conn.prepare("SELECT seq,name,old,new,actor,time FROM git_ref_log WHERE repo=? AND seq>? ORDER BY seq LIMIT ?").map_err(storage_error)?;
+        let mut stmt = conn.prepare("SELECT seq,name,old,new,actor,time,COALESCE(via,X'') FROM git_ref_log WHERE repo=? AND seq>? ORDER BY seq LIMIT ?").map_err(storage_error)?;
         let rows = stmt
             .query_map(
                 params![
@@ -549,12 +616,13 @@ impl GitRefStore for SqliteStore {
                         r.get::<_, Option<Vec<u8>>>(3)?,
                         r.get(4)?,
                         r.get(5)?,
+                        r.get(6)?,
                     ))
                 },
             )
             .map_err(storage_error)?;
         rows.map(|row| {
-            let (seq, name, old, new, actor, time) = row.map_err(storage_error)?;
+            let (seq, name, old, new, actor, time, via) = row.map_err(storage_error)?;
             Ok(GitRefLog {
                 seq: seq
                     .try_into()
@@ -563,6 +631,7 @@ impl GitRefStore for SqliteStore {
                 old: decode_git(old)?,
                 new: decode_git(new)?,
                 actor,
+                via,
                 time,
             })
         })

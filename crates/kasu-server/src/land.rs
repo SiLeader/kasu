@@ -184,6 +184,8 @@ impl Backend {
     fn land_policy(&self, name: &[u8], expected: RefState) -> Option<&'static str> {
         if !self.allows_ref(name) {
             Some("ref is not writable")
+        } else if let Some(message) = self.review_gate(name) {
+            Some(message)
         } else if expected.target.is_none() && !self.allows_create() {
             Some("ref creation is disabled")
         } else {
@@ -372,7 +374,7 @@ impl Backend {
                     self.key(),
                     &operation.storage_key,
                     &prepared.commit,
-                    self.write_actor(b"api"),
+                    &self.ref_actor(b"api", std::iter::once(q.name.as_slice())),
                     time,
                     cancelled,
                 )
