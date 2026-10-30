@@ -7,7 +7,7 @@ COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/app/target \
-    RUSTC_WRAPPER= cargo build -p kasu-server --bin kasu-server -p kasu-ingest --locked && \
+    RUSTC_WRAPPER= cargo build -p kasu-server --bin kasu-server -p kasu-ingest --bin kasu-ingest --locked && \
     mkdir -p /out && cp target/debug/kasu-server target/debug/kasu-ingest /out/ && \
     rustc --version && git --version && git lfs version
 COPY tools/lfs/run.py /out/run.py
