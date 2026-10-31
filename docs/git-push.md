@@ -1,6 +1,6 @@
-# Git Smart HTTP Writes
-
 English | [日本語](git-push_ja.md)
+
+# Git Smart HTTP Writes
 
 `git-receive-pack` is served on the same HTTP port as Metadata / upload-pack.
 Authentication uses Basic (any user name + token) or Bearer, and authorization is per repository.
@@ -64,6 +64,13 @@ The HTTP body is limited to the pack limit plus 2 MiB for commands. gzip Content
 When embedding, limits can be set with `Backend::with_receive_limits`.
 Shallow declarations are accepted only for existing published commits, and full connectivity up to the new refs is verified.
 There is no feature for creating a shallow repository with missing parents on the server side.
+
+Separately, [tree diffs during import](git-import.md#inputs-explicitly-rejected) are bounded to
+100,000 visited entries (including directories) and 64 MiB of cumulative generated full-path bytes per diff.
+These fixed limits also apply to SSH pushes and are not changed by `Backend::with_receive_limits`.
+Shared subtrees count at each distinct path even when the pack contains very few unique objects.
+Exceeding a tree diff limit during import rejects the entire push with an `unpack` error and `ng` for
+every ref, before publishing any ref.
 
 Refs are not moved until connectivity and type validation finish.
 Objects are imported parents first, storing the diff against the first parent and the raw Git commits / trees / tags, preserving the original OIDs.

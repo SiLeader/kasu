@@ -578,6 +578,98 @@ async fn malformed_connectivity_stale_refs_and_auth_never_publish_a_ref() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn shared_tree_expansion_rejects_every_ref_before_publication() {
+    let running = Running::new_labeled(
+        WritePolicy::default(),
+        |path| {
+            std::fs::write(path.join("f"), b"base").unwrap();
+            commit(path, "root");
+        },
+        "",
+    )
+    .await;
+    let before_refs = running.meta.list(b"repo", b"").unwrap();
+    let before_git_refs = running.meta.list_git(b"repo", b"").unwrap();
+    let before_log = running.meta.tail(b"repo", 0, 100).unwrap();
+    let before_git_log = running.meta.tail_git(b"repo", 0, 100).unwrap();
+    let head = oid(&running.path, "HEAD");
+    let object = |args: &[&str], input: &[u8]| {
+        String::from_utf8(success(command(&running.path, args, input)))
+            .unwrap()
+            .trim()
+            .to_owned()
+    };
+    let blob = object(&["hash-object", "-w", "--stdin"], b"x");
+    let mut tree = object(&["mktree"], format!("100644 blob {blob}\tf\n").as_bytes());
+    let mut objects = vec![blob, tree.clone()];
+    // Only 19 new objects, but 65,536 files and 131,070 directory occurrences.
+    for _ in 0..16 {
+        tree = object(
+            &["mktree"],
+            format!("040000 tree {tree}\ta\n040000 tree {tree}\tb\n").as_bytes(),
+        );
+        objects.push(tree.clone());
+    }
+    let new = object(&["commit-tree", &tree, "-p", &head], b"shared trees\n");
+    objects.push(new.clone());
+    let pack = success(command(
+        &running.path,
+        &["pack-objects", "--stdout"],
+        format!("{}\n", objects.join("\n")).as_bytes(),
+    ));
+    assert!(pack.len() < 4096);
+    let mut request = Vec::new();
+    write_packet(
+        &mut request,
+        format!("{head} {new} refs/heads/main\0report-status\n").as_bytes(),
+    )
+    .unwrap();
+    write_packet(
+        &mut request,
+        format!("{} {head} refs/heads/valid\n", "0".repeat(40)).as_bytes(),
+    )
+    .unwrap();
+    request.extend(b"0000");
+    request.extend(pack);
+    let response = http_router(running.state.clone())
+        .oneshot(
+            axum::http::Request::post("/repo.git/git-receive-pack")
+                .header("authorization", "Bearer secret")
+                .header("content-type", "application/x-git-receive-pack-request")
+                .body(axum::body::Body::from(request))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), axum::http::StatusCode::OK);
+    let body = axum::body::to_bytes(response.into_body(), 64 * 1024)
+        .await
+        .unwrap();
+    let packets = parse_packets(&body).unwrap();
+    assert!(packets.iter().any(|packet| matches!(
+        packet,
+        Packet::Data(line)
+            if line.starts_with(b"unpack ")
+                && line.windows(b"tree diff entry limit exceeded".len())
+                    .any(|part| part == b"tree diff entry limit exceeded")
+    )));
+    for name in ["main", "valid"] {
+        let rejected = format!("ng refs/heads/{name} unpacker error\n");
+        assert!(packets.contains(&Packet::Data(rejected.as_bytes())));
+    }
+    assert_eq!(running.meta.list(b"repo", b"").unwrap(), before_refs);
+    assert_eq!(
+        running.meta.list_git(b"repo", b"").unwrap(),
+        before_git_refs
+    );
+    assert_eq!(running.meta.tail(b"repo", 0, 100).unwrap(), before_log);
+    assert_eq!(
+        running.meta.tail_git(b"repo", 0, 100).unwrap(),
+        before_git_log
+    );
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn final_tree_acl_blocks_second_parent_changes_and_native_publication() {
     let running = Running::new(
         WritePolicy {

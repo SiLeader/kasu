@@ -2,6 +2,9 @@ use kasu_core::{BString, Entry, FileChange, RepoPath, Result, Tree, TreeEntry, T
 use kasu_store::Repository;
 use std::collections::BTreeMap;
 
+const MAX_DIFF_ENTRIES: usize = 100_000;
+const MAX_DIFF_PATH_BYTES: usize = 64 * 1024 * 1024;
+
 pub fn lookup(repo: &Repository<'_>, root: TreeId, path: &RepoPath) -> Result<Option<TreeEntry>> {
     let mut node = root;
     let mut parts = path.components().peekable();
@@ -108,6 +111,16 @@ pub fn flatten(repo: &Repository<'_>, root: TreeId) -> Result<BTreeMap<RepoPath,
 }
 
 pub fn diff(repo: &Repository<'_>, base: TreeId, head: TreeId) -> Result<Vec<FileChange>> {
+    diff_with_budget(repo, base, head, MAX_DIFF_ENTRIES, MAX_DIFF_PATH_BYTES)
+}
+
+fn diff_with_budget(
+    repo: &Repository<'_>,
+    base: TreeId,
+    head: TreeId,
+    mut entries_left: usize,
+    mut path_bytes_left: usize,
+) -> Result<Vec<FileChange>> {
     let mut out = BTreeMap::new();
     let mut stack = vec![(Vec::new(), Some(base), Some(head))];
     while let Some((prefix, base, head)) = stack.pop() {
@@ -122,15 +135,31 @@ pub fn diff(repo: &Repository<'_>, base: TreeId, head: TreeId) -> Result<Vec<Fil
             .map(|id| repo.tree(id))
             .transpose()?
             .unwrap_or_default();
+        if base.entries.len().max(head.entries.len()) > entries_left {
+            return Err(invalid("tree diff entry limit exceeded"));
+        }
         let names: std::collections::BTreeSet<_> =
             base.entries.keys().chain(head.entries.keys()).collect();
         for name in names {
+            // Shared trees count at every path, including directories with no leaves.
+            entries_left = entries_left
+                .checked_sub(1)
+                .ok_or_else(|| invalid("tree diff entry limit exceeded"))?;
             let old = base.entries.get(name);
             let new = head.entries.get(name);
             if old == new {
                 continue;
             }
-            let mut path = prefix.clone();
+            let path_len = prefix
+                .len()
+                .checked_add(usize::from(!prefix.is_empty()))
+                .and_then(|len| len.checked_add(name.len()))
+                .ok_or_else(|| invalid("tree diff path byte limit exceeded"))?;
+            path_bytes_left = path_bytes_left
+                .checked_sub(path_len)
+                .ok_or_else(|| invalid("tree diff path byte limit exceeded"))?;
+            let mut path = Vec::with_capacity(path_len);
+            path.extend_from_slice(&prefix);
             if !path.is_empty() {
                 path.push(b'/');
             }
@@ -164,4 +193,107 @@ pub fn diff(repo: &Repository<'_>, base: TreeId, head: TreeId) -> Result<Vec<Fil
             None => FileChange::Delete { path },
         })
         .collect())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use kasu_core::BlobId;
+    use kasu_store::{FsBlobStore, SqliteStore};
+
+    fn file() -> TreeEntry {
+        TreeEntry::Leaf(Entry::File {
+            blob: BlobId([1; 32]),
+            executable: false,
+        })
+    }
+
+    #[test]
+    fn diff_counts_shared_subtrees_at_every_path_even_without_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let meta = SqliteStore::memory().unwrap();
+        let blobs = FsBlobStore::open(dir.path()).unwrap();
+        let repo = Repository {
+            meta: &meta,
+            blobs: &blobs,
+        };
+        let empty = repo.put_tree(&Tree::default()).unwrap();
+        for leaf in [
+            Tree::default(),
+            Tree {
+                entries: BTreeMap::from([("f".into(), file())]),
+            },
+        ] {
+            let mut root = repo.put_tree(&leaf).unwrap();
+            let mut entries = leaf.entries.len();
+            for _ in 0..4 {
+                root = repo
+                    .put_tree(&Tree {
+                        entries: BTreeMap::from([
+                            ("a".into(), TreeEntry::SubTree(root)),
+                            ("b".into(), TreeEntry::SubTree(root)),
+                        ]),
+                    })
+                    .unwrap();
+                entries = 2 * (entries + 1);
+            }
+            let changes = diff_with_budget(&repo, empty, root, entries, 1024).unwrap();
+            assert_eq!(changes.len(), 16 * leaf.entries.len());
+            for (base, head) in [(empty, root), (root, empty)] {
+                assert_eq!(
+                    diff_with_budget(&repo, base, head, entries - 1, 1024)
+                        .unwrap_err()
+                        .to_string(),
+                    invalid("tree diff entry limit exceeded").to_string()
+                );
+            }
+            assert!(
+                diff_with_budget(&repo, root, root, 0, 0)
+                    .unwrap()
+                    .is_empty()
+            );
+        }
+    }
+
+    #[test]
+    fn diff_bounds_cumulative_paths_and_preserves_unchanged_subtree_skips() {
+        let dir = tempfile::tempdir().unwrap();
+        let meta = SqliteStore::memory().unwrap();
+        let blobs = FsBlobStore::open(dir.path()).unwrap();
+        let repo = Repository {
+            meta: &meta,
+            blobs: &blobs,
+        };
+        let empty = repo.put_tree(&Tree::default()).unwrap();
+        let child = repo
+            .put_tree(&Tree {
+                entries: BTreeMap::from([(BString::from(b"\xff".as_slice()), file())]),
+            })
+            .unwrap();
+        let base = repo
+            .put_tree(&Tree {
+                entries: BTreeMap::from([
+                    ("a".into(), TreeEntry::SubTree(child)),
+                    ("bb".into(), TreeEntry::SubTree(child)),
+                ]),
+            })
+            .unwrap();
+        // Directory paths (1 + 2) and file paths (3 + 4) are charged separately.
+        let changes = diff_with_budget(&repo, empty, base, 4, 10).unwrap();
+        assert_eq!(changes.len(), 2);
+        assert_eq!(apply(&repo, empty, &changes).unwrap(), base);
+        assert_eq!(
+            diff_with_budget(&repo, empty, base, 4, 9)
+                .unwrap_err()
+                .to_string(),
+            invalid("tree diff path byte limit exceeded").to_string()
+        );
+        let mut head = repo.tree(base).unwrap();
+        head.entries.insert("c".into(), file());
+        let head = repo.put_tree(&head).unwrap();
+        let changes = diff_with_budget(&repo, base, head, 3, 1).unwrap();
+        assert_eq!(changes.len(), 1);
+        assert_eq!(changes[0].path().as_bytes(), b"c");
+        assert_eq!(apply(&repo, base, &changes).unwrap(), head);
+    }
 }

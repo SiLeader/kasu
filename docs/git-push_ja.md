@@ -1,6 +1,6 @@
-# Git Smart HTTP 書き込み
-
 [English](git-push.md) | 日本語
+
+# Git Smart HTTP 書き込み
 
 Metadata／upload-pack と同じ HTTP ポートで `git-receive-pack` を提供します。
 Basic（任意ユーザー名＋トークン）または Bearer で認証し、repo 単位で認可します。
@@ -64,6 +64,13 @@ HTTP 本文は pack 上限＋コマンド領域2 MiBまでです。受信 HTTP �
 組み込み時は `Backend::with_receive_limits` で上限を設定できます。
 shallow 宣言は既存の公開 commit に限り受理し、新 ref まで完全な接続性を検証します。
 欠落した親を持つ shallow リポジトリをサーバー側に作成する機能はありません。
+
+これとは別に、[取り込み中の tree diff](git-import_ja.md#明示的に拒否する入力) は、差分ごとに
+走査するエントリ数100,000件（ディレクトリを含む）と、生成するフルパスの累積バイト数64 MiBに制限します。
+この固定上限は SSH push にも適用し、`Backend::with_receive_limits` では変更できません。
+pack 内の固有オブジェクト数が少なくても、共有 subtree は異なるパスに現れるたびに数えます。
+取り込み中に tree diff の上限を超えた場合は、ref を1つも公開せず、`unpack` エラーと
+全 ref の `ng` を返して push 全体を拒否します。
 
 接続性・型の検証が終わるまで ref を動かしません。
 親が先となる順序で取り込み、第一親との差分と raw Git commit／tree／tag を保存し、元の OID を保持します。

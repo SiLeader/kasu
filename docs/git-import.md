@@ -1,6 +1,6 @@
-# Git Import and OID Preservation
-
 English | [日本語](git-import_ja.md)
+
+# Git Import and OID Preservation
 
 ```sh
 cargo run -p kasu-ingest -- <Git repository> <storage directory> <repository name>
@@ -42,6 +42,13 @@ Currently SHA-1 repositories are supported. SHA-256, shallow history, missing / 
 names that cannot be represented as paths, empty directories that FileChange cannot reproduce, and symbolic refs other than HEAD are errors.
 Each object is checked against a 256 MiB limit both at the header stage and after reading.
 Submodule contents are not fetched; only the gitlink commit OID is kept.
+
+Each tree diff, including first-parent diffs during import, has fixed limits of 100,000 visited entries
+and 64 MiB of cumulative generated full-path bytes. Entries include directories and unchanged names
+in visited tree pairs; identical subtrees are skipped without descending. Shared subtrees are counted
+again at each distinct path, and generated directory prefixes count toward the path-byte limit.
+Exceeding either limit is an error, not a truncated diff, and aborts import before ref publication.
+These bounds prevent a small shared tree graph from expanding into unbounded file changes.
 
 ## Verification
 
