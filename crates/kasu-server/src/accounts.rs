@@ -491,6 +491,33 @@ impl Backend {
     pub(crate) fn allows_path(&self, path: &[u8]) -> bool {
         self.read_allows(path) && self.policies().all(|p| p.allows_path(path))
     }
+    pub(crate) fn effective_path_prefixes(&self) -> Vec<Vec<u8>> {
+        if self.unrestricted_paths() {
+            return Vec::new();
+        }
+        // An intersection of prefix sets starts at one of their boundaries.
+        let mut prefixes: Vec<_> = self
+            .policies()
+            .flat_map(|p| p.allowed_path_prefixes.iter().map(Vec::as_slice))
+            .map(|p| p.strip_suffix(b"/").unwrap_or(p))
+            .chain(
+                self.read_scope
+                    .iter()
+                    .flat_map(|s| s.directories.iter().map(RepoPath::as_bytes)),
+            )
+            .filter(|p| self.allows_path(p))
+            .map(<[u8]>::to_vec)
+            .collect();
+        prefixes.sort();
+        prefixes.dedup();
+        let mut minimal: Vec<Vec<u8>> = Vec::new();
+        for prefix in prefixes {
+            if !minimal.iter().any(|p| crate::read_scope::below(&prefix, p)) {
+                minimal.push(prefix);
+            }
+        }
+        minimal
+    }
     /// The ref_log actor, annotated with the delegate that acted for it.
     pub(crate) fn write_actor(&self, fallback: &[u8]) -> Vec<u8> {
         let actor = self

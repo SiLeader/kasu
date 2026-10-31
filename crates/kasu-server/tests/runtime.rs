@@ -34,6 +34,7 @@ impl Fixture {
                 meta.clone(),
                 Some("operator-secret".into()),
             )
+            .with_reviews(meta.clone())
             .with_object_token("hop-secret".into())
             .unwrap()
             .with_projection_accounts(vec![ProjectionAccount {
@@ -65,6 +66,7 @@ impl Fixture {
                 tonic::transport::Server::builder()
                     .add_service(MetadataService::new(gs.clone()).into_server())
                     .add_service(WriteService::new(gs.clone()).into_server())
+                    .add_service(ReviewService::new(gs.clone()).into_server())
                     .add_service(ObjectService::new(gs).into_server())
                     .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(grpc))
                     .await
@@ -111,6 +113,107 @@ fn list_refs() -> p::ListRefsRequest {
         repo: b"repo".to_vec(),
         prefix: vec![],
     }
+}
+
+#[tokio::test]
+async fn reviews_share_repository_admission_with_metadata_over_http_and_grpc() {
+    use tower::ServiceExt;
+    let f = Fixture::new(ServerLimits {
+        per_repository_active: Some(1),
+        per_repository_pending: Some(1),
+        queue_timeout_ms: 20,
+        ..Default::default()
+    })
+    .await;
+    // Keep an unconsumed Metadata response's repository slot.
+    let held = http_router(f.state.clone())
+        .oneshot(
+            axum::http::Request::post("/v1/refs")
+                .header("content-type", "application/json")
+                .header("authorization", "Bearer operator-secret")
+                .body(axum::body::Body::from(
+                    serde_json::to_vec(&list_refs()).unwrap(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(held.status(), 200);
+    let client = reqwest::Client::new();
+    for (path, body) in [
+        (
+            "list",
+            serde_json::to_value(p::ListReviewsRequest {
+                repo: b"repo".to_vec(),
+                ..Default::default()
+            })
+            .unwrap(),
+        ),
+        (
+            "create",
+            serde_json::to_value(p::CreateReviewRequest {
+                repo: b"repo".to_vec(),
+                ..Default::default()
+            })
+            .unwrap(),
+        ),
+        (
+            "submit",
+            serde_json::to_value(p::SubmitRequest {
+                repo: b"repo".to_vec(),
+                ..Default::default()
+            })
+            .unwrap(),
+        ),
+    ] {
+        let response = client
+            .post(format!("{}/v1/review/{path}", f.http))
+            .bearer_auth("operator-secret")
+            .header("content-type", "application/json")
+            .body(serde_json::to_vec(&body).unwrap())
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(response.status(), 429, "{path}");
+    }
+    let mut reviews = p::review_client::ReviewClient::new(f.channel.clone());
+    let request = || {
+        authorized(
+            p::ListReviewsRequest {
+                repo: b"repo".to_vec(),
+                ..Default::default()
+            },
+            "operator-secret",
+        )
+    };
+    assert_eq!(
+        reviews.list_reviews(request()).await.unwrap_err().code(),
+        Code::ResourceExhausted
+    );
+    assert_eq!(
+        reviews
+            .submit(authorized(
+                p::SubmitRequest {
+                    repo: b"repo".to_vec(),
+                    ..Default::default()
+                },
+                "operator-secret"
+            ))
+            .await
+            .unwrap_err()
+            .code(),
+        Code::ResourceExhausted
+    );
+    drop(held);
+    assert!(
+        reviews
+            .list_reviews(request())
+            .await
+            .unwrap()
+            .into_inner()
+            .reviews
+            .is_empty()
+    );
 }
 
 #[test]

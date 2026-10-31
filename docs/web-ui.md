@@ -123,7 +123,7 @@ The first `-` path segment separates the repository name (names never contain a 
 - Changesets and comparisons with paged file lists, unified or side-by-side diffs (preference), three context lines, and collapsed large files loaded on demand.
 - Accounts limited by `read_directories` see a "directory-limited view" badge and nothing outside their directories.
 - Each directory entry's latest change (the first 100 entries) is loaded after the page, or shown with `?latest=1` without JavaScript.
-- `/<repo>/-/archive/<rev>/<path>` downloads a `tar.gz` (or `?format=zip`) of a directory, streamed from the server's `kasu.v1.Archive` RPC within the caller's read scope (at most 100,000 entries and 2 GiB; gitlinks are omitted).
+- `/<repo>/-/archive/<rev>/<path>` downloads a `tar.gz` (or `?format=zip`) of a directory, streamed from the server's `kasu.v1.Archive` RPC within the caller's read scope (at most 100,000 entries; both total uncompressed file/symlink bytes and archive output are limited to 2 GiB; gitlinks are omitted). The uncompressed size is checked before loading file contents. Downloading an archive does not grant separate Objects API access.
 - Short Changeset IDs (4–63 hex digits) are accepted as `<rev>` when no branch or tag has that name and exactly one Changeset matches.
 
 ## Writing from the browser

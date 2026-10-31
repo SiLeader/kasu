@@ -36,9 +36,9 @@ impl LandCancellation {
         let _ = receiver.wait_for(|cancelled| *cancelled).await;
     }
 }
-struct CancelOnDrop {
-    cancellation: LandCancellation,
-    armed: bool,
+pub(crate) struct CancelOnDrop {
+    pub(crate) cancellation: LandCancellation,
+    pub(crate) armed: bool,
 }
 impl Drop for CancelOnDrop {
     fn drop(&mut self) {

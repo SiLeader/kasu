@@ -311,6 +311,19 @@ impl Backend {
         }
         Ok(scoped)
     }
+    async fn review_scoped(
+        self: &Arc<Self>,
+        authorization: Option<&str>,
+        repo: &[u8],
+        mode: Mode,
+    ) -> Result<Arc<Self>, Status> {
+        self.review_store()?;
+        let scoped = self.scoped(authorization, repo, mode).await?;
+        if scoped.read_scope.is_some() {
+            return Err(not_found());
+        }
+        Ok(scoped)
+    }
     /// The account name reviews attribute the caller's actions to.
     fn review_actor(&self) -> Result<String, Status> {
         match self.principal {
@@ -583,8 +596,11 @@ impl Backend {
         authorization: Option<&str>,
         q: p::GetReviewRequest,
     ) -> Result<p::ReviewRecord, Status> {
-        let scoped = self.review_scope(authorization, &q.repo, Mode::Read)?;
-        Ok(scoped.load_review(q.number)?.record)
+        self.review_scope(authorization, &q.repo, Mode::Read)?
+            .get_review_scoped(q)
+    }
+    fn get_review_scoped(&self, q: p::GetReviewRequest) -> Result<p::ReviewRecord, Status> {
+        Ok(self.load_review(q.number)?.record)
     }
     pub fn list_reviews(
         &self,
@@ -592,6 +608,13 @@ impl Backend {
         q: p::ListReviewsRequest,
     ) -> Result<p::ListReviewsResponse, Status> {
         let scoped = self.review_scope(authorization, &q.repo, Mode::Read)?;
+        scoped.list_reviews_scoped(q)
+    }
+    fn list_reviews_scoped(
+        &self,
+        q: p::ListReviewsRequest,
+    ) -> Result<p::ListReviewsResponse, Status> {
+        let scoped = self;
         let limit = match q.limit {
             0 => 50,
             n @ 1..=500 => n as usize,
@@ -629,6 +652,10 @@ impl Backend {
         q: p::UpdateReviewRequest,
     ) -> Result<p::ReviewRecord, Status> {
         let scoped = self.review_scope(authorization, &q.repo, Mode::Read)?;
+        scoped.update_review_scoped(q)
+    }
+    fn update_review_scoped(&self, q: p::UpdateReviewRequest) -> Result<p::ReviewRecord, Status> {
+        let scoped = self;
         let actor = scoped.review_actor()?;
         let loaded = scoped.load_review(q.number)?;
         if loaded.version != q.expected_version {
@@ -742,6 +769,10 @@ impl Backend {
         q: p::AddRevisionRequest,
     ) -> Result<p::ReviewRecord, Status> {
         let scoped = self.review_scope(authorization, &q.repo, Mode::Write)?;
+        scoped.add_revision_scoped(q)
+    }
+    fn add_revision_scoped(&self, q: p::AddRevisionRequest) -> Result<p::ReviewRecord, Status> {
+        let scoped = self;
         let actor = scoped.review_actor()?;
         let loaded = scoped.load_review(q.number)?;
         scoped.require_target_write(&loaded.record.target)?;
@@ -761,6 +792,13 @@ impl Backend {
         q: p::RebaseReviewRequest,
     ) -> Result<p::RebaseReviewResponse, Status> {
         let scoped = self.review_scope(authorization, &q.repo, Mode::Write)?;
+        scoped.rebase_review_scoped(q)
+    }
+    fn rebase_review_scoped(
+        &self,
+        q: p::RebaseReviewRequest,
+    ) -> Result<p::RebaseReviewResponse, Status> {
+        let scoped = self;
         let actor = scoped.review_actor()?;
         let loaded = scoped.load_review(q.number)?;
         let target = loaded.record.target.clone();
@@ -876,6 +914,13 @@ impl Backend {
         q: p::ListCommentsRequest,
     ) -> Result<p::ListCommentsResponse, Status> {
         let scoped = self.review_scope(authorization, &q.repo, Mode::Read)?;
+        scoped.list_comments_scoped(q)
+    }
+    fn list_comments_scoped(
+        &self,
+        q: p::ListCommentsRequest,
+    ) -> Result<p::ListCommentsResponse, Status> {
+        let scoped = self;
         scoped.load_review(q.number)?;
         let actor = scoped.review_actor().ok();
         Ok(p::ListCommentsResponse {
@@ -910,6 +955,10 @@ impl Backend {
         q: p::SaveDraftRequest,
     ) -> Result<p::ReviewComment, Status> {
         let scoped = self.review_scope(authorization, &q.repo, Mode::Read)?;
+        scoped.save_draft_scoped(q)
+    }
+    fn save_draft_scoped(&self, q: p::SaveDraftRequest) -> Result<p::ReviewComment, Status> {
+        let scoped = self;
         let actor = scoped.review_actor()?;
         if q.body.is_empty() {
             return Err(Status::invalid_argument("a comment needs a body"));
@@ -975,6 +1024,10 @@ impl Backend {
         q: p::EditCommentRequest,
     ) -> Result<p::ReviewComment, Status> {
         let scoped = self.review_scope(authorization, &q.repo, Mode::Read)?;
+        scoped.edit_comment_scoped(q)
+    }
+    fn edit_comment_scoped(&self, q: p::EditCommentRequest) -> Result<p::ReviewComment, Status> {
+        let scoped = self;
         let actor = scoped.review_actor()?;
         if !q.delete && q.body.is_empty() {
             return Err(Status::invalid_argument("a comment needs a body"));
@@ -1010,6 +1063,13 @@ impl Backend {
         q: p::ResolveThreadRequest,
     ) -> Result<p::ReviewComment, Status> {
         let scoped = self.review_scope(authorization, &q.repo, Mode::Read)?;
+        scoped.resolve_thread_scoped(q)
+    }
+    fn resolve_thread_scoped(
+        &self,
+        q: p::ResolveThreadRequest,
+    ) -> Result<p::ReviewComment, Status> {
+        let scoped = self;
         let actor = scoped.review_actor()?;
         let mut saved = None;
         scoped.mutate_review(q.number, |loaded, comments| {
@@ -1020,6 +1080,19 @@ impl Backend {
                 .ok_or_else(|| Status::not_found("comment not found"))?;
             if comment.parent.is_some() {
                 return Err(Status::invalid_argument("only a thread root is resolved"));
+            }
+            if comment.author != actor
+                && loaded.record.author != actor
+                && !scoped.review_admin()
+                && !scoped.eligible(
+                    scoped.review_rule(&loaded.record.target),
+                    &actor,
+                    &loaded.record.target,
+                )
+            {
+                return Err(Status::permission_denied(
+                    "only the review author, thread author, an eligible approver or an administrator can resolve a thread",
+                ));
             }
             comment.resolved = q.resolved;
             let mut write = scoped.review_write(
@@ -1043,6 +1116,10 @@ impl Backend {
         q: p::PublishRequest,
     ) -> Result<p::PublishResponse, Status> {
         let scoped = self.review_scope(authorization, &q.repo, Mode::Read)?;
+        scoped.publish_scoped(q)
+    }
+    fn publish_scoped(&self, q: p::PublishRequest) -> Result<p::PublishResponse, Status> {
+        let scoped = self;
         let actor = scoped.review_actor()?;
         text(&q.body, MAX_TEXT, "comment")?;
         let vote = q
@@ -1322,6 +1399,10 @@ impl Backend {
         q: p::GetReviewRequest,
     ) -> Result<p::SubmitStatus, Status> {
         let scoped = self.review_scope(authorization, &q.repo, Mode::Read)?;
+        scoped.submit_status_scoped(q)
+    }
+    fn submit_status_scoped(&self, q: p::GetReviewRequest) -> Result<p::SubmitStatus, Status> {
+        let scoped = self;
         let loaded = scoped.load_review(q.number)?;
         let comments = scoped.comments(q.number)?;
         Ok(scoped.evaluate(&loaded, &comments))
@@ -1499,26 +1580,14 @@ impl Backend {
             }
         }
     }
-    pub fn submit(
-        &self,
+    pub async fn submit(
+        self: &Arc<Self>,
         authorization: Option<&str>,
         q: p::SubmitRequest,
     ) -> Result<p::SubmitResponse, Status> {
-        let scoped = self.review_scope(authorization, &q.repo, Mode::Write)?;
-        scoped.submit_scoped(q)
-    }
-    fn submit_scoped(&self, q: p::SubmitRequest) -> Result<p::SubmitResponse, Status> {
-        let actor = self.review_actor()?;
-        let method = match p::SubmitMethod::try_from(q.method) {
-            Ok(p::SubmitMethod::Rebase) => SubmitMethodName::Rebase,
-            Ok(p::SubmitMethod::Squash) => SubmitMethodName::Squash,
-            Err(_) => return Err(Status::invalid_argument("unknown submit method")),
-        };
-        if q.idempotency_key.is_empty() || q.idempotency_key.len() > 256 {
-            return Err(Status::invalid_argument(
-                "Submit requires a 1..256-byte key",
-            ));
-        }
+        let scoped = self
+            .review_scoped(authorization, &q.repo, Mode::Write)
+            .await?;
         let attempts = match q.max_attempts {
             0 => 8,
             n @ 1..=32 => n,
@@ -1534,6 +1603,64 @@ impl Backend {
             _ => return Err(Status::invalid_argument("Submit permits at most 30000 ms")),
         };
         let deadline = Instant::now() + Duration::from_millis(timeout.into());
+        let cancellation = crate::LandCancellation::new();
+        let mut guard = crate::land::CancelOnDrop {
+            cancellation: cancellation.clone(),
+            armed: true,
+        };
+        let mut actual = None;
+        for attempt in 1..=attempts {
+            if Instant::now() >= deadline {
+                break;
+            }
+            let state = scoped.clone();
+            let request = q.clone();
+            let cancel = cancellation.clone();
+            let worker = crate::admission::blocking(move || {
+                state.submit_attempt(request, &|| {
+                    cancel.is_cancelled() || Instant::now() >= deadline
+                })
+            });
+            let response = tokio::select! {
+                result = worker => result.map_err(|_| Status::internal("Submit worker failed"))??,
+                _ = tokio::time::sleep_until(tokio::time::Instant::from_std(deadline)) => break,
+            };
+            if response.outcome != p::SubmitOutcome::Retry as i32 {
+                guard.armed = false;
+                return Ok(response);
+            }
+            if response.actual.is_some() {
+                actual = response.actual;
+            }
+            if attempt < attempts {
+                let pause = Duration::from_millis((2u64 << attempt.min(6)).min(200));
+                tokio::time::sleep(pause.min(deadline.saturating_duration_since(Instant::now())))
+                    .await;
+            }
+        }
+        Ok(p::SubmitResponse {
+            outcome: p::SubmitOutcome::Retry as i32,
+            actual,
+            message: "attempt budget or deadline exhausted".into(),
+            ..Default::default()
+        })
+    }
+    fn submit_attempt(
+        &self,
+        q: p::SubmitRequest,
+        cancelled: &(dyn Fn() -> bool + Send + Sync),
+    ) -> Result<p::SubmitResponse, Status> {
+        let actor = self.review_actor()?;
+        let method = match p::SubmitMethod::try_from(q.method) {
+            Ok(p::SubmitMethod::Rebase) => SubmitMethodName::Rebase,
+            Ok(p::SubmitMethod::Squash) => SubmitMethodName::Squash,
+            Err(_) => return Err(Status::invalid_argument("unknown submit method")),
+        };
+        if q.idempotency_key.is_empty() || q.idempotency_key.len() > 256 {
+            return Err(Status::invalid_argument(
+                "Submit requires a 1..256-byte key",
+            ));
+        }
         let mut fingerprint = Encoder::default();
         fingerprint.raw(b"kasu.review.submit.v1");
         fingerprint.u64(q.number);
@@ -1549,10 +1676,7 @@ impl Backend {
             Ok(response)
         };
         let mut actual = None;
-        for attempt in 1..=attempts {
-            if Instant::now() >= deadline {
-                break;
-            }
+        if !cancelled() {
             if let Some(record) = store
                 .review_request(self.key(), &actor, &key)
                 .map_err(status)?
@@ -1675,7 +1799,10 @@ impl Backend {
                 },
                 actor: self.write_actor(b"review"),
             });
-            match store.write_review(self.key(), &write).map_err(status)? {
+            match store
+                .write_review_cancellable(self.key(), &write, cancelled)
+                .map_err(status)?
+            {
                 ReviewWriteResult::Applied { number } => {
                     response.review = Some(self.load_review(number)?.record);
                     return Ok(response);
@@ -1684,11 +1811,9 @@ impl Backend {
                 ReviewWriteResult::RefMismatch(current) => {
                     actual = Some(reference(&target, current));
                 }
-                ReviewWriteResult::VersionMismatch => {}
+                ReviewWriteResult::VersionMismatch | ReviewWriteResult::Cancelled => {}
                 other => return Err(conflict_status(other)),
             }
-            let pause = Duration::from_millis((2u64 << attempt.min(6)).min(200));
-            std::thread::sleep(pause.min(deadline.saturating_duration_since(Instant::now())));
         }
         Ok(p::SubmitResponse {
             outcome: p::SubmitOutcome::Retry as i32,
@@ -1725,39 +1850,57 @@ impl ReviewService {
     }
 }
 macro_rules! review {
-    ($(($method:ident,$backend:ident,$request:ident,$response:ident,$path:literal)),* $(,)?) => {
+    ($(($method:ident,$backend:ident,$mode:ident,$request:ident,$response:ident,$path:literal)),* $(,)?) => {
         #[tonic::async_trait]
         impl Review for ReviewService {
+            async fn submit(&self, request: Request<p::SubmitRequest>) -> Result<Response<p::SubmitResponse>, Status> {
+                let authorization = request.metadata().get("authorization").and_then(|v| v.to_str().ok()).map(str::to_owned);
+                Ok(Response::new(self.state.submit(authorization.as_deref(), request.into_inner()).await?))
+            }
             $(async fn $method(&self, request: Request<p::$request>) -> Result<Response<p::$response>, Status> {
                 let authorization = request.metadata().get("authorization").and_then(|v| v.to_str().ok()).map(str::to_owned);
                 let input = request.into_inner();
-                let state = self.state.clone();
-                let result = crate::admission::blocking(move || state.$backend(authorization.as_deref(), input)).await.map_err(|_| Status::internal("review worker failed"))??;
+                let state = self.state.review_scoped(authorization.as_deref(), &input.repo, Mode::$mode).await?;
+                let result = crate::admission::blocking(move || state.$backend(input)).await.map_err(|_| Status::internal("review worker failed"))??;
                 Ok(Response::new(result))
             })*
         }
         $(async fn $method(State(state): State<Arc<Backend>>, headers: HeaderMap, Json(input): Json<p::$request>) -> Result<Json<p::$response>, crate::transport::HttpError> {
             let authorization = headers.get("authorization").and_then(|v| v.to_str().ok()).map(str::to_owned);
-            let result = crate::admission::blocking(move || state.$backend(authorization.as_deref(), input)).await.map_err(|_| crate::transport::HttpError(Status::internal("review worker failed")))?.map_err(crate::transport::HttpError)?;
+            let state = state.review_scoped(authorization.as_deref(), &input.repo, Mode::$mode).await.map_err(crate::transport::HttpError)?;
+            let result = crate::admission::blocking(move || state.$backend(input)).await.map_err(|_| crate::transport::HttpError(Status::internal("review worker failed")))?.map_err(crate::transport::HttpError)?;
             Ok(Json(result))
         })*
         pub fn review_http_router(state: Arc<Backend>) -> Router {
-            Router::new()$(.route($path, post($method)))*.layer(axum::extract::DefaultBodyLimit::max(4 * 1024 * 1024)).with_state(state)
+            Router::new()$(.route($path, post($method)))*.route("/v1/review/submit", post(submit)).layer(axum::extract::DefaultBodyLimit::max(4 * 1024 * 1024)).with_state(state)
         }
     };
 }
 review! {
-    (create_review, create_review, CreateReviewRequest, ReviewRecord, "/v1/review/create"),
-    (get_review, get_review, GetReviewRequest, ReviewRecord, "/v1/review/get"),
-    (list_reviews, list_reviews, ListReviewsRequest, ListReviewsResponse, "/v1/review/list"),
-    (update_review, update_review, UpdateReviewRequest, ReviewRecord, "/v1/review/update"),
-    (add_revision, add_revision, AddRevisionRequest, ReviewRecord, "/v1/review/add-revision"),
-    (rebase_review, rebase_review, RebaseReviewRequest, RebaseReviewResponse, "/v1/review/rebase"),
-    (list_comments, list_comments, ListCommentsRequest, ListCommentsResponse, "/v1/review/list-comments"),
-    (publish, publish, PublishRequest, PublishResponse, "/v1/review/publish"),
-    (save_draft, save_draft, SaveDraftRequest, ReviewComment, "/v1/review/save-draft"),
-    (edit_comment, edit_comment, EditCommentRequest, ReviewComment, "/v1/review/edit-comment"),
-    (resolve_thread, resolve_thread, ResolveThreadRequest, ReviewComment, "/v1/review/resolve-thread"),
-    (get_submit_status, submit_status, GetReviewRequest, SubmitStatus, "/v1/review/submit-status"),
-    (submit, submit, SubmitRequest, SubmitResponse, "/v1/review/submit"),
+    (create_review, create_review_scoped, Write, CreateReviewRequest, ReviewRecord, "/v1/review/create"),
+    (get_review, get_review_scoped, Read, GetReviewRequest, ReviewRecord, "/v1/review/get"),
+    (list_reviews, list_reviews_scoped, Read, ListReviewsRequest, ListReviewsResponse, "/v1/review/list"),
+    (update_review, update_review_scoped, Read, UpdateReviewRequest, ReviewRecord, "/v1/review/update"),
+    (add_revision, add_revision_scoped, Write, AddRevisionRequest, ReviewRecord, "/v1/review/add-revision"),
+    (rebase_review, rebase_review_scoped, Write, RebaseReviewRequest, RebaseReviewResponse, "/v1/review/rebase"),
+    (list_comments, list_comments_scoped, Read, ListCommentsRequest, ListCommentsResponse, "/v1/review/list-comments"),
+    (publish, publish_scoped, Read, PublishRequest, PublishResponse, "/v1/review/publish"),
+    (save_draft, save_draft_scoped, Read, SaveDraftRequest, ReviewComment, "/v1/review/save-draft"),
+    (edit_comment, edit_comment_scoped, Read, EditCommentRequest, ReviewComment, "/v1/review/edit-comment"),
+    (resolve_thread, resolve_thread_scoped, Read, ResolveThreadRequest, ReviewComment, "/v1/review/resolve-thread"),
+    (get_submit_status, submit_status_scoped, Read, GetReviewRequest, SubmitStatus, "/v1/review/submit-status"),
+}
+async fn submit(
+    State(state): State<Arc<Backend>>,
+    headers: HeaderMap,
+    Json(input): Json<p::SubmitRequest>,
+) -> Result<Json<p::SubmitResponse>, crate::transport::HttpError> {
+    state
+        .submit(
+            headers.get("authorization").and_then(|v| v.to_str().ok()),
+            input,
+        )
+        .await
+        .map(Json)
+        .map_err(crate::transport::HttpError)
 }

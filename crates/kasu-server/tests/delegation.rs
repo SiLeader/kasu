@@ -127,6 +127,75 @@ fn refs(repo: &str) -> p::ListRefsRequest {
 }
 const PEER: Option<&str> = Some("10.0.20.5:4000");
 
+#[test]
+fn permissions_intersect_all_path_policies_and_read_directories() {
+    let fixture = Fixture::with(&["team/app"], |backend| {
+        let mut alice = grant(&["team/app"], true, false);
+        alice.write_policy.as_mut().unwrap().allowed_path_prefixes =
+            vec![b"src/".to_vec(), b"docs".to_vec()];
+        alice.read_directories = Some(vec![
+            kasu_core::RepoPath::new(b"src/api".as_slice()).unwrap(),
+            kasu_core::RepoPath::new(b"docs/public".as_slice()).unwrap(),
+        ]);
+        let mut bob = grant(&["team/app"], true, false);
+        bob.write_policy.as_mut().unwrap().allowed_path_prefixes = vec![b"other".to_vec()];
+        let mut carol = grant(&["team/app"], true, false);
+        carol.read_directories = Some(vec![kasu_core::RepoPath::new(b"docs".as_slice()).unwrap()]);
+        backend
+            .with_write_policy(WritePolicy {
+                allowed_path_prefixes: vec![b"src".to_vec(), b"docs".to_vec()],
+                ..Default::default()
+            })
+            .with_repository_accounts(vec![
+                account("alice", vec![alice]),
+                account("bob", vec![bob]),
+                account("carol", vec![carol]),
+            ])
+            .unwrap()
+    });
+    fixture.update("team/app", |r| {
+        r.config = br#"{"write_policy":{"allowed_path_prefixes":["src/api/v1","docs","src/api/v1/nested"]}}"#.to_vec();
+        r.config_version += 1;
+    });
+    let permissions = |token: &str| {
+        fixture
+            .state
+            .permissions(
+                Some(&format!("Bearer {token}")),
+                p::PermissionsRequest {
+                    repo: b"team/app".to_vec(),
+                    refs: vec![],
+                },
+            )
+            .unwrap()
+    };
+    let alice = permissions("alice-pat");
+    assert!(alice.write && alice.paths_restricted);
+    assert_eq!(
+        alice.allowed_path_prefixes,
+        [b"docs/public".to_vec(), b"src/api/v1".to_vec()]
+    );
+    let bob = permissions("bob-pat");
+    assert!(bob.paths_restricted);
+    assert!(bob.allowed_path_prefixes.is_empty());
+    let carol = permissions("carol-pat");
+    assert!(carol.paths_restricted);
+    assert_eq!(carol.allowed_path_prefixes, [b"docs".to_vec()]);
+
+    let unrestricted = Fixture::new(&["app"])
+        .state
+        .permissions(
+            Some("Bearer operator"),
+            p::PermissionsRequest {
+                repo: b"app".to_vec(),
+                refs: vec![],
+            },
+        )
+        .unwrap();
+    assert!(unrestricted.write);
+    assert!(!unrestricted.paths_restricted);
+}
+
 #[tokio::test]
 async fn delegation_requires_trusted_peer_scope_and_matching_binding() {
     let fixture = fixture(&["10.0.20.0/24"], true);

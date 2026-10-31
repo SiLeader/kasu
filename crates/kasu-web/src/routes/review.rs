@@ -104,17 +104,29 @@ async fn list(ctx: &mut Ctx, repo: Repo) -> Result<Response> {
     )
     .await
     .read()?;
-    let mut rows = Vec::new();
-    for review in &listed.reviews {
-        let status = rpc!(
-            ctx,
-            review.get_submit_status(p::GetReviewRequest {
+    let lookups = listed
+        .reviews
+        .iter()
+        .map(|review| {
+            let upstream = ctx.upstream().clone();
+            let caller = ctx.caller().clone();
+            let request = p::GetReviewRequest {
                 repo: repo.bytes(),
-                number: review.number
-            })
-        )
-        .await
-        .ok();
+                number: review.number,
+            };
+            async move {
+                crate::upstream::read(|| {
+                    let mut client = upstream.review();
+                    let request = upstream.request(&caller, request.clone(), false);
+                    async move { client.get_submit_status(request).await }
+                })
+                .await
+            }
+        })
+        .collect::<Vec<_>>();
+    let statuses = crate::upstream::bounded_reads(lookups).await.read()?;
+    let mut rows = Vec::new();
+    for (review, status) in listed.reviews.iter().zip(statuses) {
         rows.push(ListRow {
             number: review.number,
             url: repo.url("reviews", Some(review.number.to_string().as_bytes()), None),
@@ -123,6 +135,7 @@ async fn list(ctx: &mut Ctx, repo: Repo) -> Result<Response> {
             author: review.author.clone(),
             state: state_label(t, review.state),
             approvals: status
+                .ok()
                 .map(|s| format!("{}/{}", s.approvals, s.required_approvals))
                 .unwrap_or_default(),
             updated: time::absolute(review.updated_at, b"+0000", ctx.prefs.tz.as_deref()),

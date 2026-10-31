@@ -63,6 +63,8 @@ See [multiple repositories](multi-repository.md#authentication-and-authorization
 ## Relation to the Server-wide Policy
 
 Effective permissions are the range allowed by all of the [server-wide WritePolicy](git-push.md), the [repository policy](multi-repository.md#per-repository-configuration), and the account policy.
+
+`Identity.GetPermissions.allowed_path_prefixes` reports this intersection, further restricted by `read_directories`. When `paths_restricted` is true, an empty prefix list means no paths may change; when false, paths are unrestricted. The `write` flag still determines whether the account can write.
 Account settings never widen server-wide restrictions.
 
 | Operation | Decision |

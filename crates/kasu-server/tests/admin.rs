@@ -211,6 +211,41 @@ async fn lifecycle_create_rename_delete_purge_and_recreate() {
         .await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
 
+    // More rows than one purge batch must be drained before marking it purged.
+    f.store
+        .write_review(
+            &key,
+            &ReviewWrite {
+                review: ReviewRow {
+                    number: 0,
+                    version: 1,
+                    state: REVIEW_OPEN,
+                    target: b"refs/heads/main".to_vec(),
+                    head: first.clone(),
+                    author: "alice".into(),
+                    data: vec![],
+                },
+                expected_version: 0,
+                revision: Some(ReviewRevisionRow {
+                    revision: 1,
+                    data: vec![],
+                }),
+                votes: vec![],
+                comments: (1..=10_001)
+                    .map(|id| ReviewCommentRow {
+                        id,
+                        author: "alice".into(),
+                        draft: false,
+                        data: vec![],
+                    })
+                    .collect(),
+                event: b"created".to_vec(),
+                request: None,
+                ref_update: None,
+                time: 1,
+            },
+        )
+        .unwrap();
     // Deleting stops all access and releases the name and its aliases.
     let (status, deleted) = f
         .call(
@@ -257,6 +292,19 @@ async fn lifecycle_create_rename_delete_purge_and_recreate() {
     let blob_oid = repo.blob_metadata(blob).unwrap().git_blob_oid;
     assert!(index.find(blob_oid).unwrap().is_some());
     assert_eq!(f.state.purge_deleted_repositories(i64::MAX - 1).unwrap(), 1);
+    assert!(f.store.review(key.as_bytes(), 1).unwrap().is_none());
+    assert!(
+        f.store
+            .review_comments(key.as_bytes(), 1)
+            .unwrap()
+            .is_empty()
+    );
+    assert!(
+        f.store
+            .review_revisions(key.as_bytes(), 1)
+            .unwrap()
+            .is_empty()
+    );
     assert!(!repo.has_blob_membership(key.as_bytes(), blob).unwrap());
     assert!(
         repo.require_membership(

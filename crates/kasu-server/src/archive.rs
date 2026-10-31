@@ -21,15 +21,10 @@ struct Item {
 }
 impl Backend {
     /// Every leaf below `path` at `id`, as the caller may read it.
-    fn archive_items(&self, q: &p::ArchiveRequest) -> Result<Vec<Item>, Status> {
+    fn archive_items(&self, q: &p::ArchiveRequest, max_bytes: u64) -> Result<Vec<Item>, Status> {
         let id = self.id(&q.repo, &q.id)?;
         let ops = self.ops();
         let root = ops.root_tree(id).map_err(status)?;
-        let root = if self.read_scope.is_some() {
-            self.read_root(root)?
-        } else {
-            root
-        };
         let start = if q.path.is_empty() {
             root
         } else {
@@ -45,6 +40,7 @@ impl Backend {
             }
         };
         let mut items = Vec::new();
+        let mut bytes = 0u64;
         let mut pending = vec![(Vec::new(), start)];
         while let Some((prefix, tree)) = pending.pop() {
             for (name, value) in ops
@@ -61,14 +57,28 @@ impl Backend {
                     path.push(b'/');
                 }
                 path.extend_from_slice(&name);
+                let full_path = if q.path.is_empty() {
+                    path.clone()
+                } else {
+                    [q.path.as_slice(), b"/", &path].concat()
+                };
                 match value {
-                    TreeEntry::SubTree(child) => pending.push((path, child)),
-                    TreeEntry::Leaf(entry) => {
+                    TreeEntry::SubTree(child) if self.read_enters(&full_path) => {
+                        pending.push((path, child));
+                    }
+                    TreeEntry::Leaf(entry) if self.read_allows(&full_path) => {
                         if let Some(blob) = entry.blob() {
-                            self.grant_read_blob(blob)?;
+                            let size = ops.ctx.repo.blob_metadata(blob).map_err(status)?.size;
+                            bytes = bytes
+                                .checked_add(size)
+                                .filter(|n| *n <= max_bytes)
+                                .ok_or_else(|| {
+                                    Status::resource_exhausted("archive content exceeds byte limit")
+                                })?;
                         }
                         items.push(Item { path, entry });
                     }
+                    _ => {}
                 }
                 if items.len() > MAX_ENTRIES {
                     return Err(Status::resource_exhausted("archive exceeds 100000 entries"));
@@ -87,6 +97,12 @@ struct Sink {
 }
 impl Write for Sink {
     fn write(&mut self, data: &[u8]) -> std::io::Result<usize> {
+        if data.len() as u64 > MAX_BYTES.saturating_sub(self.written) {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::FileTooLarge,
+                "archive exceeds 2 GiB",
+            ));
+        }
         let size = data.len().min(CHUNK - self.buffer.len());
         self.buffer.extend_from_slice(&data[..size]);
         self.written += size as u64;
@@ -103,6 +119,13 @@ impl Write for Sink {
         self.tx
             .blocking_send(Ok(p::ArchiveChunk { data }))
             .map_err(|_| std::io::Error::new(std::io::ErrorKind::BrokenPipe, "client went away"))
+    }
+}
+fn archive_io(error: std::io::Error) -> Status {
+    match error.kind() {
+        std::io::ErrorKind::FileTooLarge => Status::resource_exhausted(error.to_string()),
+        std::io::ErrorKind::BrokenPipe => Status::cancelled(error.to_string()),
+        _ => Status::internal(error.to_string()),
     }
 }
 fn octal(field: &mut [u8], value: u64) {
@@ -161,7 +184,7 @@ fn pax(out: &mut impl Write, name: &[u8], link: &[u8]) -> std::io::Result<()> {
     pad(out, records.len() as u64)
 }
 fn write_tar(backend: &Backend, items: &[Item], prefix: &[u8], sink: Sink) -> Result<Sink, Status> {
-    let io = |e: std::io::Error| Status::cancelled(e.to_string());
+    let io = archive_io;
     let mut out = flate2::write::GzEncoder::new(sink, flate2::Compression::default());
     for item in items {
         let name = [prefix, &item.path].concat();
@@ -183,9 +206,6 @@ fn write_tar(backend: &Backend, items: &[Item], prefix: &[u8], sink: Sink) -> Re
             .map_err(io)?;
         out.write_all(data).map_err(io)?;
         pad(&mut out, data.len() as u64).map_err(io)?;
-        if out.get_ref().written > MAX_BYTES {
-            return Err(Status::resource_exhausted("archive exceeds 2 GiB"));
-        }
     }
     out.write_all(&[0; 1024]).map_err(io)?;
     out.finish().map_err(io)
@@ -196,7 +216,7 @@ fn write_zip(
     prefix: &[u8],
     mut out: Sink,
 ) -> Result<Sink, Status> {
-    let io = |e: std::io::Error| Status::cancelled(e.to_string());
+    let io = archive_io;
     let mut central = Vec::new();
     let mut count = 0u16;
     for item in items {
@@ -259,9 +279,6 @@ fn write_zip(
         central.extend((offset as u32).to_le_bytes());
         central.extend(&name);
         count += 1;
-        if out.written > MAX_BYTES {
-            return Err(Status::resource_exhausted("archive exceeds 2 GiB"));
-        }
     }
     let start = out.written;
     out.write_all(&central).map_err(io)?;
@@ -314,7 +331,7 @@ impl Archive for ArchiveService {
             .map_err(|_| Status::invalid_argument("unknown archive format"))?;
         let worker = state.clone();
         let request = input.clone();
-        let items = crate::admission::blocking(move || worker.archive_items(&request))
+        let items = crate::admission::blocking(move || worker.archive_items(&request, MAX_BYTES))
             .await
             .map_err(|_| Status::internal("archive worker failed"))??;
         let (tx, rx) = tokio::sync::mpsc::channel(4);
@@ -328,9 +345,7 @@ impl Archive for ArchiveService {
                 p::ArchiveFormat::TarGz => write_tar(&state, &items, &input.prefix, sink),
                 p::ArchiveFormat::Zip => write_zip(&state, &items, &input.prefix, sink),
             };
-            match result
-                .and_then(|mut sink| sink.flush().map_err(|e| Status::cancelled(e.to_string())))
-            {
+            match result.and_then(|mut sink| sink.flush().map_err(archive_io)) {
                 Ok(()) => {}
                 Err(error) => {
                     let _ = tx.blocking_send(Err(error));
@@ -344,6 +359,93 @@ impl Archive for ArchiveService {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn archive_selection_limits_expanded_bytes_without_granting_object_access() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = Arc::new(kasu_store::SqliteStore::memory().unwrap());
+        let blobs = Arc::new(kasu_store::FsBlobStore::open(dir.path()).unwrap());
+        let backend = Backend::new(b"repo".to_vec(), store.clone(), blobs, store, None);
+        let mut scoped = backend.scope(None, b"repo", Mode::Read).unwrap();
+        let repository = scoped.ops().ctx.repo;
+        let blob = repository.put_blob(&[0; 8]).unwrap();
+        let signature = c::Signature {
+            name: "A".into(),
+            email: "a@example.com".into(),
+            timestamp: 1,
+            tz: "+0000".into(),
+        };
+        let id = repository
+            .put_changeset(&c::Changeset {
+                parents: vec![],
+                author: signature.clone(),
+                committer: signature,
+                message: "archive".into(),
+                changes: [b"docs/a".as_slice(), b"docs/sub/b", b"private/c"]
+                    .into_iter()
+                    .map(|path| c::FileChange::Set {
+                        path: c::RepoPath::new(path).unwrap(),
+                        entry: c::Entry::File {
+                            blob,
+                            executable: false,
+                        },
+                    })
+                    .collect(),
+                git_provenance: None,
+            })
+            .unwrap();
+        repository.associate_changeset(scoped.key(), id).unwrap();
+        scoped.read_scope = Some(Arc::new(crate::read_scope::ReadScope::new(
+            scoped.key(),
+            &[c::RepoPath::new(b"docs".as_slice()).unwrap()],
+        )));
+        let mut request = p::ArchiveRequest {
+            repo: b"repo".to_vec(),
+            id: id.0.to_vec(),
+            ..Default::default()
+        };
+        let items = scoped.archive_items(&request, 16).unwrap();
+        assert_eq!(
+            items.iter().map(|i| i.path.as_slice()).collect::<Vec<_>>(),
+            [b"docs/a".as_slice(), b"docs/sub/b"]
+        );
+        assert_eq!(
+            scoped.archive_items(&request, 15).err().unwrap().code(),
+            tonic::Code::ResourceExhausted
+        );
+        request.path = b"docs/sub".to_vec();
+        assert_eq!(scoped.archive_items(&request, 8).unwrap()[0].path, b"b");
+        request.path = b"private".to_vec();
+        assert_eq!(
+            scoped.archive_items(&request, 16).err().unwrap().code(),
+            tonic::Code::PermissionDenied
+        );
+        assert!(
+            !scoped
+                .ops()
+                .ctx
+                .repo
+                .has_blob_membership(scoped.object_namespace(), blob)
+                .unwrap()
+        );
+    }
+
+    #[test]
+    fn sink_rejects_output_over_the_limit_including_archive_trailers() {
+        let (tx, _rx) = tokio::sync::mpsc::channel(2);
+        let mut sink = Sink {
+            tx,
+            buffer: vec![],
+            written: MAX_BYTES - 4,
+        };
+        sink.write_all(b"1234").unwrap();
+        assert_eq!(sink.written, MAX_BYTES);
+        assert_eq!(
+            archive_io(sink.write_all(b"x").unwrap_err()).code(),
+            tonic::Code::ResourceExhausted
+        );
+        assert_eq!(sink.buffer, b"1234");
+    }
+
     #[test]
     fn sink_splits_large_writes_without_losing_bytes() {
         let data: Vec<u8> = (0..5 * 1024 * 1024 + 17).map(|i| i as u8).collect();

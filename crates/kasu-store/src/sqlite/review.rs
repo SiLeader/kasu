@@ -15,14 +15,14 @@ CREATE TABLE IF NOT EXISTS review_submissions (repo BLOB NOT NULL, account TEXT 
 CREATE TABLE IF NOT EXISTS review_log (seq INTEGER PRIMARY KEY AUTOINCREMENT, repo BLOB NOT NULL, number INTEGER NOT NULL, time INTEGER NOT NULL, data BLOB NOT NULL);
 CREATE INDEX IF NOT EXISTS review_log_repo ON review_log(repo,seq);
 ";
-const TABLES: [&str; 7] = [
-    "review_log",
-    "review_submissions",
-    "review_comments",
-    "review_votes",
-    "review_revisions",
-    "reviews",
-    "review_counters",
+const TABLES: [(&str, &str); 7] = [
+    ("review_log", "seq"),
+    ("review_submissions", "account,key"),
+    ("review_comments", "number,id"),
+    ("review_votes", "number,account"),
+    ("review_revisions", "number,revision"),
+    ("reviews", "number"),
+    ("review_counters", "repo"),
 ];
 
 fn number(value: u64) -> Result<i64> {
@@ -189,7 +189,12 @@ impl ReviewStore for SqliteStore {
     ) -> Result<Option<ReviewRequestRecord>> {
         read_request(&*self.lock()?, repo, account, key)
     }
-    fn write_review(&self, repo: &[u8], write: &ReviewWrite) -> Result<ReviewWriteResult> {
+    fn write_review_cancellable(
+        &self,
+        repo: &[u8],
+        write: &ReviewWrite,
+        cancelled: &(dyn Fn() -> bool + Send + Sync),
+    ) -> Result<ReviewWriteResult> {
         validate_write(write)?;
         let mut db = self.lock()?;
         let tx = db
@@ -205,6 +210,9 @@ impl ReviewStore for SqliteStore {
             return Ok(ReviewWriteResult::Replayed {
                 response: existing.response,
             });
+        }
+        if cancelled() {
+            return Ok(ReviewWriteResult::Cancelled);
         }
         let review = &write.review;
         let n = if review.number == 0 {
@@ -323,6 +331,9 @@ impl ReviewStore for SqliteStore {
             )
             .map_err(storage_error)?;
         }
+        if cancelled() {
+            return Ok(ReviewWriteResult::Cancelled);
+        }
         tx.commit().map_err(storage_error)?;
         Ok(ReviewWriteResult::Applied { number: n })
     }
@@ -352,13 +363,19 @@ impl ReviewStore for SqliteStore {
         })
         .collect()
     }
-    fn purge_reviews(&self, repo: &[u8], _limit: usize) -> Result<usize> {
+    fn purge_reviews(&self, repo: &[u8], limit: usize) -> Result<usize> {
         let mut db = self.lock()?;
         let tx = db.transaction().map_err(storage_error)?;
         let mut removed = 0;
-        for table in TABLES {
+        for (table, key) in TABLES {
+            if removed == limit {
+                break;
+            }
             removed += tx
-                .execute(&format!("DELETE FROM {table} WHERE repo=?"), [repo])
+                .execute(
+                    &format!("DELETE FROM {table} WHERE repo=?1 AND ({key}) IN (SELECT {key} FROM {table} WHERE repo=?1 ORDER BY {key} LIMIT ?2)"),
+                    params![repo, number((limit - removed) as u64)?],
+                )
                 .map_err(storage_error)?;
         }
         tx.commit().map_err(storage_error)?;
@@ -369,6 +386,60 @@ impl ReviewStore for SqliteStore {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn purge_obeys_a_shared_row_budget_and_preserves_other_repositories() {
+        let store = SqliteStore::memory().unwrap();
+        let mut create = write(header(0, 1, b"a"), 0);
+        create.revision = Some(ReviewRevisionRow {
+            revision: 1,
+            data: vec![],
+        });
+        create.votes = vec![ReviewVoteRow {
+            account: "bob".into(),
+            data: vec![],
+        }];
+        create.comments = (1..=5)
+            .map(|id| ReviewCommentRow {
+                id,
+                author: "bob".into(),
+                draft: false,
+                data: vec![],
+            })
+            .collect();
+        create.request = Some(ReviewRequestRecord {
+            account: "alice".into(),
+            key: b"create".to_vec(),
+            fingerprint: vec![],
+            response: vec![],
+        });
+        for repo in [b"r", b"o"] {
+            store.write_review(repo, &create).unwrap();
+        }
+        let count = |repo: &[u8]| {
+            let db = store.lock().unwrap();
+            TABLES
+                .iter()
+                .map(|(table, _)| {
+                    db.query_row(
+                        &format!("SELECT count(*) FROM {table} WHERE repo=?"),
+                        [repo],
+                        |r| r.get::<_, i64>(0),
+                    )
+                    .unwrap() as usize
+                })
+                .sum::<usize>()
+        };
+        assert_eq!(count(b"r"), 11);
+        assert_eq!(store.purge_reviews(b"r", 0).unwrap(), 0);
+        assert_eq!(count(b"r"), 11);
+        for expected in [3, 3, 3, 2, 0] {
+            let before = count(b"r");
+            assert_eq!(store.purge_reviews(b"r", 3).unwrap(), expected);
+            assert_eq!(count(b"r"), before - expected);
+            assert_eq!(count(b"o"), 11);
+        }
+    }
+
     fn header(number: u64, version: u64, head: &[u8]) -> ReviewRow {
         ReviewRow {
             number,
@@ -489,6 +560,36 @@ mod tests {
         // Nothing of the rejected write was applied.
         assert_eq!(store.review(b"r", 1).unwrap().unwrap().version, 1);
         submit.ref_update.as_mut().unwrap().update.expected = RefState::default();
+        submit.request = Some(ReviewRequestRecord {
+            account: "alice".into(),
+            key: b"submit".to_vec(),
+            fingerprint: b"s".to_vec(),
+            response: vec![1],
+        });
+        for cancel_at in [0, 1] {
+            let checks = std::sync::atomic::AtomicUsize::new(0);
+            assert_eq!(
+                store
+                    .write_review_cancellable(b"r", &submit, &|| {
+                        checks.fetch_add(1, std::sync::atomic::Ordering::SeqCst) >= cancel_at
+                    })
+                    .unwrap(),
+                ReviewWriteResult::Cancelled
+            );
+            assert_eq!(store.review(b"r", 1).unwrap().unwrap().version, 1);
+            assert_eq!(
+                store.resolve(b"r", b"refs/heads/main").unwrap(),
+                RefState::default()
+            );
+            assert!(store.tail(b"r", 0, 10).unwrap().is_empty());
+            assert!(
+                store
+                    .review_request(b"r", "alice", b"submit")
+                    .unwrap()
+                    .is_none()
+            );
+            assert_eq!(store.review_log(b"r", 0, 10).unwrap().len(), 1);
+        }
         store.write_review(b"r", &submit).unwrap();
         assert_eq!(
             store.resolve(b"r", b"refs/heads/main").unwrap().target,

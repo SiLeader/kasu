@@ -512,6 +512,24 @@ fn reviews_share_transactions_with_refs_and_serialize_writers() {
     );
     assert_eq!(store.review(&repo, 1).unwrap().unwrap().version, 1);
     submit.ref_update.as_mut().unwrap().update.expected = RefState::default();
+    for cancel_at in [0, 1] {
+        let checks = AtomicUsize::new(0);
+        assert_eq!(
+            store
+                .write_review_cancellable(&repo, &submit, &|| {
+                    checks.fetch_add(1, Ordering::SeqCst) >= cancel_at
+                })
+                .unwrap(),
+            ReviewWriteResult::Cancelled
+        );
+        assert_eq!(store.review(&repo, 1).unwrap().unwrap().version, 1);
+        assert_eq!(
+            store.resolve(&repo, b"refs/heads/main").unwrap(),
+            RefState::default()
+        );
+        assert!(store.tail(&repo, 0, 10).unwrap().is_empty());
+        assert_eq!(store.review_log(&repo, 0, 100).unwrap().len(), 2);
+    }
     assert_eq!(
         store.write_review(&repo, &submit).unwrap(),
         ReviewWriteResult::Applied { number: 1 }
@@ -535,7 +553,7 @@ fn reviews_share_transactions_with_refs_and_serialize_writers() {
     let threads: Vec<_> = (0..8)
         .map(|i| {
             let (store, repo, barrier, wins) =
-                (store.clone(), repo.clone(), barrier.clone(), wins.clone());
+                (open(), repo.clone(), barrier.clone(), wins.clone());
             std::thread::spawn(move || {
                 let mut write = review_write(2, 2, b"b");
                 write.comments = vec![ReviewCommentRow {
@@ -592,6 +610,26 @@ fn reviews_share_transactions_with_refs_and_serialize_writers() {
             .len(),
         1
     );
-    assert!(store.purge_reviews(&repo, 1000).unwrap() > 0);
+    assert_eq!(store.purge_reviews(&repo, 0).unwrap(), 0);
+    assert!(store.review(&repo, 1).unwrap().is_some());
+    let mut removed = 0;
+    loop {
+        let count = store.purge_reviews(&repo, 2).unwrap();
+        assert!(count <= 2);
+        removed += count;
+        if count == 0 {
+            break;
+        }
+    }
+    assert!(removed > 2);
     assert!(store.review(&repo, 1).unwrap().is_none());
+    assert!(store.review_revisions(&repo, 1).unwrap().is_empty());
+    assert!(store.review_comments(&repo, 2).unwrap().is_empty());
+    assert!(store.review_log(&repo, 0, 100).unwrap().is_empty());
+    assert!(
+        store
+            .review_request(&repo, "alice", b"k")
+            .unwrap()
+            .is_none()
+    );
 }

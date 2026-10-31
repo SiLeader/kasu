@@ -92,6 +92,7 @@ pub enum ReviewWriteResult {
     /// Another open review has the same target and head.
     Duplicate(u64),
     RefMismatch(RefState),
+    Cancelled,
 }
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ReviewEvent {
@@ -121,7 +122,16 @@ pub trait ReviewStore: Send + Sync {
         account: &str,
         key: &[u8],
     ) -> Result<Option<ReviewRequestRecord>>;
-    fn write_review(&self, repo: &[u8], write: &ReviewWrite) -> Result<ReviewWriteResult>;
+    fn write_review(&self, repo: &[u8], write: &ReviewWrite) -> Result<ReviewWriteResult> {
+        self.write_review_cancellable(repo, write, &|| false)
+    }
+    /// Check cancellation after acquiring locks and immediately before commit.
+    fn write_review_cancellable(
+        &self,
+        repo: &[u8],
+        write: &ReviewWrite,
+        cancelled: &(dyn Fn() -> bool + Send + Sync),
+    ) -> Result<ReviewWriteResult>;
     fn review_log(&self, repo: &[u8], after: u64, limit: usize) -> Result<Vec<ReviewEvent>>;
     /// Remove up to `limit` review rows of a deleted repository.
     fn purge_reviews(&self, repo: &[u8], limit: usize) -> Result<usize>;

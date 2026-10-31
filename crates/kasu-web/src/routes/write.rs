@@ -57,6 +57,38 @@ pub async fn refs(ctx: &mut Ctx, name: String, rest: Vec<Vec<u8>>, post: bool) -
         .collect();
     let names: Vec<Vec<u8>> = refs.iter().take(256).map(|r| r.name.clone()).collect();
     let permissions = ctx.permissions(&repo, &names).await;
+    let lookups = refs
+        .iter()
+        .take(200)
+        .filter_map(|reference| {
+            let target = reference.target.clone()?;
+            let key = crate::cache::Cache::key(
+                ctx.caller().act_as.as_deref(),
+                "changeset",
+                &[&repo.record.key, &repo.cache_scope, &target],
+            );
+            let app = ctx.app.clone();
+            let upstream = ctx.upstream().clone();
+            let caller = ctx.caller().clone();
+            let request = p::ChangesetRequest {
+                repo: repo.bytes(),
+                id: target,
+            };
+            Some(async move {
+                browse::cached(&app, key, || async {
+                    crate::upstream::read(|| {
+                        let mut client = upstream.metadata();
+                        let request = upstream.request(&caller, request.clone(), false);
+                        async move { client.get_changeset(request).await }
+                    })
+                    .await
+                })
+                .await
+            })
+        })
+        .collect::<Vec<_>>();
+    let dates = crate::upstream::bounded_reads(lookups).await.read()?;
+    let mut dates = dates.into_iter();
     let t = ctx.t;
     let mut groups = vec![
         RefGroup {
@@ -84,8 +116,9 @@ pub async fn refs(ctx: &mut Ctx, name: String, rest: Vec<Vec<u8>>, post: bool) -
             (2, reference.name.as_slice())
         };
         let when = if index < 200 {
-            browse::get_changeset(ctx, &repo, target)
-                .await
+            dates
+                .next()
+                .expect("a lookup for every live ref")
                 .ok()
                 .and_then(|cs| cs.committer)
                 .map(|s| crate::render::time::absolute(s.timestamp, &s.tz, ctx.prefs.tz.as_deref()))

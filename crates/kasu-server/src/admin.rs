@@ -512,9 +512,11 @@ impl Backend {
                         {}
                     }
                     if let Some(reviews) = &self.reviews {
-                        reviews
+                        while reviews
                             .purge_reviews(record.key.as_bytes(), PURGE_BATCH)
-                            .map_err(status)?;
+                            .map_err(status)?
+                            > 0
+                        {}
                     }
                     record.purged = true;
                     record = self.written(

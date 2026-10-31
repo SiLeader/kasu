@@ -391,7 +391,7 @@ pub async fn list_dir(ctx: &Ctx, repo: &Repo, id: &[u8], path: &[u8]) -> Result<
         "list_dir",
         &[&repo.record.key, &repo.cache_scope, id, path],
     );
-    let root = cached(ctx, key.clone(), || async {
+    let root = cached(&ctx.app, key.clone(), || async {
         rpc!(
             ctx,
             metadata.get_root_tree(p::ChangesetRequest {
@@ -411,7 +411,7 @@ pub async fn list_dir(ctx: &Ctx, repo: &Repo, id: &[u8], path: &[u8]) -> Result<
         "entries",
         &[&repo.record.key, &repo.cache_scope, id, path],
     );
-    let listing: p::ListDirResponse = cached(ctx, key, || async {
+    let listing: p::ListDirResponse = cached(&ctx.app, key, || async {
         rpc!(
             ctx,
             metadata.list_dir(p::PathRequest {
@@ -432,7 +432,7 @@ pub async fn list_dir(ctx: &Ctx, repo: &Repo, id: &[u8], path: &[u8]) -> Result<
 }
 /// Fetch an immutable response through the per-account cache.
 pub async fn cached<T, F, Fut>(
-    ctx: &Ctx,
+    app: &crate::App,
     key: Vec<u8>,
     fetch: F,
 ) -> std::result::Result<T, tonic::Status>
@@ -442,15 +442,15 @@ where
     Fut: std::future::Future<Output = std::result::Result<T, tonic::Status>>,
 {
     use std::sync::atomic::Ordering;
-    if let Some(bytes) = ctx.app.cache.get(&key)
+    if let Some(bytes) = app.cache.get(&key)
         && let Ok(value) = T::decode(bytes.as_slice())
     {
-        ctx.app.metrics.cache[0].fetch_add(1, Ordering::Relaxed);
+        app.metrics.cache[0].fetch_add(1, Ordering::Relaxed);
         return Ok(value);
     }
-    ctx.app.metrics.cache[1].fetch_add(1, Ordering::Relaxed);
+    app.metrics.cache[1].fetch_add(1, Ordering::Relaxed);
     let value = fetch().await?;
-    ctx.app.cache.put(key, value.encode_to_vec());
+    app.cache.put(key, value.encode_to_vec());
     Ok(value)
 }
 pub async fn read_file(
@@ -464,7 +464,7 @@ pub async fn read_file(
         "read_file",
         &[&repo.record.key, &repo.cache_scope, id, path],
     );
-    cached(ctx, key, || async {
+    cached(&ctx.app, key, || async {
         rpc!(
             ctx,
             metadata.read_file(p::PathRequest {
@@ -484,7 +484,7 @@ pub async fn get_changeset(ctx: &Ctx, repo: &Repo, id: &[u8]) -> Result<p::Chang
         "changeset",
         &[&repo.record.key, &repo.cache_scope, id],
     );
-    cached(ctx, key, || async {
+    cached(&ctx.app, key, || async {
         rpc!(
             ctx,
             metadata.get_changeset(p::ChangesetRequest {

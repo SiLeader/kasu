@@ -170,6 +170,9 @@ message Permissions {
   bool write = 3; repeated bytes allowed_path_prefixes = 4;
   repeated RefPermission refs = 5;
   bool admin = 6; bool review = 7;
+  // When true, only allowed_path_prefixes are writable (empty denies all paths).
+  // When false, paths are unrestricted. write still controls write access.
+  bool paths_restricted = 8;
 }
 
 // Review of a Changeset stack proposed for a target ref.

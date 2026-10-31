@@ -89,6 +89,7 @@ The fingerprint hashes, for each Changeset of the stack in order, its changes ag
 - `REBASE` replays each Changeset onto the target's tip (authors kept, the submitter as committer). When the tip is already the base and trailers are off, the original Changesets land unchanged. `SQUASH` lands one Changeset with the cumulative change, the review title and description as message and the review author as author.
 - A conflict returns `CONFLICT` with the Changeset index and paths; the review stays open. Use `RebaseReview` (the Web UI's *Rebase onto target*) or resolve with the CLI and add a revision.
 - The ref compare-and-swap, the ref log entry, `SUBMITTED`, and the idempotent result commit in **one transaction**. If the target or the review moved, conditions are evaluated again and the attempt repeats within the budget (`max_attempts`, `timeout_ms`, as for Land); otherwise `RETRY`.
+- Retry delays are asynchronous. Disconnects and deadlines cancel pending work, with cancellation checked inside the transaction before commit. A commit that wins the cancellation race is recovered with the same idempotency key.
 
 `RebaseReview(number, expected_revision, onto?)` rebases the latest stack onto the target's tip (or `onto`) and appends a revision, or returns the conflict without changing the review.
 
@@ -102,11 +103,13 @@ Comments belong to a revision, optionally anchored to a line: `Anchor { path, si
 |---|---|
 | Read reviews and comments | Read access without `read_directories` (directory-limited accounts get `NOT_FOUND`) |
 | Comment, vote | The above and a non-anonymous account (votes outside `approvers` are kept but do not count) |
+| Resolve or reopen a thread | The review author, thread author, an eligible approver of the target, or a repository administrator |
 | Create, add revision, rebase | Write access to the target, ignoring the review requirement |
 | Edit title and description, close, reopen | The author or a repository administrator |
 | Submit | Approval condition 6 |
 
 Reviews of invisible repositories are `NOT_FOUND`, indistinguishable from missing ones.
+All review RPCs share the repository admission limits and metrics with Metadata and Writer.
 
 ## API
 

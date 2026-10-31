@@ -63,6 +63,8 @@ force と削除は既定で許可しません。書き込み範囲を限定す�
 ## サーバー全体の policy との関係
 
 実効権限は、[サーバー全体の WritePolicy](git-push_ja.md)、[リポジトリの policy](multi-repository_ja.md#リポジトリ単位の設定)、アカウントの policy のすべてが許す範囲です。
+
+`Identity.GetPermissions.allowed_path_prefixes` は、この積集合をさらに `read_directories` で制限した範囲を返します。`paths_restricted` が true のとき、空の prefix 配列は変更可能なパスなしを表し、false のときはパス制限なしです。書き込み自体の可否は引き続き `write` で判定します。
 アカウント設定はサーバー全体の制限を拡大しません。
 
 | 操作 | 判定 |

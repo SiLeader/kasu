@@ -69,7 +69,9 @@ impl WritePolicy {
         }
     }
     pub fn unrestricted_paths(&self) -> bool {
-        self.allowed_path_prefixes.iter().any(|p| p.is_empty())
+        self.allowed_path_prefixes
+            .iter()
+            .any(|p| p.strip_suffix(b"/").unwrap_or(p).is_empty())
     }
     pub fn allows_path(&self, path: &[u8]) -> bool {
         self.allowed_path_prefixes.iter().any(|p| {

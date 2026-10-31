@@ -123,7 +123,7 @@ KASU_WEB_CONFIG_FILE=web.json \
 - ページ分割したファイル一覧、unified / side-by-side（利用者設定）の diff、前後 3 行の文脈、大きいファイルの折りたたみと遅延読み込みを備えた Changeset 表示と比較。
 - `read_directories` を持つアカウントには「ディレクトリ限定ビュー」のバッジを出し、範囲外は表示しません。
 - ディレクトリの各 entry の最終変更（先頭 100 件）をページ表示後に読み込みます。JavaScript なしでは `?latest=1` で表示します。
-- `/<repo>/-/archive/<rev>/<path>` はディレクトリの `tar.gz`（`?format=zip` で zip）をダウンロードします。サーバーの `kasu.v1.Archive` RPC から呼び出し元の読み取り範囲内でストリーミングします（最大 100,000 entry・2 GiB。gitlink は含めない）。
+- `/<repo>/-/archive/<rev>/<path>` はディレクトリの `tar.gz`（`?format=zip` で zip）をダウンロードします。サーバーの `kasu.v1.Archive` RPC から呼び出し元の読み取り範囲内でストリーミングします（最大 100,000 entry。非圧縮のファイル・symlink の合計サイズとアーカイブ出力はそれぞれ最大 2 GiB。gitlink は含めない）。非圧縮サイズはファイル内容の読み込み前に確認します。アーカイブの取得によって別途 Objects API のアクセス権を付与することはありません。
 - 同名の branch・tag がなく、一致する Changeset が 1 つだけなら、短縮 Changeset ID（4〜63 桁の 16 進）を `<rev>` に使えます。
 
 ## ブラウザからの書き込み

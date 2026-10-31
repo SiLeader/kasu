@@ -121,3 +121,79 @@ where
         result => Ok(result?.into_inner()),
     }
 }
+
+/// Run advisory lookups with bounded concurrency, preserving their input order.
+pub async fn bounded_reads<T, F>(
+    calls: impl IntoIterator<Item = F>,
+) -> Result<Vec<Result<T, Status>>, Status>
+where
+    T: Send + 'static,
+    F: std::future::Future<Output = Result<T, Status>> + Send + 'static,
+{
+    const CONCURRENCY: usize = 8;
+    let mut calls = calls.into_iter().enumerate();
+    let mut tasks = tokio::task::JoinSet::new();
+    let mut results = std::collections::BTreeMap::new();
+    loop {
+        while tasks.len() < CONCURRENCY {
+            let Some((index, call)) = calls.next() else {
+                break;
+            };
+            tasks.spawn(async move { (index, call.await) });
+        }
+        let Some(result) = tasks.join_next().await else {
+            break;
+        };
+        let (index, result) = result.map_err(|error| {
+            tracing::error!(%error, "advisory lookup worker failed");
+            Status::internal("advisory lookup worker failed")
+        })?;
+        if let Err(status) = &result {
+            tracing::warn!(code = ?status.code(), "advisory lookup failed");
+        }
+        results.insert(index, result);
+    }
+    Ok(results.into_values().collect())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[tokio::test]
+    async fn advisory_reads_are_bounded_and_keep_order_and_errors() {
+        use std::sync::{
+            Arc,
+            atomic::{AtomicUsize, Ordering},
+        };
+        let active = Arc::new(AtomicUsize::new(0));
+        let peak = Arc::new(AtomicUsize::new(0));
+        let results = bounded_reads((0..20).map(|index| {
+            let (active, peak) = (active.clone(), peak.clone());
+            async move {
+                let count = active.fetch_add(1, Ordering::SeqCst) + 1;
+                peak.fetch_max(count, Ordering::SeqCst);
+                for _ in 0..(20 - index) {
+                    tokio::task::yield_now().await;
+                }
+                active.fetch_sub(1, Ordering::SeqCst);
+                if index == 4 {
+                    Err(Status::unavailable("unavailable"))
+                } else {
+                    Ok(index)
+                }
+            }
+        }))
+        .await
+        .unwrap();
+        assert_eq!(results.len(), 20);
+        assert!((2..=8).contains(&peak.load(Ordering::SeqCst)));
+        assert_eq!(active.load(Ordering::SeqCst), 0);
+        for (index, result) in results.into_iter().enumerate() {
+            if index == 4 {
+                assert_eq!(result.unwrap_err().code(), Code::Unavailable);
+            } else {
+                assert_eq!(result.unwrap(), index);
+            }
+        }
+    }
+}

@@ -93,7 +93,7 @@ impl Backend {
                     self.repository_accounts[a].grant(g).write_policy.is_some()
                 }),
             };
-        if write {
+        if grant.is_some_and(|(a, g)| self.repository_accounts[a].grant(g).write_policy.is_some()) {
             scoped.writer_grant = grant;
         }
         let bypass = scoped.review_bypass();
@@ -116,15 +116,7 @@ impl Backend {
                 }
             })
             .collect();
-        let allowed_path_prefixes = if scoped.unrestricted_paths() {
-            Vec::new()
-        } else {
-            scoped
-                .policies()
-                .find(|p| !p.unrestricted_paths())
-                .map(|p| p.allowed_path_prefixes.clone())
-                .unwrap_or_default()
-        };
+        let allowed_path_prefixes = scoped.effective_path_prefixes();
         Ok(p::Permissions {
             read_filtered: scoped.read_scope.is_some(),
             read_directories: scoped
@@ -139,6 +131,7 @@ impl Backend {
                 .unwrap_or_default(),
             write,
             allowed_path_prefixes,
+            paths_restricted: !scoped.unrestricted_paths(),
             refs,
             admin: self.administers(credential, &record),
             review: self.reviews.is_some()

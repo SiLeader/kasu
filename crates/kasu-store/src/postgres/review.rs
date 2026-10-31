@@ -129,7 +129,12 @@ impl ReviewStore for PostgresStore {
             read_request(client, &repo, account, key)
         })
     }
-    fn write_review(&self, repo: &[u8], write: &ReviewWrite) -> Result<ReviewWriteResult> {
+    fn write_review_cancellable(
+        &self,
+        repo: &[u8],
+        write: &ReviewWrite,
+        cancelled: &(dyn Fn() -> bool + Send + Sync),
+    ) -> Result<ReviewWriteResult> {
         validate_write(write)?;
         self.client(|client| {
             let mut tx = client.transaction().map_err(pg_error)?;
@@ -155,6 +160,9 @@ impl ReviewStore for PostgresStore {
                 return Ok(ReviewWriteResult::Replayed {
                     response: existing.response,
                 });
+            }
+            if cancelled() {
+                return Ok(ReviewWriteResult::Cancelled);
             }
             let review = &write.review;
             let n = if review.number == 0 {
@@ -247,6 +255,9 @@ impl ReviewStore for PostgresStore {
                 )
                 .map_err(pg_error)?;
             }
+            if cancelled() {
+                return Ok(ReviewWriteResult::Cancelled);
+            }
             tx.commit().map_err(pg_error)?;
             Ok(ReviewWriteResult::Applied { number: n })
         })
@@ -269,11 +280,11 @@ impl ReviewStore for PostgresStore {
                 .collect()
         })
     }
-    fn purge_reviews(&self, repo: &[u8], _limit: usize) -> Result<usize> {
+    fn purge_reviews(&self, repo: &[u8], limit: usize) -> Result<usize> {
         self.client(|client| {
             let mut tx = client.transaction().map_err(pg_error)?;
             let repo = scope(&mut tx, repo)?;
-            let mut removed = 0;
+            let mut removed = 0usize;
             for table in [
                 "review_log",
                 "review_submissions",
@@ -283,12 +294,20 @@ impl ReviewStore for PostgresStore {
                 "reviews",
                 "review_counters",
             ] {
-                removed += tx
-                    .execute(&format!("DELETE FROM kasu.{table} WHERE repo=$1"), &[&repo])
+                if removed == limit {
+                    break;
+                }
+                let count = tx
+                    .execute(
+                        &format!("DELETE FROM kasu.{table} WHERE repo=$1 AND ctid IN (SELECT ctid FROM kasu.{table} WHERE repo=$1 LIMIT $2)"),
+                        &[&repo, &number((limit - removed) as u64)?],
+                    )
                     .map_err(pg_error)?;
+                removed += usize::try_from(count)
+                    .map_err(|_| invalid("deleted row count exceeds range"))?;
             }
             tx.commit().map_err(pg_error)?;
-            usize::try_from(removed).map_err(|_| invalid("deleted row count exceeds range"))
+            Ok(removed)
         })
     }
 }

@@ -4,6 +4,53 @@ use common::*;
 use kasu_core::ObjectId;
 use kasu_proto::v1 as p;
 use kasu_server::*;
+use kasu_store::{ReviewStore, ReviewWrite, ReviewWriteResult};
+use std::{
+    sync::{Arc, Mutex, mpsc},
+    time::Duration,
+};
+
+struct PausedReviews {
+    store: Arc<kasu_store::SqliteStore>,
+    entered: tokio::sync::Notify,
+    finished: tokio::sync::Notify,
+    release: Mutex<mpsc::Receiver<()>>,
+}
+macro_rules! forward_review_reads {
+    ($($method:ident($($arg:ident: $ty:ty),*) -> $output:ty;)*) => {
+        $(fn $method(&self, $($arg: $ty),*) -> kasu_core::Result<$output> {
+            self.store.$method($($arg),*)
+        })*
+    };
+}
+impl ReviewStore for PausedReviews {
+    forward_review_reads! {
+        review(repo: &[u8], number: u64) -> Option<kasu_store::ReviewRow>;
+        list_reviews(repo: &[u8], filter: &kasu_store::ReviewFilter, before: u64, limit: usize) -> Vec<kasu_store::ReviewRow>;
+        review_revisions(repo: &[u8], number: u64) -> Vec<kasu_store::ReviewRevisionRow>;
+        review_votes(repo: &[u8], number: u64) -> Vec<kasu_store::ReviewVoteRow>;
+        review_comments(repo: &[u8], number: u64) -> Vec<kasu_store::ReviewCommentRow>;
+        review_request(repo: &[u8], account: &str, key: &[u8]) -> Option<kasu_store::ReviewRequestRecord>;
+        review_log(repo: &[u8], after: u64, limit: usize) -> Vec<kasu_store::ReviewEvent>;
+        purge_reviews(repo: &[u8], limit: usize) -> usize;
+    }
+    fn write_review_cancellable(
+        &self,
+        repo: &[u8],
+        write: &ReviewWrite,
+        cancelled: &(dyn Fn() -> bool + Send + Sync),
+    ) -> kasu_core::Result<ReviewWriteResult> {
+        self.entered.notify_one();
+        self.release
+            .lock()
+            .unwrap()
+            .recv_timeout(Duration::from_secs(5))
+            .unwrap();
+        let result = self.store.write_review_cancellable(repo, write, cancelled);
+        self.finished.notify_one();
+        result
+    }
+}
 
 fn grant(write: bool, dirs: Option<&[u8]>) -> RepositoryGrant {
     RepositoryGrant {
@@ -163,6 +210,77 @@ fn main_ref(fixture: &Fixture) -> kasu_store::RefState {
         .store
         .resolve(fixture.record("app").key.as_bytes(), b"refs/heads/main")
         .unwrap()
+}
+
+#[tokio::test]
+async fn cancelled_or_expired_submits_do_not_commit_when_a_worker_resumes() {
+    for expire in [false, true] {
+        let fixture = fixture(POLICY);
+        let base = fixture
+            .commit("operator", "app", None, &[(b"a", b"1")])
+            .await;
+        let next = change(&fixture, "alice", base, b"b", b"2").await;
+        create(&fixture, "alice", vec![next]).await;
+        vote(&fixture, "bob", 1, p::VoteValue::Approve).await;
+        let before = main_ref(&fixture);
+        let key = fixture.record("app").key;
+        let (release, receiver) = mpsc::channel();
+        let paused = Arc::new(PausedReviews {
+            store: fixture.store.clone(),
+            entered: tokio::sync::Notify::new(),
+            finished: tokio::sync::Notify::new(),
+            release: Mutex::new(receiver),
+        });
+        let state = Arc::new(fixture.state.as_ref().clone().with_reviews(paused.clone()));
+        let mut request = submit(1, p::SubmitMethod::Rebase, b"cancelled");
+        request.timeout_ms = 1000;
+        let task = tokio::spawn(async move { state.submit(Some("Bearer alice"), request).await });
+        tokio::time::timeout(Duration::from_secs(5), paused.entered.notified())
+            .await
+            .unwrap();
+        if expire {
+            let response = tokio::time::timeout(Duration::from_secs(2), task)
+                .await
+                .unwrap()
+                .unwrap()
+                .unwrap();
+            assert_eq!(response.outcome, p::SubmitOutcome::Retry as i32);
+        } else {
+            task.abort();
+            assert!(task.await.unwrap_err().is_cancelled());
+        }
+        release.send(()).unwrap();
+        tokio::time::timeout(Duration::from_secs(5), paused.finished.notified())
+            .await
+            .unwrap();
+        assert_eq!(main_ref(&fixture), before);
+        assert_eq!(
+            fixture
+                .store
+                .review(key.as_bytes(), 1)
+                .unwrap()
+                .unwrap()
+                .state,
+            kasu_store::REVIEW_OPEN
+        );
+        assert!(
+            fixture
+                .store
+                .review_request(key.as_bytes(), "alice", b"submit\0cancelled")
+                .unwrap()
+                .is_none()
+        );
+        let retry = fixture
+            .state
+            .submit(
+                Some("Bearer alice"),
+                submit(1, p::SubmitMethod::Rebase, b"cancelled"),
+            )
+            .await
+            .unwrap();
+        assert_eq!(retry.outcome, p::SubmitOutcome::Landed as i32);
+        assert!(!retry.replayed);
+    }
 }
 
 #[tokio::test]
@@ -628,7 +746,7 @@ async fn drafts_are_private_until_published_and_restricted_accounts_see_no_revie
     let visible = comments("alice").await.1;
     assert_eq!(visible["comments"].as_array().unwrap().len(), 2);
     assert_eq!(visible["comments"][0]["draft"], false);
-    // Only the author edits; anyone resolves a thread root.
+    // Only the comment author edits; the review author may resolve a root.
     let (status, _) = fixture
         .call(
             Some("alice"),
@@ -685,6 +803,99 @@ async fn drafts_are_private_until_published_and_restricted_accounts_see_no_revie
 }
 
 #[tokio::test]
+async fn thread_resolution_requires_ownership_approval_eligibility_or_admin() {
+    let fixture = fixture(
+        r#"{"review":{"rules":[{"ref_patterns":["refs/heads/main"],"approvers":["bob"],"require_resolved_threads":true}]}}"#,
+    );
+    let base = fixture
+        .commit("operator", "app", None, &[(b"a", b"1")])
+        .await;
+    let next = change(&fixture, "alice", base, b"b", b"2").await;
+    create(&fixture, "alice", vec![next]).await;
+    let (_, published) = fixture
+        .call(
+            Some("bob"),
+            "/v1/review/publish",
+            &p::PublishRequest {
+                repo: b"app".to_vec(),
+                number: 1,
+                revision: 1,
+                vote: Some(p::VoteValue::Approve as i32),
+                body: b"blocking thread".to_vec(),
+            },
+        )
+        .await;
+    let id = published["comments"][0]["id"].as_u64().unwrap();
+    let resolve = |id, resolved| p::ResolveThreadRequest {
+        repo: b"app".to_vec(),
+        number: 1,
+        id,
+        resolved,
+    };
+    for token in ["carol", "bot"] {
+        assert_eq!(
+            fixture
+                .call(Some(token), "/v1/review/resolve-thread", &resolve(id, true))
+                .await
+                .0,
+            StatusCode::FORBIDDEN
+        );
+        assert_eq!(submit_status(&fixture, "alice").await["ready"], false);
+    }
+    for token in ["alice", "bob", "operator"] {
+        for resolved in [true, false] {
+            let (status, body) = fixture
+                .call(
+                    Some(token),
+                    "/v1/review/resolve-thread",
+                    &resolve(id, resolved),
+                )
+                .await;
+            assert_eq!(status, StatusCode::OK, "{body}");
+            assert_eq!(body["resolved"], resolved);
+            assert_eq!(submit_status(&fixture, "alice").await["ready"], resolved);
+        }
+    }
+    let (_, published) = fixture
+        .call(
+            Some("carol"),
+            "/v1/review/publish",
+            &p::PublishRequest {
+                repo: b"app".to_vec(),
+                number: 1,
+                revision: 1,
+                body: b"my thread".to_vec(),
+                vote: None,
+            },
+        )
+        .await;
+    let own = published["comments"][0]["id"].as_u64().unwrap();
+    assert_eq!(
+        fixture
+            .call(
+                Some("carol"),
+                "/v1/review/resolve-thread",
+                &resolve(own, true)
+            )
+            .await
+            .0,
+        StatusCode::OK
+    );
+    // An eligible approver can also change someone else's thread.
+    assert_eq!(
+        fixture
+            .call(
+                Some("bob"),
+                "/v1/review/resolve-thread",
+                &resolve(own, false)
+            )
+            .await
+            .0,
+        StatusCode::OK
+    );
+}
+
+#[tokio::test]
 async fn read_only_repositories_refuse_review_writes() {
     let fixture = fixture(POLICY);
     let base = fixture
@@ -707,6 +918,49 @@ async fn read_only_repositories_refuse_review_writes() {
         )
         .await;
     assert_eq!(status, StatusCode::PRECONDITION_FAILED);
+}
+
+#[tokio::test]
+async fn explicitly_eligible_read_only_approvers_can_resolve_other_authors_threads() {
+    let fixture = fixture(
+        r#"{"review":{"rules":[{"ref_patterns":["refs/heads/main"],"approvers":["carol"],"require_resolved_threads":true}]}}"#,
+    );
+    let base = fixture
+        .commit("operator", "app", None, &[(b"a", b"1")])
+        .await;
+    let next = change(&fixture, "alice", base, b"b", b"2").await;
+    create(&fixture, "alice", vec![next]).await;
+    let (status, published) = fixture
+        .call(
+            Some("bob"),
+            "/v1/review/publish",
+            &p::PublishRequest {
+                repo: b"app".to_vec(),
+                number: 1,
+                revision: 1,
+                vote: None,
+                body: b"thread".to_vec(),
+            },
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK);
+    let id = published["comments"][0]["id"].as_u64().unwrap();
+    assert_eq!(
+        fixture
+            .call(
+                Some("carol"),
+                "/v1/review/resolve-thread",
+                &p::ResolveThreadRequest {
+                    repo: b"app".to_vec(),
+                    number: 1,
+                    id,
+                    resolved: true,
+                }
+            )
+            .await
+            .0,
+        StatusCode::OK
+    );
 }
 
 #[tokio::test]
