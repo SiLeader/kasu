@@ -126,8 +126,14 @@ pub struct App {
     pub assets: Assets,
     pub metrics: Metrics,
     pub cache: cache::Cache,
-    /// Login attempts per client: (minute, count).
-    logins: Mutex<HashMap<IpAddr, (i64, u32)>>,
+    /// MiB of raw-file responses being fetched or sent.
+    pub(crate) raw_downloads: Arc<tokio::sync::Semaphore>,
+    logins: Mutex<LoginAttempts>,
+}
+#[derive(Default)]
+struct LoginAttempts {
+    minute: i64,
+    clients: HashMap<IpAddr, u32>,
 }
 impl App {
     pub fn new(config: Config) -> Result<Arc<Self>, Box<dyn std::error::Error + Send + Sync>> {
@@ -137,9 +143,10 @@ impl App {
                 config.file.limits.highlight_concurrency,
             )),
             cache: cache::Cache::new(config.file.cache.bytes),
+            raw_downloads: Arc::new(tokio::sync::Semaphore::new(256)),
             assets: Assets::load(),
             metrics: Metrics::default(),
-            logins: Mutex::new(HashMap::new()),
+            logins: Mutex::new(LoginAttempts::default()),
             upstream,
             config,
         }))
@@ -149,19 +156,24 @@ impl App {
         let Some(client) = client else {
             return true;
         };
+        let client = match config::canonical(client) {
+            IpAddr::V6(ip) => IpAddr::V6((u128::from(ip) & (u128::MAX << 64)).into()),
+            ip => ip,
+        };
         let minute = auth::now() / 60;
         let Ok(mut logins) = self.logins.lock() else {
             return false;
         };
-        if logins.len() > 65_536 {
-            logins.retain(|_, (m, _)| *m == minute);
+        if logins.minute != minute {
+            logins.clients.clear();
+            logins.minute = minute;
         }
-        let entry = logins.entry(client).or_insert((minute, 0));
-        if entry.0 != minute {
-            *entry = (minute, 0);
+        if logins.clients.len() >= 65_536 && !logins.clients.contains_key(&client) {
+            return false;
         }
-        entry.1 += 1;
-        entry.1 <= self.config.file.auth.login_attempts_per_minute
+        let entry = logins.clients.entry(client).or_default();
+        *entry = entry.saturating_add(1);
+        *entry <= self.config.file.auth.login_attempts_per_minute
     }
 }
 

@@ -447,6 +447,97 @@ async fn delegated_writes_are_attributed_to_the_account_via_the_delegate() {
     let entry = log.last().unwrap();
     assert_eq!(entry.actor, b"alice");
     assert_eq!(entry.via, b"kasu-web:alice@example.com");
+
+    let (_, advertisement) = fixture
+        .get(
+            Some("alice-pat"),
+            "/team/app.git/info/refs?service=git-upload-pack",
+        )
+        .await;
+    let oid = kasu_git::parse_packets(&advertisement)
+        .unwrap()
+        .into_iter()
+        .find_map(|packet| match packet {
+            kasu_git::Packet::Data(line)
+                if line
+                    .windows(b"refs/heads/main".len())
+                    .any(|w| w == b"refs/heads/main") =>
+            {
+                Some(String::from_utf8(line[..40].to_vec()).unwrap())
+            }
+            _ => None,
+        })
+        .unwrap();
+    let mut pack = Vec::new();
+    kasu_git::write_packet(
+        &mut pack,
+        format!(
+            "{} {oid} refs/heads/git-topic\0report-status\n",
+            "0".repeat(40)
+        )
+        .as_bytes(),
+    )
+    .unwrap();
+    pack.extend_from_slice(b"0000");
+    let mut request = Request::post("/team/app.git/git-receive-pack")
+        .header("content-type", "application/x-git-receive-pack-request");
+    for (name, value) in acting("alice", Some(&alice)) {
+        request = request.header(name, value);
+    }
+    let response = http_router(fixture.state.clone())
+        .oneshot(request.body(Body::from(pack)).unwrap())
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = to_bytes(response.into_body(), 1 << 20).await.unwrap();
+    assert!(
+        kasu_git::parse_packets(&body)
+            .unwrap()
+            .contains(&kasu_git::Packet::Data(b"ok refs/heads/git-topic\n"))
+    );
+    let log = fixture.store.tail(key.as_bytes(), 0, 10).unwrap();
+    let entry = log.last().unwrap();
+    assert_eq!(entry.actor, b"alice");
+    assert_eq!(entry.via, b"kasu-web:alice@example.com");
+}
+
+#[tokio::test]
+async fn read_only_git_pushes_reject_before_unpacking_objects() {
+    for state in [
+        kasu_core::RepositoryState::ReadOnly,
+        kasu_core::RepositoryState::Archived,
+    ] {
+        let fixture = fixture(&[], true);
+        fixture.update("team/app", |record| record.state = state);
+        let mut bytes = Vec::new();
+        kasu_git::write_packet(
+            &mut bytes,
+            format!(
+                "{} {} refs/heads/main\0report-status\n",
+                "0".repeat(40),
+                "1".repeat(40)
+            )
+            .as_bytes(),
+        )
+        .unwrap();
+        bytes.extend_from_slice(b"0000invalid pack must not be decoded");
+        let response = http_router(fixture.state.clone())
+            .oneshot(
+                Request::post("/team/app.git/git-receive-pack")
+                    .header("authorization", "Bearer alice-pat")
+                    .header("content-type", "application/x-git-receive-pack-request")
+                    .body(Body::from(bytes))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = to_bytes(response.into_body(), 1 << 20).await.unwrap();
+        let packets = kasu_git::parse_packets(&body).unwrap();
+        assert!(packets.contains(&kasu_git::Packet::Data(
+            b"ng refs/heads/main repository is read-only\n"
+        )));
+    }
 }
 
 #[tokio::test]

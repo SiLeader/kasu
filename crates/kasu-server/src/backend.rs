@@ -475,6 +475,7 @@ impl Backend {
         for path in &paths {
             self.require_read_path(path.as_bytes())?;
         }
+        let exact_paths = q.exact_paths && !paths.is_empty();
         if paths.is_empty()
             && let Some(scope) = &self.read_scope
         {
@@ -482,7 +483,7 @@ impl Backend {
         }
         let files = self
             .ops()
-            .diff(a, b, &paths, q.content)
+            .diff_with_exact_paths(a, b, &paths, q.content, exact_paths)
             .map_err(status)?
             .into_iter()
             .map(|f| {
@@ -670,6 +671,10 @@ pub(crate) fn status(error: core::Error) -> tonic::Status {
         core::Error::Invalid(message) => tonic::Status::invalid_argument(message),
         core::Error::NotFound(message) => tonic::Status::not_found(message),
         core::Error::Precondition(message) => tonic::Status::failed_precondition(message),
+        core::Error::Corrupt(message) => {
+            tracing::error!(error=%message, "stored data validation failed");
+            tonic::Status::data_loss("corrupt stored data")
+        }
         other => {
             tracing::error!(error=%other,"metadata operation failed");
             tonic::Status::internal("storage operation failed")

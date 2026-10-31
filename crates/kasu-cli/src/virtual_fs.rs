@@ -238,7 +238,7 @@ pub async fn mount(q: MountRequest<'_>) -> Result<()> {
         )?;
     }
     let owner = std::fs::metadata(&upper)?;
-    let fs = lower::Lower::new(snapshot, sizes, remote, owner.uid(), owner.gid())?;
+    let fs = lower::Lower::new(snapshot, sizes, remote, &backing, owner.uid(), owner.gid())?;
     let mut config = fuser::Config::default();
     config.mount_options = vec![
         fuser::MountOption::RO,

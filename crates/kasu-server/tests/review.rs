@@ -175,6 +175,7 @@ async fn vote(fixture: &Fixture, token: &str, revision: u32, value: p::VoteValue
                 revision,
                 vote: Some(value as i32),
                 body: vec![],
+                comment_ids: vec![],
             },
         )
         .await;
@@ -624,6 +625,54 @@ async fn approvals_survive_only_trivial_rebases_and_request_changes_blocks() {
 }
 
 #[tokio::test]
+async fn approvals_do_not_carry_over_when_a_revision_reverts_new_target_content() {
+    let fixture = fixture(POLICY);
+    let base = fixture
+        .commit("operator", "app", None, &[(b"a", b"A")])
+        .await;
+    let first = change(&fixture, "alice", base.clone(), b"a", b"B").await;
+    let initial = create(&fixture, "alice", vec![first]).await;
+    vote(&fixture, "bob", 1, p::VoteValue::Approve).await;
+    assert_eq!(status_of(&fixture).await["ready"], true);
+
+    let moved = fixture
+        .commit("operator", "app", Some(base), &[(b"a", b"C")])
+        .await;
+    let revert = change(&fixture, "alice", moved, b"a", b"B").await;
+    let (status, updated) = fixture
+        .call(
+            Some("alice"),
+            "/v1/review/add-revision",
+            &p::AddRevisionRequest {
+                repo: b"app".to_vec(),
+                number: 1,
+                expected_revision: 1,
+                changesets: vec![revert],
+            },
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{updated}");
+    assert_ne!(
+        initial["revisions"][0]["fingerprint"],
+        updated["revisions"][1]["fingerprint"]
+    );
+    assert_eq!(status_of(&fixture).await["ready"], false);
+    let expected = main_ref(&fixture);
+    let (status, response) = fixture
+        .call(
+            Some("alice"),
+            "/v1/review/submit",
+            &submit(2, p::SubmitMethod::Rebase, b"revert"),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(response["outcome"], p::SubmitOutcome::NotReady as i32);
+    assert_eq!(main_ref(&fixture), expected);
+    vote(&fixture, "bob", 2, p::VoteValue::Approve).await;
+    assert_eq!(status_of(&fixture).await["ready"], true);
+}
+
+#[tokio::test]
 async fn squash_submit_lands_one_changeset_with_the_review_message() {
     let fixture = fixture(
         r#"{"review":{"rules":[{"ref_patterns":["refs/heads/main"],"required_approvals":0,"methods":["SQUASH"]}]}}"#,
@@ -672,6 +721,67 @@ async fn squash_submit_lands_one_changeset_with_the_review_message() {
         String::from_utf8(bytes(&cs["message"])).unwrap(),
         "Add files\n\nBody\n\nReview: app#1\n"
     );
+}
+
+#[tokio::test]
+async fn publishing_selected_drafts_preserves_other_drafts_and_checks_ownership() {
+    let fixture = fixture(POLICY);
+    let base = fixture
+        .commit("operator", "app", None, &[(b"a", b"1")])
+        .await;
+    let first = change(&fixture, "alice", base, b"b", b"2").await;
+    create(&fixture, "alice", vec![first]).await;
+    for (actor, body) in [("bob", "private"), ("bob", "reply"), ("alice", "other")] {
+        let (status, _) = fixture
+            .call(
+                Some(actor),
+                "/v1/review/save-draft",
+                &p::SaveDraftRequest {
+                    repo: b"app".to_vec(),
+                    number: 1,
+                    revision: 1,
+                    body: body.as_bytes().to_vec(),
+                    ..Default::default()
+                },
+            )
+            .await;
+        assert_eq!(status, StatusCode::OK);
+    }
+    let mut publish = p::PublishRequest {
+        repo: b"app".to_vec(),
+        number: 1,
+        revision: 1,
+        comment_ids: vec![2, 3],
+        ..Default::default()
+    };
+    let (status, _) = fixture
+        .call(Some("bob"), "/v1/review/publish-selected", &publish)
+        .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    publish.comment_ids.clear();
+    let (status, _) = fixture
+        .call(Some("bob"), "/v1/review/publish-selected", &publish)
+        .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    publish.comment_ids = vec![2];
+    let (status, published) = fixture
+        .call(Some("bob"), "/v1/review/publish-selected", &publish)
+        .await;
+    assert_eq!(status, StatusCode::OK, "{published}");
+    assert_eq!(published["comments"].as_array().unwrap().len(), 1);
+    assert_eq!(published["comments"][0]["id"], 2);
+    let (_, visible) = fixture
+        .call(
+            Some("bob"),
+            "/v1/review/list-comments",
+            &p::ListCommentsRequest {
+                repo: b"app".to_vec(),
+                number: 1,
+            },
+        )
+        .await;
+    assert_eq!(visible["comments"][0]["draft"], true);
+    assert_eq!(visible["comments"][1]["draft"], false);
 }
 
 #[tokio::test]
@@ -739,6 +849,7 @@ async fn drafts_are_private_until_published_and_restricted_accounts_see_no_revie
                 revision: 1,
                 vote: None,
                 body: b"overall".to_vec(),
+                comment_ids: vec![],
             },
         )
         .await;
@@ -822,6 +933,7 @@ async fn thread_resolution_requires_ownership_approval_eligibility_or_admin() {
                 revision: 1,
                 vote: Some(p::VoteValue::Approve as i32),
                 body: b"blocking thread".to_vec(),
+                comment_ids: vec![],
             },
         )
         .await;
@@ -866,6 +978,7 @@ async fn thread_resolution_requires_ownership_approval_eligibility_or_admin() {
                 revision: 1,
                 body: b"my thread".to_vec(),
                 vote: None,
+                comment_ids: vec![],
             },
         )
         .await;
@@ -914,6 +1027,7 @@ async fn read_only_repositories_refuse_review_writes() {
                 revision: 1,
                 vote: None,
                 body: b"x".to_vec(),
+                comment_ids: vec![],
             },
         )
         .await;
@@ -940,6 +1054,7 @@ async fn explicitly_eligible_read_only_approvers_can_resolve_other_authors_threa
                 revision: 1,
                 vote: None,
                 body: b"thread".to_vec(),
+                comment_ids: vec![],
             },
         )
         .await;
@@ -1064,6 +1179,7 @@ async fn path_owners_must_approve_changes_below_their_paths() {
                         revision: 1,
                         vote: Some(p::VoteValue::Approve as i32),
                         body: vec![],
+                        comment_ids: vec![],
                     },
                 )
                 .await

@@ -20,9 +20,7 @@ impl FsBlobStore {
         let hex = id.to_string();
         self.root.join(&hex[..2]).join(&hex[2..])
     }
-}
-impl BlobStore for FsBlobStore {
-    fn get_compressed(&self, id: ObjectId) -> Result<Vec<u8>> {
+    fn read(&self, id: ObjectId) -> Result<(Vec<u8>, Vec<u8>)> {
         let file = fs::File::open(self.path(id)).map_err(|error| {
             if error.kind() == std::io::ErrorKind::NotFound {
                 Error::NotFound(id.to_string())
@@ -41,7 +39,19 @@ impl BlobStore for FsBlobStore {
         if bytes.len() > MAX_COMPRESSED_OBJECT_SIZE {
             return Err(invalid("compressed object too large"));
         }
-        Ok(bytes)
+        let raw = decompress(&bytes).map_err(|error| Error::Corrupt(error.to_string()))?;
+        if ObjectId::hash(&raw) != id {
+            return Err(Error::Corrupt("object hash mismatch".into()));
+        }
+        Ok((bytes, raw))
+    }
+}
+impl BlobStore for FsBlobStore {
+    fn get_compressed(&self, id: ObjectId) -> Result<Vec<u8>> {
+        self.read(id).map(|(frame, _)| frame)
+    }
+    fn get(&self, id: ObjectId) -> Result<Vec<u8>> {
+        self.read(id).map(|(_, raw)| raw)
     }
     fn put_compressed(&self, id: ObjectId, bytes: &[u8]) -> Result<()> {
         let raw = decompress(bytes)?;

@@ -2,15 +2,67 @@ use crate::{Remote, Result, Snapshot, invalid};
 use fuser::*;
 use kasu_core::{BlobId, Entry};
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, VecDeque},
     ffi::OsStr,
+    fs::File,
+    io::Write,
     os::unix::ffi::OsStrExt,
+    os::unix::fs::FileExt,
+    path::{Path, PathBuf},
     sync::{Arc, Mutex},
     time::{Duration, UNIX_EPOCH},
 };
 
 const TTL: Duration = Duration::from_secs(3600);
-const CACHE_BYTES: usize = 32 * 1024 * 1024;
+const CACHE_BYTES: u64 = 512 * 1024 * 1024;
+const CACHE_ENTRIES: usize = 1024;
+struct BlobCache {
+    directory: PathBuf,
+    entries: VecDeque<(BlobId, u64, Arc<File>)>,
+    bytes: u64,
+}
+impl BlobCache {
+    fn new(directory: &Path) -> Self {
+        Self {
+            directory: directory.to_owned(),
+            entries: VecDeque::new(),
+            bytes: 0,
+        }
+    }
+    fn get(
+        &mut self,
+        id: BlobId,
+        size: u64,
+        fetch: impl FnOnce() -> Result<Vec<u8>>,
+    ) -> Result<Arc<File>> {
+        if let Some(at) = self.entries.iter().position(|(cached, _, _)| *cached == id) {
+            let entry = self.entries.remove(at).unwrap();
+            let file = entry.2.clone();
+            self.entries.push_back(entry);
+            return Ok(file);
+        }
+        if size > kasu_store::MAX_OBJECT_SIZE {
+            return Err(invalid("virtual blob exceeds object size limit"));
+        }
+        let bytes = fetch()?;
+        if bytes.len() as u64 != size || BlobId::hash(&bytes) != id {
+            return Err(invalid("invalid virtual blob content"));
+        }
+        while self.bytes + size > CACHE_BYTES || self.entries.len() >= CACHE_ENTRIES {
+            if let Some((_, size, _)) = self.entries.pop_front() {
+                self.bytes -= size;
+            } else {
+                break;
+            }
+        }
+        let mut file = tempfile::tempfile_in(&self.directory)?;
+        file.write_all(&bytes)?;
+        let file = Arc::new(file);
+        self.entries.push_back((id, size, file.clone()));
+        self.bytes += size;
+        Ok(file)
+    }
+}
 struct Node {
     parent: u64,
     kind: FileType,
@@ -35,7 +87,7 @@ impl Node {
 }
 struct Fetch {
     remote: Remote,
-    cached: Option<(BlobId, Arc<Vec<u8>>)>,
+    cache: BlobCache,
 }
 pub(super) struct Lower {
     nodes: Vec<Node>,
@@ -49,6 +101,7 @@ impl Lower {
         snapshot: Snapshot,
         sizes: BTreeMap<BlobId, u64>,
         remote: Remote,
+        backing: &Path,
         uid: u32,
         gid: u32,
     ) -> Result<Self> {
@@ -56,7 +109,7 @@ impl Lower {
             nodes: vec![Node::directory(1)],
             fetch: Mutex::new(Fetch {
                 remote,
-                cached: None,
+                cache: BlobCache::new(backing),
             }),
             runtime: tokio::runtime::Handle::current(),
             uid,
@@ -174,31 +227,36 @@ impl Lower {
             flags: 0,
         })
     }
-    fn bytes(&self, ino: INodeNo) -> std::result::Result<Arc<Vec<u8>>, Errno> {
+    fn bytes(&self, ino: INodeNo, offset: u64, size: usize) -> std::result::Result<Vec<u8>, Errno> {
         let node = self.node(ino.0).ok_or(Errno::ENOENT)?;
+        let start = offset.min(node.size);
+        let count = (node.size - start).min(size as u64) as usize;
         if let Some(bytes) = &node.inline {
-            return Ok(Arc::new(bytes.clone()));
+            return Ok(bytes[start as usize..start as usize + count].to_vec());
         }
         let id = node.blob.ok_or(Errno::EISDIR)?;
+        if count == 0 {
+            return Ok(Vec::new());
+        }
         let mut fetch = self.fetch.lock().map_err(|_| Errno::EIO)?;
-        if let Some((cached, bytes)) = &fetch.cached
-            && *cached == id
-        {
-            return Ok(bytes.clone());
-        }
-        let result = self.runtime.block_on(async {
-            tokio::time::timeout(Duration::from_secs(30), fetch.remote.fetch_blob_bytes(id)).await
-        });
-        let bytes = match result {
-            Ok(Ok(bytes)) if bytes.len() as u64 == node.size => Arc::new(bytes),
-            _ => {
-                tracing::warn!("virtual blob read failed");
-                return Err(Errno::EIO);
-            }
-        };
-        if bytes.len() <= CACHE_BYTES {
-            fetch.cached = Some((id, bytes.clone()));
-        }
+        let Fetch { remote, cache } = &mut *fetch;
+        let file = cache
+            .get(id, node.size, || {
+                self.runtime.block_on(async {
+                    tokio::time::timeout(Duration::from_secs(30), remote.fetch_blob_bytes(id))
+                        .await?
+                })
+            })
+            .map_err(|error| {
+                tracing::warn!(%error, "virtual blob read failed");
+                Errno::EIO
+            });
+        drop(fetch);
+        let mut bytes = vec![0; count];
+        file?.read_exact_at(&mut bytes, start).map_err(|error| {
+            tracing::warn!(%error, "virtual blob cache read failed");
+            Errno::EIO
+        })?;
         Ok(bytes)
     }
 }
@@ -246,14 +304,8 @@ impl Filesystem for Lower {
         _: Option<LockOwner>,
         reply: ReplyData,
     ) {
-        match self.bytes(ino) {
-            Ok(bytes) => {
-                let start = usize::try_from(offset)
-                    .unwrap_or(usize::MAX)
-                    .min(bytes.len());
-                let end = start.saturating_add(size as usize).min(bytes.len());
-                reply.data(&bytes[start..end]);
-            }
+        match self.bytes(ino, offset, size as usize) {
+            Ok(bytes) => reply.data(&bytes),
             Err(error) => reply.error(error),
         }
     }
@@ -262,7 +314,7 @@ impl Filesystem for Lower {
             reply.error(Errno::EINVAL);
             return;
         }
-        match self.bytes(ino) {
+        match self.bytes(ino, 0, usize::MAX) {
             Ok(bytes) => reply.data(&bytes),
             Err(error) => reply.error(error),
         }
@@ -312,5 +364,43 @@ impl Filesystem for Lower {
         } else {
             reply.data(&[]);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn large_and_alternating_blobs_are_fetched_once_and_read_by_range() {
+        let directory = tempfile::tempdir().unwrap();
+        let mut cache = BlobCache::new(directory.path());
+        let content = vec![b'x'; 33 * 1024 * 1024];
+        let id = BlobId::hash(&content);
+        let first = cache
+            .get(id, content.len() as u64, || Ok(content.clone()))
+            .unwrap();
+        let other = b"second blob";
+        let other_id = BlobId::hash(other);
+        cache
+            .get(other_id, other.len() as u64, || Ok(other.to_vec()))
+            .unwrap();
+        for _ in 0..3 {
+            let file = cache
+                .get(id, content.len() as u64, || panic!("blob fetched again"))
+                .unwrap();
+            let mut range = [0; 16];
+            file.read_exact_at(&mut range, content.len() as u64 - 16)
+                .unwrap();
+            assert_eq!(&range, &[b'x'; 16]);
+            assert!(Arc::ptr_eq(&first, &file));
+            cache
+                .get(other_id, other.len() as u64, || {
+                    panic!("alternating read evicted blob")
+                })
+                .unwrap();
+        }
+        let missing = BlobId::hash(b"invalid");
+        assert!(cache.get(missing, 1, || Ok(vec![0])).is_err());
+        assert_eq!(cache.entries.len(), 2);
     }
 }

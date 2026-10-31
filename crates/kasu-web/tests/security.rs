@@ -30,6 +30,31 @@ async fn proxy_harness() -> Harness {
 }
 
 #[tokio::test]
+async fn forwarded_client_addresses_do_not_require_or_grant_proxy_sign_in() {
+    let mut config = kasu_web::Config::local("http://127.0.0.1:1");
+    config.file.trusted_forwarders = vec!["10.0.0.0/8".into()];
+    config.file.auth.login_attempts_per_minute = 1;
+    config.validate().unwrap();
+    let app = kasu_web::App::new(config).unwrap();
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert("x-forwarded-for", "192.0.2.1".parse().unwrap());
+    headers.insert("x-forwarded-user", "alice".parse().unwrap());
+    let peer = Some("10.0.0.1".parse().unwrap());
+    let first = app.client_addr(&headers, peer);
+    assert_eq!(first, Some("192.0.2.1".parse().unwrap()));
+    assert!(app.login_allowed(first));
+    assert!(!app.login_allowed(first));
+    headers.insert("x-forwarded-for", "192.0.2.2".parse().unwrap());
+    assert!(app.login_allowed(app.client_addr(&headers, peer)));
+    let untrusted = Some("198.51.100.1".parse().unwrap());
+    assert_eq!(app.client_addr(&headers, untrusted), untrusted);
+    assert!(!app.viewer(&headers, peer).ok().unwrap().signed_in());
+    assert!(app.login_allowed(Some("2001:db8::1".parse().unwrap())));
+    assert!(!app.login_allowed(Some("2001:db8::2".parse().unwrap())));
+    assert!(app.login_allowed(Some("2001:db8:0:1::1".parse().unwrap())));
+}
+
+#[tokio::test]
 async fn proxy_identity_is_trusted_only_from_configured_peers() {
     let h = proxy_harness().await;
     h.commit("team/app", &[(b"a", Some(b"1"))], "init").await;

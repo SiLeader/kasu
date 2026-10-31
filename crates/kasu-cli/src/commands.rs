@@ -68,6 +68,7 @@ impl WorkingCopy {
                 head: self.state.base.clone(),
                 paths: vec![],
                 content: false,
+                exact_paths: false,
             });
             for file in remote.metadata.diff(q).await?.into_inner().files {
                 anchor_entries.insert(file.path.clone(), file.before);

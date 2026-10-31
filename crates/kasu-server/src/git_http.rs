@@ -259,10 +259,7 @@ async fn handle(
                     repo: ops.ctx.repo,
                     projection,
                 };
-                let mut plan = plan_fetch(&index, &refs, &q)?;
-                if protocol != Protocol::V2 && !q.done {
-                    plan.send_pack = false;
-                }
+                let plan = plan_fetch_protocol(&index, &refs, &q, protocol)?;
                 let prefix = fetch_prefix(protocol, &q, &plan)?;
                 if plan.send_pack {
                     Ok(Prepared::Pack(q.sideband, plan, prefix))

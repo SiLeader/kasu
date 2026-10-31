@@ -955,6 +955,7 @@ async fn directory_read_views_filter_metadata_objects_and_writer_blob_references
                 head: after.id,
                 paths: vec![],
                 content: false,
+                exact_paths: false,
             },
         ))
         .await
@@ -1122,6 +1123,7 @@ async fn directory_read_views_filter_metadata_objects_and_writer_blob_references
                 head: head.id.clone(),
                 paths: vec![],
                 content: true,
+                exact_paths: false,
             },
         ))
         .await

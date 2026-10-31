@@ -21,6 +21,60 @@ fn cs(parents: Vec<ChangesetId>, n: u32) -> Changeset {
     }
 }
 #[test]
+fn exact_diff_paths_do_not_read_descendants_during_file_directory_replacement() {
+    let dir = tempfile::tempdir().unwrap();
+    let meta = SqliteStore::memory().unwrap();
+    let blobs = FsBlobStore::open(dir.path()).unwrap();
+    let engine = Engine::standard();
+    let ops = Operations {
+        engine: &engine,
+        ctx: Ctx {
+            repo: Repository {
+                meta: &meta,
+                blobs: &blobs,
+            },
+        },
+    };
+    let old = ops.ctx.repo.put_blob(b"old file\n").unwrap();
+    let child = ops.ctx.repo.put_blob(b"child content\n").unwrap();
+    let path = RepoPath::new(b"dir".as_slice()).unwrap();
+    let mut base = cs(vec![], 0);
+    base.changes = vec![FileChange::Set {
+        path: path.clone(),
+        entry: Entry::File {
+            blob: old,
+            executable: false,
+        },
+    }];
+    let base = ops.create_changeset(&base).unwrap();
+    let mut head = cs(vec![base], 1);
+    head.changes = vec![
+        FileChange::Delete { path: path.clone() },
+        FileChange::Set {
+            path: RepoPath::new(b"dir/child".as_slice()).unwrap(),
+            entry: Entry::File {
+                blob: child,
+                executable: false,
+            },
+        },
+    ];
+    let head = ops.create_changeset(&head).unwrap();
+    let prefix = ops
+        .diff(base, head, std::slice::from_ref(&path), false)
+        .unwrap();
+    assert_eq!(prefix.len(), 2);
+    let hash = child.to_string();
+    std::fs::remove_file(dir.path().join(&hash[..2]).join(&hash[2..])).unwrap();
+    let exact = ops
+        .diff_with_exact_paths(base, head, std::slice::from_ref(&path), true, true)
+        .unwrap();
+    assert_eq!(exact.len(), 1);
+    assert_eq!(exact[0].path, path);
+    assert_eq!(exact[0].edits[0].before, vec![b"old file\n".to_vec()]);
+    assert!(ops.diff(base, head, &[path], true).is_err());
+}
+
+#[test]
 fn all_merge_bases_in_criss_cross_history() {
     let dir = tempfile::tempdir().unwrap();
     let meta = SqliteStore::memory().unwrap();

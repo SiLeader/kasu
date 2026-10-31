@@ -58,7 +58,7 @@ up to 128 at a time. It reads stored BlobMetadata, not blob contents.
 That size is used for FUSE attributes, so `stat` / `readdir` never prefetch blobs.
 
 Regular-file reads and symlink readlinks fetch content from the Objects RPC.
-FUSE keeps the most recent blob, up to 32 MiB, and also reuses the kernel page cache.
+FUSE caches verified blobs in temporary files under the backing directory (up to 512 MiB and 1,024 entries, least-recently-used eviction). Reads copy only the requested byte range, including for blobs over 32 MiB. The cache is discarded on unmount and also reuses the kernel page cache.
 Large blobs are read as single objects, with the existing maximum of 256 MiB.
 Each Objects fetch has a 30-second deadline; failures and size mismatches return file I/O errors.
 Gitlinks are shown as directories containing `.kasu-gitlink`, as in a normal checkout.

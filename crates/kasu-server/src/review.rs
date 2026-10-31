@@ -460,12 +460,11 @@ impl Backend {
             None => ops.ctx.repo.put_tree(&c::Tree::default()).map_err(status),
         }
     }
-    /// The changes of each stack member against its first parent, by path
-    /// and resulting entry. Equal across a rebase that changes nothing.
+    /// Both sides of each stack member's diff against its first parent.
     pub(crate) fn review_fingerprint(&self, stack: &[ChangesetId]) -> Result<Vec<u8>, Status> {
         let repository = self.ops().ctx.repo;
         let mut encoded = Encoder::default();
-        encoded.raw(b"kasu.review.fingerprint.v1");
+        encoded.raw(b"kasu.review.fingerprint.v2");
         for id in stack {
             let parent = repository
                 .changeset(*id)
@@ -473,15 +472,19 @@ impl Backend {
                 .parents
                 .first()
                 .copied();
-            let changes =
-                kasu_derived::diff(&repository, self.tree_of(parent)?, self.tree_of(Some(*id))?)
-                    .map_err(status)?;
-            encoded.u64(changes.len() as u64);
-            for change in changes {
-                encoded.raw(&change.encode());
+            let before = self.tree_of(parent)?;
+            let after = self.tree_of(Some(*id))?;
+            for (from, to) in [(before, after), (after, before)] {
+                let changes = kasu_derived::diff(&repository, from, to).map_err(status)?;
+                encoded.u64(changes.len() as u64);
+                for change in changes {
+                    encoded.raw(&change.encode());
+                }
             }
         }
-        Ok(ObjectId::hash(&encoded.0).0.to_vec())
+        // Untagged, legacy fingerprints omitted the before side and cannot
+        // safely carry approvals between revisions.
+        Ok([b"\x02".as_slice(), &ObjectId::hash(&encoded.0).0].concat())
     }
     fn revision(
         &self,
@@ -1122,6 +1125,10 @@ impl Backend {
         let scoped = self;
         let actor = scoped.review_actor()?;
         text(&q.body, MAX_TEXT, "comment")?;
+        if q.comment_ids.len() > MAX_COMMENTS {
+            return Err(Status::invalid_argument("too many comment IDs"));
+        }
+        let selected: std::collections::BTreeSet<_> = q.comment_ids.iter().copied().collect();
         let vote = q
             .vote
             .map(p::VoteValue::try_from)
@@ -1140,11 +1147,26 @@ impl Backend {
             if vote.is_some() && loaded.state() != p::ReviewState::Open {
                 return Err(Status::failed_precondition("only open reviews take votes"));
             }
+            let available: std::collections::BTreeSet<_> = comments
+                .iter()
+                .filter(|c| c.draft && c.author == actor && !c.deleted)
+                .map(|c| c.id)
+                .collect();
+            if !selected.is_subset(&available) {
+                return Err(Status::invalid_argument(
+                    "selected comment is not an available draft",
+                ));
+            }
             let now = now_seconds();
             let mut record = loaded.record.clone();
             published = comments
                 .iter()
-                .filter(|c| c.draft && c.author == actor && !c.deleted)
+                .filter(|c| {
+                    c.draft
+                        && c.author == actor
+                        && !c.deleted
+                        && (selected.is_empty() || selected.contains(&c.id))
+                })
                 .cloned()
                 .map(|mut c| {
                     c.draft = false;
@@ -1209,6 +1231,12 @@ impl Backend {
             review: Some(scoped.load_review(number)?.record),
             comments: published,
         })
+    }
+    fn publish_selected_scoped(&self, q: p::PublishRequest) -> Result<p::PublishResponse, Status> {
+        if q.comment_ids.is_empty() {
+            return Err(Status::invalid_argument("select at least one draft"));
+        }
+        self.publish_scoped(q)
     }
 
     /// Whether `account` currently counts as an approver of `target`.
@@ -1306,11 +1334,13 @@ impl Backend {
                     || record.revisions.iter().any(|r| r.created_by == account))
         };
         let unchanged_since = |revision: u32| {
-            record
-                .revisions
-                .iter()
-                .filter(|r| r.number >= revision)
-                .all(|r| r.fingerprint == latest.fingerprint)
+            latest.fingerprint.len() == 33
+                && latest.fingerprint.first() == Some(&2)
+                && record
+                    .revisions
+                    .iter()
+                    .filter(|r| r.number >= revision)
+                    .all(|r| r.fingerprint == latest.fingerprint)
                 && record.revisions.iter().any(|r| r.number == revision)
         };
         let mut approvals = 0u32;
@@ -1885,6 +1915,7 @@ review! {
     (rebase_review, rebase_review_scoped, Write, RebaseReviewRequest, RebaseReviewResponse, "/v1/review/rebase"),
     (list_comments, list_comments_scoped, Read, ListCommentsRequest, ListCommentsResponse, "/v1/review/list-comments"),
     (publish, publish_scoped, Read, PublishRequest, PublishResponse, "/v1/review/publish"),
+    (publish_selected, publish_selected_scoped, Read, PublishRequest, PublishResponse, "/v1/review/publish-selected"),
     (save_draft, save_draft_scoped, Read, SaveDraftRequest, ReviewComment, "/v1/review/save-draft"),
     (edit_comment, edit_comment_scoped, Read, EditCommentRequest, ReviewComment, "/v1/review/edit-comment"),
     (resolve_thread, resolve_thread_scoped, Read, ResolveThreadRequest, ReviewComment, "/v1/review/resolve-thread"),

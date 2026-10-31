@@ -39,7 +39,7 @@ For creation, merging, and ref updates through `kasu.v1.Writer` on the same gRPC
 The cursor is also checked against the first-parent chain and the path's change points. Paging by ID is unaffected by ref movement.
 The cursor is empty at the end. Path tracking is name-based.
 
-Diff paths select each path itself and everything under it. The start of a content change range is 0-based; before / after are lists of byte strings
+Diff paths select each path itself and everything under it. With `exact_paths: true`, nonempty `paths` select only those exact files, including during file/directory replacements; the default remains prefix matching. The start of a content change range is 0-based; before / after are lists of byte strings
 including line endings. A trailing line without a newline is preserved. Content containing NUL is binary=true and no line diff is returned.
 When only a file's mode changes, the Entry diff is returned and the content change ranges are empty.
 

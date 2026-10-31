@@ -738,7 +738,7 @@ fn thread_html(
 }
 /// The content of line `line` (1-based) of `path` at `id`, if it exists.
 async fn line_at(ctx: &Ctx, repo: &Repo, id: &[u8], path: &[u8], line: u64) -> Option<Vec<u8>> {
-    let file = browse::read_file(ctx, repo, id, path).await.ok()?;
+    let file = browse::read_view_file(ctx, repo, id, path).await.ok()??;
     text::lines(&file.content)
         .get(line.checked_sub(1)? as usize)
         .map(|l| l.to_vec())
@@ -1051,7 +1051,7 @@ async fn act(ctx: &mut Ctx, repo: Repo, number: u64, action: &str) -> Result<Res
                 .get("revision")
                 .and_then(|r| r.parse().ok())
                 .unwrap_or(latest);
-            client()
+            let saved = client()
                 .save_draft(ctx.wreq(p::SaveDraftRequest {
                     repo: repo.bytes(),
                     number,
@@ -1061,16 +1061,18 @@ async fn act(ctx: &mut Ctx, repo: Repo, number: u64, action: &str) -> Result<Res
                     body: fields.text("body").replace("\r\n", "\n").into_bytes(),
                 }))
                 .await
-                .wrote()?;
+                .wrote()?
+                .into_inner();
             // Replies are published at once; line comments stay drafts.
             if parent.is_some() {
                 client()
-                    .publish(ctx.wreq(p::PublishRequest {
+                    .publish_selected(ctx.wreq(p::PublishRequest {
                         repo: repo.bytes(),
                         number,
                         revision: latest,
                         vote: None,
                         body: Vec::new(),
+                        comment_ids: vec![saved.id],
                     }))
                     .await
                     .wrote()?;
@@ -1102,6 +1104,7 @@ async fn act(ctx: &mut Ctx, repo: Repo, number: u64, action: &str) -> Result<Res
                     revision,
                     vote,
                     body: fields.text("body").replace("\r\n", "\n").into_bytes(),
+                    comment_ids: Vec::new(),
                 }))
                 .await;
             match result {

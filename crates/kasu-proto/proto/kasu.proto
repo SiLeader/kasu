@@ -88,7 +88,7 @@ message LogResponse { repeated Changeset changesets = 1; bytes cursor = 2; }
 message CompareRequest { bytes repo = 1; bytes base = 2; bytes head = 3; }
 message AncestorResponse { bool is_ancestor = 1; }
 message MergeBaseResponse { repeated bytes ids = 1; }
-message DiffRequest { bytes repo = 1; bytes base = 2; bytes head = 3; repeated bytes paths = 4; bool content = 5; }
+message DiffRequest { bytes repo = 1; bytes base = 2; bytes head = 3; repeated bytes paths = 4; bool content = 5; bool exact_paths = 6; }
 message ContentEdit { uint64 before_start = 1; uint64 after_start = 2; repeated bytes before = 3; repeated bytes after = 4; }
 message FileDiff { bytes path = 1; Entry before = 2; Entry after = 3; repeated ContentEdit edits = 4; bool binary = 5; }
 message DiffResponse { repeated FileDiff files = 1; }
@@ -185,6 +185,7 @@ service Review {
   rpc RebaseReview(RebaseReviewRequest) returns (RebaseReviewResponse);
   rpc ListComments(ListCommentsRequest) returns (ListCommentsResponse);
   rpc Publish(PublishRequest) returns (PublishResponse);
+  rpc PublishSelected(PublishRequest) returns (PublishResponse);
   rpc SaveDraft(SaveDraftRequest) returns (ReviewComment);
   rpc EditComment(EditCommentRequest) returns (ReviewComment);
   rpc ResolveThread(ResolveThreadRequest) returns (ReviewComment);
@@ -231,7 +232,8 @@ message ListCommentsRequest { bytes repo = 1; uint64 number = 2; }
 message ListCommentsResponse { repeated ReviewComment comments = 1; }
 message SaveDraftRequest { bytes repo = 1; uint64 number = 2; uint32 revision = 3; optional uint64 parent = 4; Anchor anchor = 5; bytes body = 6; }
 // Publishes every draft of the caller, an optional top-level comment and vote atomically.
-message PublishRequest { bytes repo = 1; uint64 number = 2; uint32 revision = 3; optional VoteValue vote = 4; bytes body = 5; }
+// Empty comment_ids publishes all of the caller's drafts; otherwise only those IDs.
+message PublishRequest { bytes repo = 1; uint64 number = 2; uint32 revision = 3; optional VoteValue vote = 4; bytes body = 5; repeated uint64 comment_ids = 6; }
 message PublishResponse { ReviewRecord review = 1; repeated ReviewComment comments = 2; }
 // Only the author edits; delete leaves a tombstone.
 message EditCommentRequest { bytes repo = 1; uint64 number = 2; uint64 id = 3; bytes body = 4; bool delete = 5; }

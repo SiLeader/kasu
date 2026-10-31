@@ -78,7 +78,7 @@ This includes creating and deleting protected refs. Bypass updates are recorded 
 5. No unresolved published thread remains (when required).
 6. The caller can write the target.
 
-The fingerprint hashes, for each Changeset of the stack in order, its changes against its first parent as (path → resulting entry). A rebase that changes no Changeset's own changes keeps it ("trivial rebase"); differences that only come from the new base are not detected, as in Gerrit.
+The fingerprint hashes both sides of each Changeset's diff against its first parent, in stack order. A rebase preserves approvals only when the changed paths have the same before and after entries; unrelated base changes do not affect it. Reverting new target content therefore requires a new approval. Legacy fingerprints that omitted the before side no longer carry approvals between revisions; votes on the latest revision still count.
 
 ## Submit
 
@@ -96,6 +96,8 @@ The fingerprint hashes, for each Changeset of the stack in order, its changes ag
 ## Comments
 
 Comments belong to a revision, optionally anchored to a line: `Anchor { path, side: HEAD | BASE, line, changeset_index? }` (without `changeset_index` the line is on the cumulative diff). Replies point at a thread root; only roots are resolved. Drafts (`SaveDraft`) are visible only to their author until `Publish`, which publishes all of the caller's drafts, an optional top-level comment and an optional vote atomically. Authors edit their comments; deletion leaves a tombstone. Limits per review: 256 revisions, 10,000 comments, 64 Changesets per stack; titles up to 256 bytes, descriptions and comments up to 64 KiB.
+
+`PublishSelected(PublishRequest)` requires a nonempty `comment_ids` list of the caller's drafts. Invalid, deleted, already published, or other users' IDs reject the whole request. Web replies use this RPC to publish only the newly saved reply; older servers reject the unknown method rather than publishing unrelated drafts. Ordinary `Publish` with an empty list retains the publish-all behavior.
 
 ## Permissions
 
@@ -123,6 +125,7 @@ gRPC service `kasu.v1.Review` and HTTP/JSON (`POST`, same messages):
 | `UpdateReview` (CAS on `version`) | `/v1/review/update` |
 | `AddRevision` (CAS on `expected_revision`) | `/v1/review/add-revision` |
 | `RebaseReview` | `/v1/review/rebase` |
+| `PublishSelected` | `/v1/review/publish-selected` |
 | `ListComments` / `SaveDraft` / `EditComment` / `ResolveThread` / `Publish` | `/v1/review/list-comments`, `save-draft`, `edit-comment`, `resolve-thread`, `publish` |
 | `GetSubmitStatus` / `Submit` | `/v1/review/submit-status`, `/v1/review/submit` |
 

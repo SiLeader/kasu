@@ -512,6 +512,7 @@ async fn review(cli: &Cli, server: &str, repo: Option<&str>, action: &ReviewActi
                 revision: latest(&record),
                 vote: Some(vote as i32),
                 body: message.as_bytes().to_vec(),
+                comment_ids: Vec::new(),
             });
             reviews.client.publish(q).await?;
         }
@@ -527,6 +528,7 @@ async fn review(cli: &Cli, server: &str, repo: Option<&str>, action: &ReviewActi
                 revision: latest(&record),
                 vote: None,
                 body: message.as_bytes().to_vec(),
+                comment_ids: Vec::new(),
             });
             reviews.client.publish(q).await?;
         }

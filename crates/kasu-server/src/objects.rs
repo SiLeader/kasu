@@ -101,6 +101,11 @@ impl ObjectService {
                         )));
                         return;
                     }
+                    Err(kasu_core::Error::Invalid(error)) => {
+                        tracing::error!(%error, %id, "stored object validation failed");
+                        let _ = tx.blocking_send(Err(Status::data_loss("invalid stored object")));
+                        return;
+                    }
                     Err(error) => {
                         let _ = tx.blocking_send(Err(status(error)));
                         return;

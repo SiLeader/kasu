@@ -57,6 +57,7 @@ pub fn canonical(ip: IpAddr) -> IpAddr {
 #[serde(default, deny_unknown_fields)]
 pub struct FileConfig {
     pub auth: AuthConfig,
+    pub trusted_forwarders: Vec<String>,
     pub clone_urls: CloneUrls,
     pub default_email_domain: String,
     pub limits: Limits,
@@ -67,6 +68,7 @@ impl Default for FileConfig {
     fn default() -> Self {
         Self {
             auth: AuthConfig::default(),
+            trusted_forwarders: Vec::new(),
             clone_urls: CloneUrls::default(),
             default_email_domain: "users.kasu.invalid".into(),
             limits: Limits::default(),
@@ -193,6 +195,7 @@ pub struct Config {
     pub metrics_token: Option<String>,
     pub file: FileConfig,
     pub proxy_peers: Vec<Cidr>,
+    pub forwarder_peers: Vec<Cidr>,
 }
 impl Config {
     pub fn secure(&self) -> bool {
@@ -209,6 +212,7 @@ impl Config {
             metrics_token: None,
             file: FileConfig::default(),
             proxy_peers: Vec::new(),
+            forwarder_peers: Vec::new(),
         }
     }
     pub fn validate(&mut self) -> Result<(), BoxError> {
@@ -239,6 +243,13 @@ impl Config {
         if session.idle_secs == 0 || session.max_secs < session.idle_secs {
             return Err("invalid session lifetimes".into());
         }
+        self.forwarder_peers = self
+            .file
+            .trusted_forwarders
+            .iter()
+            .map(|c| Cidr::parse(c))
+            .collect::<Result<_, _>>()?;
+        self.proxy_peers.clear();
         if let Some(proxy) = &self.file.auth.proxy {
             if proxy.user_header.is_empty() {
                 return Err("auth.proxy.user_header is required".into());
@@ -307,6 +318,7 @@ impl Config {
                 .transpose()?,
             file,
             proxy_peers: Vec::new(),
+            forwarder_peers: Vec::new(),
         };
         config.validate()?;
         if config.delegate_token.is_none() {

@@ -13,13 +13,13 @@ const STYLE: ClassStyle = ClassStyle::SpacedPrefixed { prefix: "hl-" };
 
 pub struct Highlighter {
     syntaxes: SyntaxSet,
-    permits: Semaphore,
+    permits: Arc<Semaphore>,
 }
 impl Highlighter {
     pub fn new(concurrency: usize) -> Self {
         Self {
             syntaxes: SyntaxSet::load_defaults_newlines(),
-            permits: Semaphore::new(concurrency),
+            permits: Arc::new(Semaphore::new(concurrency)),
         }
     }
     /// The stylesheet for highlighted code, light and dark.
@@ -34,13 +34,29 @@ impl Highlighter {
     /// Highlighted lines as self-contained HTML, or None when no syntax
     /// matches. The caller enforces size limits.
     pub async fn lines(self: &Arc<Self>, path: &[u8], text: String) -> Option<Vec<String>> {
-        let _permit = self.permits.acquire().await.ok()?;
+        if text.lines().any(|line| line.len() > 4096) {
+            return None;
+        }
+        let permit = tokio::time::timeout(
+            std::time::Duration::from_millis(100),
+            self.permits.clone().acquire_owned(),
+        )
+        .await
+        .ok()?
+        .ok()?;
         let this = self.clone();
         let path = path.to_vec();
-        tokio::task::spawn_blocking(move || this.highlight(&path, &text))
-            .await
-            .ok()
-            .flatten()
+        tokio::time::timeout(
+            std::time::Duration::from_secs(2),
+            tokio::task::spawn_blocking(move || {
+                let _permit = permit;
+                this.highlight(&path, &text)
+            }),
+        )
+        .await
+        .ok()?
+        .ok()
+        .flatten()
     }
     fn highlight(&self, path: &[u8], text: &str) -> Option<Vec<String>> {
         let name = String::from_utf8_lossy(path);
@@ -55,7 +71,11 @@ impl Highlighter {
         }
         let mut generator =
             ClassedHTMLGenerator::new_with_class_style(syntax, &self.syntaxes, STYLE);
+        let started = std::time::Instant::now();
         for line in LinesWithEndings::from(text) {
+            if started.elapsed() > std::time::Duration::from_secs(1) {
+                return None;
+            }
             generator
                 .parse_html_for_line_which_includes_newline(line)
                 .ok()?;

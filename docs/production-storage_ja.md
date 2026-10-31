@@ -54,9 +54,8 @@ feature なしのバイナリも、指定された PostgreSQL／S3 設定を無�
 
 ## PostgreSQL の保存契約
 
-起動時に専用の `kasu` schema と version 1 のテーブルを作成します。
-初期化の DDL だけに advisory lock を使います。schema の削除や既存 SQLite からの
-自動移行は行いません。未対応の schema version は拒否します。
+起動時に advisory lock のもとで専用の `kasu` schema を初期化、または version 1 から version 2 へ更新します。version 2 への接続ではバージョン確認のみ行い、再接続による DDL やデータテーブルのロックは発生しません。旧 server／ingest は version 2 に対応しないため、更新前に停止してください。
+schema の削除や既存 SQLite からの自動移行は行いません。未対応の schema version は拒否します。
 初期化と通常の保存に必要な権限を持つ専用 DB ロールを用意してください。
 
 不変 KV は BLAKE3 のキー索引と元のキー・値を保持します。

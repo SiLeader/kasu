@@ -23,6 +23,8 @@ pub enum Error {
     Precondition(String),
     #[error("storage: {0}")]
     Storage(String),
+    #[error("corrupt stored data: {0}")]
+    Corrupt(String),
 }
 pub type Result<T> = std::result::Result<T, Error>;
 

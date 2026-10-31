@@ -35,6 +35,16 @@ pub trait Store: Send + Sync {
     fn hot(&self, _key: Key) -> Result<Option<Frame>, Status> {
         Ok(None)
     }
+    /// Memory-only, atomic identity/membership lookup. Must not perform disk
+    /// I/O; other stores use `get` on a blocking worker instead.
+    fn hot_scoped(
+        &self,
+        _repo: &[u8],
+        _identity: &str,
+        _key: Key,
+    ) -> Result<Option<Frame>, Status> {
+        Ok(None)
+    }
     fn get(&self, key: Key) -> Result<Option<Frame>, Status>;
     fn put(&self, key: Key, bytes: Frame) -> Result<(), Status>;
     /// Whether the upstream confirmed that `repo` (a normalized name) has `key`.
@@ -95,6 +105,15 @@ impl MemoryStore {
     }
 }
 impl Store for MemoryStore {
+    fn hot_scoped(&self, repo: &[u8], identity: &str, key: Key) -> Result<Option<Frame>, Status> {
+        let mut state = self.lock()?;
+        if state.identities.get(repo).map(String::as_str) != Some(identity)
+            || state.members.to_back(&(repo.to_vec(), key)).is_none()
+        {
+            return Ok(None);
+        }
+        Ok(state.entries.to_back(&key).cloned())
+    }
     fn member(&self, repo: &[u8], key: Key) -> Result<bool, Status> {
         Ok(self
             .lock()?
@@ -489,9 +508,7 @@ impl Layer {
         identity: &str,
         key: Key,
     ) -> Result<Frame, Status> {
-        if self.store.member_scoped(repo, identity, key)?
-            && let Some(bytes) = self.store.hot(key)?
-        {
+        if let Some(bytes) = self.store.hot_scoped(repo, identity, key)? {
             self.counters.hits.fetch_add(1, Ordering::Relaxed);
             return Ok(bytes);
         }
@@ -811,6 +828,68 @@ impl Objects for Service {
 #[cfg(test)]
 mod clock_tests {
     use super::*;
+
+    struct BlockingLookup {
+        runtime_thread: std::thread::ThreadId,
+        frame: Frame,
+    }
+    impl Store for BlockingLookup {
+        fn member_scoped(&self, _: &[u8], _: &str, _: Key) -> Result<bool, Status> {
+            assert_ne!(std::thread::current().id(), self.runtime_thread);
+            Ok(true)
+        }
+        fn hot(&self, _: Key) -> Result<Option<Frame>, Status> {
+            assert_ne!(std::thread::current().id(), self.runtime_thread);
+            Ok(Some(self.frame.clone()))
+        }
+        fn get(&self, key: Key) -> Result<Option<Frame>, Status> {
+            self.hot(key)
+        }
+        fn put(&self, _: Key, _: Frame) -> Result<(), Status> {
+            panic!("unexpected write")
+        }
+        fn member(&self, _: &[u8], _: Key) -> Result<bool, Status> {
+            panic!("unscoped lookup")
+        }
+        fn add_member(&self, _: &[u8], _: Key) -> Result<(), Status> {
+            panic!("unexpected write")
+        }
+        fn add_member_scoped(&self, _: &[u8], _: &str, _: Key) -> Result<(), Status> {
+            panic!("unexpected write")
+        }
+        fn identify(&self, _: &[u8], _: &str) -> Result<(), Status> {
+            panic!("unexpected identity write")
+        }
+    }
+
+    #[tokio::test]
+    async fn disk_style_lookups_do_not_run_on_the_async_worker() {
+        let frame = Arc::new(kasu_store::compress(b"cached").unwrap());
+        let store = Arc::new(BlockingLookup {
+            runtime_thread: std::thread::current().id(),
+            frame: frame.clone(),
+        });
+        let channel = tonic::transport::Endpoint::from_static("http://127.0.0.1:1").connect_lazy();
+        let upstream = Client::new(channel, Some("upstream"), Some(Role::Server)).unwrap();
+        let layer = Layer::new(
+            Role::Cache,
+            vec![],
+            "client",
+            "upstream",
+            upstream,
+            store,
+            Limits::default(),
+        )
+        .unwrap();
+        let key = Key {
+            kind: Kind::Blob,
+            id: ObjectId::hash(b"cached"),
+        };
+        assert_eq!(
+            layer.get_validated(b"repo", "identity", key).await.unwrap(),
+            frame
+        );
+    }
 
     #[tokio::test(start_paused = true)]
     async fn circuit_cooldown_and_half_open_probe_follow_the_runtime_clock() {

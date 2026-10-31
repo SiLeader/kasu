@@ -274,7 +274,7 @@ pub fn serve_git_ssh(
                         repo: ops.ctx.repo,
                         projection: projection.clone(),
                     };
-                    let plan = plan_fetch(&index, &refs, &q)?;
+                    let plan = plan_fetch_protocol(&index, &refs, &q, protocol)?;
                     let prefix = fetch_prefix(protocol, &q, &plan)?;
                     trace_packets(protocol, "ssh server", &prefix);
                     output.write_all(&prefix).map_err(storage_error)?;
@@ -300,7 +300,7 @@ pub fn serve_git_ssh(
         projection: projection.clone(),
     };
     if initial.depth.is_some() || initial.since.is_some() || !initial.exclude.is_empty() {
-        let plan = plan_fetch(&index, &refs, &initial)?;
+        let plan = plan_fetch_protocol(&index, &refs, &initial, protocol)?;
         let prefix = fetch_prefix(protocol, &initial, &plan)?;
         trace_packets(protocol, "ssh server", &prefix);
         output.write_all(&prefix).map_err(storage_error)?;
@@ -339,7 +339,7 @@ pub fn serve_git_ssh(
         let UploadRequest::Fetch(q) = parse_upload(protocol, &bytes)? else {
             return Err(invalid("invalid SSH fetch negotiation"));
         };
-        let plan = plan_fetch(&index, &refs, &q)?;
+        let plan = plan_fetch_protocol(&index, &refs, &q, protocol)?;
         let mut ack = q.clone();
         ack.depth = None;
         ack.since = None;

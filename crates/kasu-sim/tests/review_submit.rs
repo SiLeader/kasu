@@ -179,6 +179,7 @@ fn vote(value: p::VoteValue) -> p::PublishRequest {
         revision: 1,
         vote: Some(value as i32),
         body: vec![],
+        comment_ids: vec![],
     }
 }
 

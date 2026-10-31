@@ -484,6 +484,7 @@ impl Backend {
         let repository = self.resolve(repo)?;
         let record = &repository.record;
         let mut scoped = self.clone();
+        scoped.via = self.delegation_via(authorization).map(Arc::new);
         scoped.writer_grant = None;
         scoped.read_scope = None;
         fn readable<'a>(

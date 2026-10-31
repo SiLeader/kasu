@@ -236,6 +236,17 @@ impl Backend {
                 "backend does not support atomic push",
             ));
         }
+        if !self.record().state.writable() {
+            if !q.report_status {
+                return Err(Status::permission_denied("repository is read-only"));
+            }
+            let statuses = q
+                .commands
+                .iter()
+                .map(|c| (c.name.clone(), Some("repository is read-only".to_owned())))
+                .collect::<Vec<_>>();
+            return receive_report(&q, None, &statuses).map_err(status);
+        }
         for command in &q.commands {
             tracing::trace!(old=?command.old,new=?command.new,name=%String::from_utf8_lossy(&command.name).escape_default(),"Git receive command");
         }
@@ -350,12 +361,7 @@ impl Backend {
             .duration_since(std::time::UNIX_EPOCH)
             .map_err(|_| Status::internal("clock before epoch"))?
             .as_secs() as i64;
-        let statuses = if !self.record().state.writable() {
-            q.commands
-                .iter()
-                .map(|c| (c.name.clone(), Some("repository is read-only".to_owned())))
-                .collect()
-        } else if q.atomic {
+        let statuses = if q.atomic {
             self.receive_atomic(&index, &q.commands, time)
         } else {
             q.commands

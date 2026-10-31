@@ -496,6 +496,14 @@ pub fn plan_fetch(
     refs: &[ResolvedRef],
     q: &FetchRequest,
 ) -> Result<FetchPlan> {
+    plan_fetch_protocol(index, refs, q, Protocol::V2)
+}
+pub fn plan_fetch_protocol(
+    index: &GitIndex<'_>,
+    refs: &[ResolvedRef],
+    q: &FetchRequest,
+    protocol: Protocol,
+) -> Result<FetchPlan> {
     validate_fetch(q)?;
     let public = ReachableSet::new(index, public_roots(refs))?;
     authorize_wants(index, &public, &q.wants)?;
@@ -509,7 +517,17 @@ pub fn plan_fetch(
             common.push(*oid);
         }
     }
-    let send_pack = q.done || !common.is_empty();
+    let send_pack = q.done || (protocol == Protocol::V2 && !common.is_empty());
+    let changing_depth = q.depth.is_some() || q.since.is_some() || !q.exclude.is_empty();
+    if !send_pack && !changing_depth {
+        return Ok(FetchPlan {
+            objects: BTreeSet::new(),
+            shallow: BTreeSet::new(),
+            unshallow: BTreeSet::new(),
+            common,
+            send_pack,
+        });
+    }
     let unbounded =
         q.shallow.is_empty() && q.depth.is_none() && q.since.is_none() && q.exclude.is_empty();
     let (mut objects, shallow, unshallow) = if unbounded {
@@ -519,7 +537,9 @@ pub fn plan_fetch(
             BTreeSet::new(),
         )
     } else {
-        let have_objects = reachable(index, common.iter().copied(), &q.shallow)?;
+        let have_objects = send_pack
+            .then(|| HaveObjects::new(index, &common, &q.shallow))
+            .transpose()?;
         let mut excludes = BTreeSet::new();
         for name in &q.exclude {
             let r = refs
@@ -549,12 +569,14 @@ pub fn plan_fetch(
             loop {
                 let (kind, raw) = index.object(id)?;
                 if kind == GitKind::Tag {
-                    objects.insert(id);
+                    if send_pack {
+                        objects.insert(id);
+                    }
                     id = oid_from_hex(parse_tag(&raw)?.target)?;
                 } else {
                     if kind == GitKind::Commit {
                         seeds.push(id);
-                    } else {
+                    } else if send_pack {
                         objects.extend(reachable(index, [id], &BTreeSet::new())?);
                     }
                     break;
@@ -638,18 +660,29 @@ pub fn plan_fetch(
             } else if q.shallow.contains(id) {
                 unshallow.insert(*id);
             }
+            let Some(have_objects) = &have_objects else {
+                continue;
+            };
             objects.insert(*id);
             for tree in object_links(index, *id, false)? {
                 let mut stack = vec![tree];
                 while let Some(oid) = stack.pop() {
-                    if have_objects.contains(&oid) || !objects.insert(oid) {
+                    if have_objects.contains(oid)? || !objects.insert(oid) {
                         continue;
                     }
                     stack.extend(object_links(index, oid, true)?);
                 }
             }
         }
-        objects.retain(|oid| !have_objects.contains(oid));
+        if let Some(have_objects) = &have_objects {
+            let mut missing = BTreeSet::new();
+            for oid in objects {
+                if !have_objects.contains(oid)? {
+                    missing.insert(oid);
+                }
+            }
+            objects = missing;
+        }
         (objects, shallow, unshallow)
     };
     if q.include_tag {
@@ -680,7 +713,9 @@ pub fn plan_fetch(
     }
     // Explicit wants are never omitted, even if a common commit reaches them.
     // A partial client may have that commit while still missing its blobs.
-    objects.extend(q.wants.iter().copied());
+    if send_pack {
+        objects.extend(q.wants.iter().copied());
+    }
     Ok(FetchPlan {
         objects,
         shallow,
@@ -688,6 +723,42 @@ pub fn plan_fetch(
         common,
         send_pack,
     })
+}
+struct HaveObjects<'a, 'b> {
+    commits: BTreeSet<GitOid>,
+    objects: ReachableSet<'a, 'b>,
+}
+impl<'a, 'b> HaveObjects<'a, 'b> {
+    fn new(index: &'a GitIndex<'b>, common: &[GitOid], shallow: &BTreeSet<GitOid>) -> Result<Self> {
+        let mut commits = BTreeSet::new();
+        let roots = if shallow.is_empty() {
+            common.iter().copied().collect()
+        } else {
+            let mut trees = BTreeSet::new();
+            let mut pending = common.to_vec();
+            while let Some(id) = pending.pop() {
+                if !commits.insert(id) {
+                    continue;
+                }
+                let (_, raw) = index.object(id)?;
+                let commit = parse_commit(&raw)?;
+                trees.insert(oid_from_hex(commit.tree)?);
+                if !shallow.contains(&id) {
+                    for parent in commit.parents {
+                        pending.push(oid_from_hex(parent)?);
+                    }
+                }
+            }
+            trees
+        };
+        Ok(Self {
+            commits,
+            objects: ReachableSet::new(index, roots)?,
+        })
+    }
+    fn contains(&self, id: GitOid) -> Result<bool> {
+        Ok(self.commits.contains(&id) || self.objects.contains(id)?)
+    }
 }
 pub fn fetch_prefix(protocol: Protocol, q: &FetchRequest, plan: &FetchPlan) -> Result<Vec<u8>> {
     let mut out = Vec::new();

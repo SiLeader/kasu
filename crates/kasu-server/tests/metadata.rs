@@ -557,6 +557,7 @@ fn path_log_blame_diff_and_all_merge_bases_match_git() {
                 head: f.ids[b].0.to_vec(),
                 paths: vec![],
                 content: true,
+                exact_paths: false,
             })
             .unwrap();
         let raw = git(
@@ -880,7 +881,8 @@ async fn grpc_over_tcp_and_http_json_preserve_bytes_and_enforce_access() {
                 base: f.ids[0].0.to_vec(),
                 head: f.ids[3].0.to_vec(),
                 paths: vec![],
-                content: true
+                content: true,
+                exact_paths: false,
             }))
             .await
             .unwrap()

@@ -19,6 +19,21 @@ struct Item {
     path: Vec<u8>,
     entry: c::Entry,
 }
+fn validate_archive_path(path: &[u8], zip: bool) -> Result<(), Status> {
+    c::RepoPath::new(path).map_err(status)?;
+    if zip
+        && (path.contains(&b'\\')
+            || path.contains(&b':')
+            || path
+                .split(|b| *b == b'/')
+                .any(|part| part.ends_with(b".") || part.ends_with(b" ")))
+    {
+        return Err(Status::invalid_argument(
+            "path is not safe for a portable zip archive",
+        ));
+    }
+    Ok(())
+}
 impl Backend {
     /// Every leaf below `path` at `id`, as the caller may read it.
     fn archive_items(&self, q: &p::ArchiveRequest, max_bytes: u64) -> Result<Vec<Item>, Status> {
@@ -67,6 +82,10 @@ impl Backend {
                         pending.push((path, child));
                     }
                     TreeEntry::Leaf(entry) if self.read_allows(&full_path) => {
+                        validate_archive_path(
+                            &[q.prefix.as_slice(), &path].concat(),
+                            q.format == p::ArchiveFormat::Zip as i32,
+                        )?;
                         if let Some(blob) = entry.blob() {
                             let size = ops.ctx.repo.blob_metadata(blob).map_err(status)?.size;
                             bytes = bytes
@@ -323,6 +342,12 @@ impl Archive for ArchiveService {
         if input.prefix.len() > 256 || input.prefix.contains(&0) {
             return Err(Status::invalid_argument("invalid archive prefix"));
         }
+        if !input.prefix.is_empty() {
+            validate_archive_path(
+                input.prefix.strip_suffix(b"/").unwrap_or(&input.prefix),
+                input.format == p::ArchiveFormat::Zip as i32,
+            )?;
+        }
         let state = self
             .state
             .scoped(authorization.as_deref(), &input.repo, Mode::Read)
@@ -359,6 +384,30 @@ impl Archive for ArchiveService {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn archive_paths_reject_traversal_and_windows_separators() {
+        for path in [
+            b"../escape".as_slice(),
+            b"/absolute",
+            b"prefix/../../escape",
+        ] {
+            assert!(validate_archive_path(path, false).is_err());
+            assert!(validate_archive_path(path, true).is_err());
+        }
+        for path in [
+            b"..\\escape".as_slice(),
+            b"C:escape",
+            b".. /escape",
+            b"file.",
+        ] {
+            assert!(validate_archive_path(path, true).is_err());
+        }
+        for path in [b"repo/docs/a.txt".as_slice(), b"repo/file\xff"] {
+            assert!(validate_archive_path(path, false).is_ok());
+            assert!(validate_archive_path(path, true).is_ok());
+        }
+        assert!(validate_archive_path(b"..\\escape", false).is_ok());
+    }
     #[test]
     fn archive_selection_limits_expanded_bytes_without_granting_object_access() {
         let dir = tempfile::tempdir().unwrap();

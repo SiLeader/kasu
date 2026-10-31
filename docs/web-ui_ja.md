@@ -93,6 +93,8 @@ KASU_WEB_CONFIG_FILE=web.json \
 
 優先順位はプロキシヘッダー（信頼ピアのみ）→ セッション Cookie → 匿名です。信頼ピア以外からのヘッダーは無視し、ログに記録します。運用者トークン、射影アカウント、Objects hop token ではサインインできません。
 
+プロキシ認証を使わず TLS 終端プロキシを置く場合は、トップレベルの `trusted_forwarders` にその CIDR（例: `["127.0.0.1/32"]`）を設定します。このピア、または `auth.proxy.trusted_peers` からのみ `X-Forwarded-For` の右端のアドレスを採用します。認証ヘッダーは信頼しません。プロキシは実際のクライアントアドレスを上書きまたは追記してください。ログイン制限は IPv6 の /64 をまとめ、クライアントの記録数にも上限を設けます。
+
 セッションは署名付き Cookie（`__Host-kasu_session`、`Secure; HttpOnly; SameSite=Lax`）で、最終利用から 2 時間、サインインから 12 時間で失効します。ログアウトは Cookie を削除します。あるアカウントの全セッションを即時に終わらせるには PAT を差し替えます。binding が一致しなくなり、kasu-server が次の要求でセッションを拒否します。ログイン試行は接続元アドレスごとに制限します。
 
 ## URL
@@ -112,7 +114,11 @@ KASU_WEB_CONFIG_FILE=web.json \
 /<repo>/-/settings                 管理
 ```
 
-`<rev>` は 1 セグメントで、64 桁 16 進の Changeset ID、完全な ref 名（`refs/...`）、branch 名または tag 名です。`/` を含む予約文字はすべてパーセントエンコードします（`feature%2Fx`）。`<path>` は残り全体をバイト単位でエンコードするため、非 UTF-8 のパスも往復します。ref で表示中の画面は Changeset ID のパーマリンクを示します（`y` キーでも移動）。Changeset ID 指定の画面は `Cache-Control: private, max-age=3600`、それ以外は `private, no-cache` です。
+`<rev>` は 1 セグメントで、64 桁 16 進の Changeset ID、完全な ref 名（`refs/...`）、branch 名または tag 名です。`/` を含む予約文字はすべてパーセントエンコードします（`feature%2Fx`）。`<path>` は残り全体をバイト単位でエンコードするため、非 UTF-8 のパスも往復します。ref で表示中の画面は Changeset ID のパーマリンクを示します（`y` キーでも移動）。ログイン中の HTML 画面は `Cache-Control: private, no-store`、匿名での Changeset ID 指定画面は `private, max-age=3600`、その他は `private, no-cache` です。
+
+README・blame・diff は内容取得前に blob サイズを確認します。diff は展開後も含め、1 ページあたり変更前後の入力合計16 MiB・描画10,000行を上限とし、超過時は案内を表示します。構文強調は4 KiBを超える行を避け、混雑時は通常のテキスト表示に切り替えます。ZIP は Windows で危険なパス（バックスラッシュ・コロン・末尾のドットや空白）を拒否します。Unix の名前をバイト単位で保持する場合は tar.gz を使用してください。
+
+raw ダウンロードは上流の単一応答ファイル API を維持し、取得前にサイズ分の枠を予約します。応答全体で共有する上限は256 MiBです。チャンク送信中も予約を保持し、完了・切断時に解放します。同時ダウンロードが上限を超えた場合は再試行可能な混雑応答を返します。
 
 ## 閲覧
 

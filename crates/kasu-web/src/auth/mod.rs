@@ -88,7 +88,8 @@ impl App {
     }
     /// The browser's address: the peer, or the proxy's forwarded address.
     pub fn client_addr(&self, headers: &HeaderMap, peer: Option<IpAddr>) -> Option<IpAddr> {
-        if self.trusted_proxy(peer)
+        if (self.trusted_proxy(peer)
+            || peer.is_some_and(|ip| self.config.forwarder_peers.iter().any(|c| c.contains(ip))))
             && let Some(forwarded) = headers
                 .get("x-forwarded-for")
                 .and_then(|v| v.to_str().ok())

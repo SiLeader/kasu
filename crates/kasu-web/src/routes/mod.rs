@@ -269,7 +269,9 @@ impl Ctx {
                 (header::CONTENT_TYPE, "text/html; charset=utf-8"),
                 (
                     header::CACHE_CONTROL,
-                    if immutable {
+                    if self.viewer.signed_in() {
+                        "private, no-store"
+                    } else if immutable {
                         "private, max-age=3600"
                     } else {
                         "private, no-cache"
@@ -373,13 +375,18 @@ impl Ctx {
     }
     /// The request body as form fields, after CSRF and origin checks.
     pub async fn form(&mut self, kind: &str) -> Result<Fields> {
+        self.check_origin()?;
         let body = self
             .body
             .lock()
             .ok()
             .and_then(|mut b| b.take())
             .ok_or_else(|| WebError::BadRequest("missing body".into()))?;
-        let limit = self.app.config.file.limits.upload_total_bytes as usize + 1024 * 1024;
+        let limit = if matches!(kind, "login" | "preferences" | "logout") {
+            16 * 1024
+        } else {
+            self.app.config.file.limits.upload_total_bytes as usize + 1024 * 1024
+        };
         let bytes = axum::body::to_bytes(body, limit)
             .await
             .map_err(|_| WebError::BadRequest("the form is too large".into()))?;
@@ -390,6 +397,7 @@ impl Ctx {
     }
     /// A multipart body; the caller checks CSRF on its `csrf` part.
     pub async fn multipart(&mut self) -> Result<Multipart> {
+        self.check_origin()?;
         let body = self
             .body
             .lock()
@@ -411,6 +419,24 @@ impl Ctx {
     /// Verify the CSRF token of `kind` and that the request comes from this
     /// site.
     pub fn check(&self, kind: &str, token: Option<&str>) -> Result<()> {
+        self.check_origin()?;
+        let valid = token.is_some_and(|token| {
+            csrf::verify(
+                &self.app.config.session_key,
+                &self.viewer.csrf_subject,
+                kind,
+                token,
+                self.now,
+            )
+        });
+        if !valid {
+            return Err(WebError::Forbidden(
+                "the form expired; reload and try again".into(),
+            ));
+        }
+        Ok(())
+    }
+    fn check_origin(&self) -> Result<()> {
         let origin = self
             .headers
             .get(header::ORIGIN)
@@ -430,20 +456,6 @@ impl Ctx {
             });
         if origin.as_deref() != Some(self.app.config.public_url.as_str()) {
             return Err(WebError::Forbidden("cross-site request".into()));
-        }
-        let valid = token.is_some_and(|token| {
-            csrf::verify(
-                &self.app.config.session_key,
-                &self.viewer.csrf_subject,
-                kind,
-                token,
-                self.now,
-            )
-        });
-        if !valid {
-            return Err(WebError::Forbidden(
-                "the form expired; reload and try again".into(),
-            ));
         }
         Ok(())
     }
@@ -851,11 +863,14 @@ impl Ctx {
             rev: resolved.map(|r| RevBar {
                 label: r.label(),
                 short: crate::render::text::short(&r.id),
-                permalink: self.path.replacen(
-                    &format!("/{}", rev::segment(r.segment())),
-                    &format!("/{}", hex::encode(&r.id)),
-                    1,
-                ),
+                permalink: match Route::parse(&self.path) {
+                    Some(Route::View { view, rest, .. }) => repo.url(
+                        &view,
+                        Some(hex::encode(&r.id).as_bytes()),
+                        Some(&rest.into_iter().skip(1).collect::<Vec<_>>().join(&b'/')),
+                    ),
+                    _ => repo.url("tree", Some(hex::encode(&r.id).as_bytes()), None),
+                },
                 switch: format!("{}?select=1", repo.url("refs", None, None)),
             }),
         }

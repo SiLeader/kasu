@@ -169,6 +169,49 @@ async fn reviews_are_created_commented_approved_and_submitted_without_javascript
         "comment markdown is sanitized"
     );
 
+    let pending = h
+        .post(
+            "/team/app/-/reviews/1/comment",
+            Some(&bob),
+            &[
+                ("csrf", &csrf),
+                ("revision", "1"),
+                ("path", &with_form.field("path")),
+                ("side", &with_form.field("side")),
+                ("line", &with_form.field("line")),
+                ("body", "keep this draft private"),
+            ],
+        )
+        .await;
+    assert_eq!(pending.status, StatusCode::SEE_OTHER, "{}", pending.text());
+    let reply = h
+        .post(
+            "/team/app/-/reviews/1/comment",
+            Some(&bob),
+            &[
+                ("csrf", &csrf),
+                ("parent", "1"),
+                ("body", "only this reply is published"),
+            ],
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::SEE_OTHER, "{}", reply.text());
+    let visible = h
+        .get("/team/app/-/reviews/1/files", Some(&alice))
+        .await
+        .text();
+    assert!(
+        visible.contains("only this reply is published"),
+        "{visible}"
+    );
+    assert!(!visible.contains("keep this draft private"), "{visible}");
+    assert!(
+        h.get("/team/app/-/reviews/1/files", Some(&bob))
+            .await
+            .text()
+            .contains("keep this draft private")
+    );
+
     let overview = h.get("/team/app/-/reviews/1", Some(&alice)).await;
     assert!(overview.text().contains("ready"), "{}", overview.text());
     let submitted = h

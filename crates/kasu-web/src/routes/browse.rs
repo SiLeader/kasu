@@ -542,10 +542,7 @@ pub fn markdown_at(repo: &Repo, rev: &[u8], file: &[u8], source: &[u8]) -> Strin
     markdown::render(source, Some(&rewrite))
 }
 async fn render_readme(ctx: &Ctx, repo: &Repo, resolved: &Resolved, file: &[u8]) -> Option<String> {
-    let response = read_file(ctx, repo, &resolved.id, file).await.ok()?;
-    if response.content.len() as u64 > ctx.app.config.file.limits.file_view_bytes {
-        return None;
-    }
+    let response = read_view_file(ctx, repo, &resolved.id, file).await.ok()??;
     let lower = file.to_ascii_lowercase();
     Some(
         if lower.ends_with(b".md") || lower.ends_with(b".markdown") {
@@ -616,6 +613,31 @@ pub async fn blob_size(ctx: &Ctx, repo: &Repo, blob: &[u8]) -> Result<p::BlobMet
     .read()?;
     response.blobs.into_iter().next().ok_or(WebError::NotFound)
 }
+async fn entry_size(ctx: &Ctx, repo: &Repo, entry: &p::Entry) -> Result<u64> {
+    let Some(blob) = entry_blob(entry) else {
+        return Ok(0);
+    };
+    Ok(blob_size(ctx, repo, blob).await?.size)
+}
+fn entry_blob(entry: &p::Entry) -> Option<&[u8]> {
+    match &entry.kind {
+        Some(p::entry::Kind::File(file)) => Some(&file.blob),
+        Some(p::entry::Kind::Symlink(blob)) => Some(blob),
+        _ => None,
+    }
+}
+pub async fn read_view_file(
+    ctx: &Ctx,
+    repo: &Repo,
+    id: &[u8],
+    path: &[u8],
+) -> Result<Option<p::ReadFileResponse>> {
+    let entry = entry_at(ctx, repo, id, path).await?;
+    if entry_size(ctx, repo, &entry).await? > ctx.app.config.file.limits.file_view_bytes {
+        return Ok(None);
+    }
+    Ok(Some(read_file(ctx, repo, id, path).await.read()?))
+}
 pub async fn blob(ctx: &mut Ctx, name: String, rest: Vec<Vec<u8>>) -> Result<Response> {
     let (rev, path) = split_rev(rest)?;
     if path.is_empty() {
@@ -647,7 +669,11 @@ pub async fn blob(ctx: &mut Ctx, name: String, rest: Vec<Vec<u8>>) -> Result<Res
     match entry.kind {
         Some(p::entry::Kind::Gitlink(commit)) => page_data.gitlink = Some(hex::encode(commit)),
         Some(p::entry::Kind::Symlink(_)) => {
-            let file = read_file(ctx, &repo, &resolved.id, &path).await.read()?;
+            let file = read_view_file(ctx, &repo, &resolved.id, &path)
+                .await?
+                .ok_or_else(|| {
+                    WebError::BadRequest(t.s("The file is too large to display.").into())
+                })?;
             let target = file.content;
             let dir = path
                 .iter()
@@ -779,6 +805,15 @@ pub async fn raw(ctx: &mut Ctx, name: String, rest: Vec<Vec<u8>>) -> Result<Resp
     }
     let repo = ctx.repo(&name).await?;
     let resolved = ctx.resolve(&repo, &rev).await?;
+    let entry = entry_at(ctx, &repo, &resolved.id, &path).await?;
+    let size = entry_size(ctx, &repo, &entry).await?;
+    let units = u32::try_from(size.div_ceil(1024 * 1024).max(1)).map_err(|_| WebError::Busy)?;
+    let permit = ctx
+        .app
+        .raw_downloads
+        .clone()
+        .try_acquire_many_owned(units)
+        .map_err(|_| WebError::Busy)?;
     let file = read_file(ctx, &repo, &resolved.id, &path).await.read()?;
     let image = image_type(&path).filter(|_| {
         matches!(
@@ -811,7 +846,18 @@ pub async fn raw(ctx: &mut Ctx, name: String, rest: Vec<Vec<u8>>) -> Result<Resp
         },
         rev::segment(filename)
     );
-    let mut response = (StatusCode::OK, file.content).into_response();
+    let mut bytes = axum::body::Bytes::from(file.content);
+    let chunks = std::iter::from_fn(move || {
+        let _permit = &permit;
+        if bytes.is_empty() {
+            None
+        } else {
+            Some(Ok::<_, std::convert::Infallible>(
+                bytes.split_to(bytes.len().min(256 * 1024)),
+            ))
+        }
+    });
+    let mut response = axum::body::Body::from_stream(tokio_stream::iter(chunks)).into_response();
     let headers = response.headers_mut();
     headers.insert(header::CONTENT_TYPE, HeaderValue::from_static(content_type));
     if let Ok(value) = HeaderValue::from_str(&disposition) {
@@ -823,7 +869,9 @@ pub async fn raw(ctx: &mut Ctx, name: String, rest: Vec<Vec<u8>>) -> Result<Resp
     );
     headers.insert(
         header::CACHE_CONTROL,
-        HeaderValue::from_static(if resolved.immutable() {
+        HeaderValue::from_static(if ctx.viewer.signed_in() {
+            "private, no-store"
+        } else if resolved.immutable() {
             "private, max-age=3600"
         } else {
             "private, no-cache"
@@ -851,11 +899,16 @@ pub async fn blame(ctx: &mut Ctx, name: String, rest: Vec<Vec<u8>>) -> Result<Re
     let resolved = ctx.resolve(&repo, &rev).await?;
     let moves = ctx.q("moves") == Some("1");
     let copies = ctx.q("copies") == Some("1");
-    let file = read_file(ctx, &repo, &resolved.id, &path).await.read()?;
+    let file = read_view_file(ctx, &repo, &resolved.id, &path).await?;
     let t = ctx.t;
-    let lines = text::lines(&file.content);
-    let too_large =
-        lines.len() > ctx.app.config.file.limits.blame_lines || !text::is_text(&file.content);
+    let content = file
+        .as_ref()
+        .map(|f| f.content.as_slice())
+        .unwrap_or_default();
+    let lines = text::lines(content);
+    let too_large = file.is_none()
+        || lines.len() > ctx.app.config.file.limits.blame_lines
+        || !text::is_text(content);
     let mut groups: Vec<BlameGroup> = Vec::new();
     if !too_large {
         let blame = rpc!(
@@ -870,7 +923,7 @@ pub async fn blame(ctx: &mut Ctx, name: String, rest: Vec<Vec<u8>>) -> Result<Re
         )
         .await
         .read()?;
-        let highlighted = code_lines(ctx, &path, &file.content).await;
+        let highlighted = code_lines(ctx, &path, content).await;
         let mut origins: std::collections::HashMap<Vec<u8>, p::Changeset> = Default::default();
         for (index, origin) in blame.lines.iter().enumerate() {
             let line = highlighted.get(index).cloned().unwrap_or_default();
@@ -1016,6 +1069,7 @@ pub struct FileDiffData {
     pub binary: bool,
     /// None when collapsed (too many changed lines).
     pub rows: Option<Vec<Row>>,
+    pub expandable: bool,
 }
 fn status_of(file: &p::FileDiff) -> &'static str {
     let kind = |e: &Option<p::Entry>| {
@@ -1058,65 +1112,128 @@ pub async fn diff_files(
             head: head.to_vec(),
             paths: filter.to_vec(),
             content: false,
+            exact_paths: false,
         })
     )
     .await
     .read()?;
     let total = listing.files.len();
-    let shown: Vec<Vec<u8>> = listing
-        .files
-        .iter()
-        .skip(page * limits.diff_files)
-        .take(limits.diff_files)
-        .map(|f| f.path.clone())
-        .collect();
-    if shown.is_empty() {
-        return Ok((Vec::new(), total));
-    }
-    let content = rpc!(
-        ctx,
-        metadata.diff(p::DiffRequest {
-            repo: repo.bytes(),
-            base: base.to_vec(),
-            head: head.to_vec(),
-            paths: shown.clone(),
-            content: true,
-        })
-    )
-    .await
-    .read()?;
-    let mut files = Vec::new();
-    for file in content
+    let shown: Vec<_> = listing
         .files
         .into_iter()
-        .filter(|f| shown.contains(&f.path))
-    {
+        .skip(page.saturating_mul(limits.diff_files))
+        .take(limits.diff_files)
+        .collect();
+    let ids: Vec<_> = shown
+        .iter()
+        .flat_map(|f| [&f.before, &f.after])
+        .flatten()
+        .filter_map(entry_blob)
+        .map(<[u8]>::to_vec)
+        .collect::<std::collections::BTreeSet<_>>()
+        .into_iter()
+        .collect();
+    let mut sizes = std::collections::BTreeMap::new();
+    for batch in ids.chunks(128) {
+        let metadata = rpc!(
+            ctx,
+            metadata.get_blob_metadata(p::ObjectRequest {
+                repo: repo.bytes(),
+                ids: batch.to_vec(),
+            })
+        )
+        .await
+        .read()?;
+        for blob in metadata.blobs {
+            sizes.insert(blob.id, blob.size);
+        }
+    }
+    let mut files = Vec::new();
+    let mut bytes_left = 16 * 1024 * 1024u64;
+    let mut rows_left = 10_000usize;
+    let mut wanted = Vec::new();
+    for file in &shown {
+        let mut size = 0u64;
+        let mut fits = true;
+        for entry in [&file.before, &file.after].into_iter().flatten() {
+            let entry_bytes = match entry_blob(entry) {
+                Some(id) => *sizes.get(id).ok_or(WebError::Upstream)?,
+                None => 0,
+            };
+            fits &= entry_bytes <= limits.file_view_bytes;
+            size = size.saturating_add(entry_bytes);
+        }
+        if fits && size <= bytes_left {
+            wanted.push(file.path.clone());
+            bytes_left -= size;
+        }
+    }
+    let mut content = if wanted.is_empty() {
+        std::collections::BTreeMap::new()
+    } else {
+        rpc!(
+            ctx,
+            metadata.diff(p::DiffRequest {
+                repo: repo.bytes(),
+                base: base.to_vec(),
+                head: head.to_vec(),
+                paths: wanted.clone(),
+                content: true,
+                exact_paths: true,
+            })
+        )
+        .await
+        .read()?
+        .files
+        .into_iter()
+        .map(|f| (f.path.clone(), f))
+        .collect()
+    };
+    for mut file in shown {
+        if !wanted.contains(&file.path) || rows_left == 0 {
+            files.push(FileDiffData {
+                status: status_of(&file),
+                path: file.path,
+                binary: file.binary,
+                rows: None,
+                expandable: false,
+            });
+            continue;
+        }
+        file = content.remove(&file.path).ok_or(WebError::Upstream)?;
         let changed: usize = file
             .edits
             .iter()
             .map(|e| e.before.len() + e.after.len())
             .sum();
-        let collapsed = changed > limits.diff_lines && expand != Some(file.path.as_slice());
+        let mut expandable = changed <= rows_left;
+        let collapsed =
+            !expandable || (changed > limits.diff_lines && expand != Some(file.path.as_slice()));
         let rows = if file.binary || collapsed {
             None
         } else {
             let after = match &file.after {
                 Some(p::Entry {
                     kind: Some(p::entry::Kind::File(_)),
-                }) => read_file(ctx, repo, head, &file.path)
-                    .await
-                    .map(|r| r.content)
-                    .unwrap_or_default(),
+                }) => read_file(ctx, repo, head, &file.path).await.read()?.content,
                 _ => Vec::new(),
             };
             let lines = text::lines(&after);
-            Some(diff::rows(&file.edits, &lines, 3))
+            let rows = diff::rows(&file.edits, &lines, 3);
+            if rows.len() > rows_left {
+                expandable = false;
+                None
+            } else {
+                rows_left -= rows.len();
+                Some(rows)
+            }
         };
         files.push(FileDiffData {
             status: status_of(&file),
             binary: file.binary,
             path: file.path,
             rows,
+            expandable,
         });
     }
     Ok((files, total))
@@ -1148,12 +1265,16 @@ pub fn file_view(
             };
             format!("<table class=\"diff\">{body}</table>")
         }
+        None if !file.expandable => format!(
+            "<p class=\"muted\">{}</p>",
+            t.s("The file is too large to display.")
+        ),
         None => String::new(),
     };
     FileView {
         path: lossy(&file.path),
         status: t.s(file.status).to_owned(),
-        collapsed: file.rows.is_none() && !file.binary,
+        collapsed: file.rows.is_none() && !file.binary && file.expandable,
         html,
         load,
         anchor,
@@ -1223,6 +1344,7 @@ pub async fn changeset(ctx: &mut Ctx, name: String, rest: Vec<Vec<u8>>) -> Resul
                     },
                     binary: false,
                     rows: Some(Vec::new()),
+                    expandable: false,
                 })
                 .collect::<Vec<_>>();
             let total = files.len();

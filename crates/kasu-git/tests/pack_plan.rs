@@ -89,6 +89,42 @@ fn pack_sets_include_intermediate_blobs_and_second_parents_and_respect_client_sh
         ..Default::default()
     };
     let full = plan_fetch(&index, &refs, &request).unwrap();
+    for protocol in [Protocol::V0, Protocol::V1, Protocol::V2] {
+        for depth in [None, Some(1)] {
+            let negotiation = plan_fetch_protocol(
+                &index,
+                &refs,
+                &FetchRequest {
+                    done: false,
+                    depth,
+                    ..request.clone()
+                },
+                protocol,
+            )
+            .unwrap();
+            assert!(!negotiation.send_pack);
+            assert!(negotiation.objects.is_empty());
+            if depth.is_some() {
+                assert_eq!(negotiation.shallow, BTreeSet::from([oids[4]]));
+            }
+        }
+    }
+    for protocol in [Protocol::V0, Protocol::V1] {
+        let negotiation = plan_fetch_protocol(
+            &index,
+            &refs,
+            &FetchRequest {
+                done: false,
+                haves: vec![oids[0]],
+                ..request.clone()
+            },
+            protocol,
+        )
+        .unwrap();
+        assert_eq!(negotiation.common, vec![oids[0]]);
+        assert!(!negotiation.send_pack);
+        assert!(negotiation.objects.is_empty());
+    }
     assert!(
         full.objects
             .contains(&GitOid::hash("blob", b"intermediate-only\n"))

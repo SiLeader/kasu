@@ -141,9 +141,9 @@ impl S3BlobStore {
         if bytes.len() != expected {
             return Err(invalid("truncated S3 frame"));
         }
-        let raw = decompress(&bytes)?;
+        let raw = decompress(&bytes).map_err(|error| Error::Corrupt(error.to_string()))?;
         if ObjectId::hash(&raw) != id {
-            return Err(invalid("corrupt S3 object hash"));
+            return Err(Error::Corrupt("S3 object hash mismatch".into()));
         }
         Ok(bytes)
     }

@@ -20,7 +20,7 @@ impl SqliteStore {
     pub fn memory() -> Result<Self> {
         Self::from_connection(Connection::open_in_memory().map_err(storage_error)?)
     }
-    fn from_connection(connection: Connection) -> Result<Self> {
+    fn from_connection(mut connection: Connection) -> Result<Self> {
         connection
             .busy_timeout(Duration::from_secs(30))
             .map_err(storage_error)?;
@@ -40,17 +40,21 @@ impl SqliteStore {
         connection
             .execute_batch(review::SCHEMA)
             .map_err(storage_error)?;
+        let migration = connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .map_err(storage_error)?;
         for table in ["ref_log", "git_ref_log"] {
-            let columns: Vec<String> = connection
+            let columns: Vec<String> = migration
                 .prepare(&format!("SELECT name FROM pragma_table_info('{table}')"))
                 .and_then(|mut s| s.query_map([], |r| r.get(0))?.collect())
                 .map_err(storage_error)?;
             if !columns.iter().any(|c| c == "via") {
-                connection
+                migration
                     .execute_batch(&format!("ALTER TABLE {table} ADD COLUMN via BLOB"))
                     .map_err(storage_error)?;
             }
         }
+        migration.commit().map_err(storage_error)?;
         Ok(Self {
             connection: Mutex::new(connection),
         })

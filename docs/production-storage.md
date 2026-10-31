@@ -54,9 +54,8 @@ Externalizing only one of them is possible, but then sharing the other's local d
 
 ## PostgreSQL Storage Contract
 
-At startup, a dedicated `kasu` schema and version 1 tables are created.
-An advisory lock is used only for the initialization DDL. Schemas are never dropped, and there is no
-automatic migration from existing SQLite. Unsupported schema versions are rejected.
+At startup, a dedicated `kasu` schema is initialized or upgraded from version 1 to version 2 under an advisory lock. Connections to version 2 only read the version; reconnecting does not run DDL or lock data tables. Stop older server/ingest processes before this upgrade, since they do not accept version 2.
+Schemas are never dropped, and there is no automatic migration from existing SQLite. Unsupported schema versions are rejected.
 Prepare a dedicated DB role with the permissions needed for initialization and normal storage.
 
 The immutable KV keeps a BLAKE3 key index plus the original key and value.

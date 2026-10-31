@@ -3,6 +3,118 @@ use axum::http::StatusCode;
 use common::*;
 
 #[tokio::test]
+async fn raw_download_budget_is_held_until_the_response_is_dropped() {
+    use axum::{body::Body, http::Request};
+    use tower::ServiceExt;
+    let h = Harness::delegated(&["team/app"]).await;
+    h.commit("team/app", &[(b"a", Some(b"content"))], "init")
+        .await;
+    let request = || {
+        Request::get("/team/app/-/raw/main/a")
+            .body(Body::empty())
+            .unwrap()
+    };
+    let mut responses = Vec::new();
+    for _ in 0..256 {
+        let response = h.web.clone().oneshot(request()).await.unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        responses.push(response);
+    }
+    assert_eq!(
+        h.web.clone().oneshot(request()).await.unwrap().status(),
+        StatusCode::TOO_MANY_REQUESTS
+    );
+    drop(responses);
+    assert_eq!(
+        h.get("/team/app/-/raw/main/a", None).await.status,
+        StatusCode::OK
+    );
+}
+
+#[tokio::test]
+async fn permalinks_replace_the_revision_not_the_repository_name() {
+    let h = Harness::delegated(&["team/main"]).await;
+    let id = h
+        .commit("team/main", &[(b"main/file.txt", Some(b"hello"))], "init")
+        .await;
+    let alice = h.login("alice").await;
+    let page = h
+        .get("/team/main/-/blob/main/main/file.txt", Some(&alice))
+        .await;
+    assert_eq!(page.status, StatusCode::OK, "{}", page.text());
+    let link = format!("/team/main/-/blob/{}/main/file.txt", hex::encode(id));
+    assert!(page.links().contains(&link), "{}", page.text());
+    let immutable = h.get(&link, Some(&alice)).await;
+    assert_eq!(immutable.status, StatusCode::OK);
+    assert_eq!(immutable.headers["cache-control"], "private, no-store");
+}
+
+#[tokio::test]
+async fn readme_blame_and_expanded_diffs_respect_display_limits() {
+    let h = Harness::start(
+        &["team/app"],
+        |b| {
+            b.with_repository_accounts(accounts())
+                .unwrap()
+                .with_delegates(vec![delegate()])
+                .unwrap()
+        },
+        |c| {
+            c.delegate_token = Some("web-delegate".into());
+            c.file.auth.anonymous.enabled = true;
+            c.file.auth.anonymous.account = Some("public".into());
+            c.file.limits.file_view_bytes = 32;
+        },
+    )
+    .await;
+    let large = b"# This README is too large to display\nnever_render_this_content\n";
+    h.commit("team/app", &[(b"README.md", Some(large))], "init")
+        .await;
+    let id = h
+        .commit(
+            "team/app",
+            &[(
+                b"README.md",
+                Some(b"# changed\nnever_render_this_content_after_either\n"),
+            )],
+            "change",
+        )
+        .await;
+    let tree = h.get("/team/app/-/tree/main", None).await;
+    assert_eq!(tree.status, StatusCode::OK, "{}", tree.text());
+    assert!(!tree.text().contains("never_render_this_content"));
+    for url in [
+        "/team/app/-/blame/main/README.md".to_owned(),
+        format!("/team/app/-/changeset/{}?expand=README.md", hex::encode(id)),
+    ] {
+        let page = h.get(&url, None).await;
+        assert_eq!(page.status, StatusCode::OK, "{}", page.text());
+        assert!(page.text().contains("too large"), "{}", page.text());
+        assert!(!page.text().contains("never_render_this_content"));
+    }
+}
+
+#[tokio::test]
+async fn expanding_many_short_changed_lines_keeps_a_hard_rendering_limit() {
+    let h = Harness::delegated(&["team/app"]).await;
+    h.commit("team/app", &[(b"a", Some(b"before\n"))], "init")
+        .await;
+    let content = b"x\n".repeat(12_000);
+    let id = h
+        .commit("team/app", &[(b"a", Some(&content))], "change")
+        .await;
+    let page = h
+        .get(
+            &format!("/team/app/-/changeset/{}?expand=a", hex::encode(id)),
+            None,
+        )
+        .await;
+    assert_eq!(page.status, StatusCode::OK, "{}", page.text());
+    assert!(page.text().contains("too large"), "{}", page.text());
+    assert_eq!(page.count("class", "add"), 0);
+}
+
+#[tokio::test]
 async fn anonymous_visitors_browse_trees_files_history_and_changesets() {
     let h = Harness::delegated(&["team/app", "team/secret"]).await;
     h.commit(

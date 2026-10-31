@@ -155,6 +155,16 @@ impl Operations<'_> {
         paths: &[RepoPath],
         content: bool,
     ) -> Result<Vec<FileDiff>> {
+        self.diff_with_exact_paths(base, head, paths, content, false)
+    }
+    pub fn diff_with_exact_paths(
+        &self,
+        base: ChangesetId,
+        head: ChangesetId,
+        paths: &[RepoPath],
+        content: bool,
+        exact_paths: bool,
+    ) -> Result<Vec<FileDiff>> {
         let old = self.root_tree(base)?;
         let new = self.root_tree(head)?;
         let mut result = Vec::new();
@@ -163,7 +173,8 @@ impl Operations<'_> {
             if !paths.is_empty()
                 && !paths.iter().any(|prefix| {
                     path == prefix
-                        || (path.as_bytes().starts_with(prefix.as_bytes())
+                        || (!exact_paths
+                            && path.as_bytes().starts_with(prefix.as_bytes())
                             && path.as_bytes().get(prefix.as_bytes().len()) == Some(&b'/'))
                 })
             {

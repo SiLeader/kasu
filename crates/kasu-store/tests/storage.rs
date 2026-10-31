@@ -24,6 +24,22 @@ fn oversized_local_frames_are_rejected_before_reading_or_decompression() {
 }
 
 #[test]
+fn local_compressed_reads_detect_corrupt_and_misplaced_frames() {
+    let dir = tempfile::tempdir().unwrap();
+    let blobs = FsBlobStore::open(dir.path()).unwrap();
+    let id = blobs.put(b"original").unwrap();
+    let other = blobs.put(b"different").unwrap();
+    let hex = id.to_string();
+    let path = dir.path().join(&hex[..2]).join(&hex[2..]);
+    std::fs::write(&path, blobs.get_compressed(other).unwrap()).unwrap();
+    assert!(
+        matches!(blobs.get_compressed(id), Err(Error::Corrupt(message)) if message == "object hash mismatch")
+    );
+    std::fs::write(&path, b"not zstd").unwrap();
+    assert!(blobs.get_compressed(id).is_err());
+}
+
+#[test]
 fn immutable_and_compressed_objects_survive_reopen() {
     let dir = tempfile::tempdir().unwrap();
     let db = dir.path().join("meta.db");
@@ -135,6 +151,12 @@ fn independent_connections_race_one_winner_and_one_log() {
     let dir = tempfile::tempdir().unwrap();
     let db = dir.path().join("meta.db");
     SqliteStore::open(&db).unwrap();
+    rusqlite::Connection::open(&db)
+        .unwrap()
+        .execute_batch(
+            "ALTER TABLE ref_log DROP COLUMN via; ALTER TABLE git_ref_log DROP COLUMN via;",
+        )
+        .unwrap();
     let barrier = Arc::new(Barrier::new(16));
     let workers: Vec<_> = (0..16)
         .map(|n| {

@@ -93,6 +93,8 @@ Set `KASU_BINDING_KEY_FILE` (32 bytes or more, shared by every server replica) s
 
 Precedence is proxy header (trusted peers only) → session cookie → anonymous. Headers from untrusted peers are ignored and logged. The operator token, projection accounts and the object hop token cannot sign in.
 
+For TLS-terminating proxies without proxy sign-in, set top-level `trusted_forwarders` to their CIDRs (for example `["127.0.0.1/32"]`). Only these peers, or `auth.proxy.trusted_peers`, may supply the rightmost `X-Forwarded-For` address. This does not trust identity headers. Proxies must overwrite or append the actual client address. Login limits group IPv6 clients by /64 and bound the client map.
+
 Sessions are signed cookies (`__Host-kasu_session`; `Secure; HttpOnly; SameSite=Lax`) that expire after 2 hours of inactivity and 12 hours after sign-in. Logging out deletes the cookie; to end every session of an account immediately, replace its PAT: the binding then no longer matches and kasu-server rejects the session on its next request. Login attempts are rate limited per client address.
 
 ## URLs
@@ -112,7 +114,11 @@ The first `-` path segment separates the repository name (names never contain a 
 /<repo>/-/settings                 administration
 ```
 
-`<rev>` is one segment: a 64-hex Changeset ID, a full ref name (`refs/...`), or a branch or tag name, with `/` and every reserved byte percent-encoded (`feature%2Fx`). `<path>` is the rest, byte by byte, so non-UTF-8 paths round-trip. Pages shown by a ref link to their Changeset ID permalink (also the `y` key). Pages addressed by Changeset ID are `Cache-Control: private, max-age=3600`; everything else is `private, no-cache`.
+`<rev>` is one segment: a 64-hex Changeset ID, a full ref name (`refs/...`), or a branch or tag name, with `/` and every reserved byte percent-encoded (`feature%2Fx`). `<path>` is the rest, byte by byte, so non-UTF-8 paths round-trip. Pages shown by a ref link to their Changeset ID permalink (also the `y` key). Signed-in HTML pages use `Cache-Control: private, no-store`. Anonymous pages addressed by Changeset ID use `private, max-age=3600`; other pages use `private, no-cache`.
+
+README, blame, and diff displays check blob sizes before fetching content. Diffs also cap each page at 16 MiB of before/after input and 10,000 rendered rows, including expanded files. Oversized files show a notice instead. Highlighting skips lines over 4 KiB and falls back to plain text when busy. ZIP downloads reject Windows-unsafe paths (backslashes, colons, trailing dots/spaces); use tar.gz for byte-preserving Unix names.
+
+Raw downloads retain the upstream unary file API but reserve their size before fetching, with a shared 256 MiB response budget. The reservation stays held while sending chunks and is released on completion or disconnect; excess concurrent downloads receive a retryable busy response.
 
 ## Browsing
 

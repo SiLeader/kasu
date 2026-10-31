@@ -39,7 +39,7 @@ ID は BLAKE3 の 32 バイト、Git OID は SHA-1 の 20 バイトです。パ�
 cursor は第一親チェーンと path の変更点にも照合します。ref が動いても ID を指定したページング結果は変わりません。
 終了時の cursor は空です。path の追跡は名前に基づきます。
 
-Diff の paths は各パス自身とその配下を選びます。内容の変更範囲の start は 0-based、before／after は改行を
+Diff の paths は各パス自身とその配下を選びます。`exact_paths: true` かつ `paths` が空でない場合は、ファイルとディレクトリの置換時も含め指定ファイルとの完全一致だけを選びます。既定は従来どおり前方一致です。内容の変更範囲の start は 0-based、before／after は改行を
 含むバイト列のリストです。改行なしの末尾も保持します。NUL を含む内容は binary=true とし、行 diff は返しません。
 ファイルの mode のみが変わった場合は Entry の差分を返し、内容の変更範囲は空です。
 

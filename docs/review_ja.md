@@ -78,7 +78,7 @@
 5. 未解決の公開スレッドが残っていない（必須の場合）。
 6. 呼び出したアカウントが target に書き込める。
 
-指紋は、スタックの各 Changeset について第一親との変更を（パス → 変更後の entry）として順に並べてハッシュしたものです。各 Changeset 自身の変更を変えない rebase（trivial rebase）では指紋は変わりません。新しい base だけに由来する違いは検出しません（Gerrit と同じ割り切り）。
+指紋は、スタック順に各 Changeset と第一親との差分の変更前・変更後の両方をハッシュしたものです。変更対象パスの変更前後の entry が同じ場合のみ rebase 後も承認を維持し、無関係な base の変更は影響しません。新たな target の変更を巻き戻す場合は再承認が必要です。変更前を含まない旧形式の指紋ではリビジョン間の承認を引き継ぎませんが、最新リビジョンへの投票は引き続き有効です。
 
 ## Submit
 
@@ -96,6 +96,8 @@
 ## コメント
 
 コメントはリビジョンに属し、任意で行に固定できます: `Anchor { path, side: HEAD | BASE, line, changeset_index? }`（`changeset_index` なしは累積差分上の行）。返信はスレッドの根を指し、解決できるのは根だけです。下書き（`SaveDraft`）は `Publish` まで作者にだけ見えます。`Publish` は呼び出したアカウントの下書きすべて、任意のトップレベルコメント、任意の投票を原子的に公開します。作者はコメントを編集でき、削除は tombstone を残します。1 レビューあたりの上限は、リビジョン 256、コメント 10,000、スタック 64 Changeset、タイトル 256 bytes、説明とコメント 64 KiB です。
+
+`PublishSelected(PublishRequest)` は、呼び出したアカウント自身の下書きを指定する空でない `comment_ids` を要求します。無効・削除済み・公開済み・他者の ID を含む場合は要求全体を拒否します。Web の返信はこの RPC で新たに保存した返信だけを公開します。旧サーバーは未知のメソッドとして拒否するため、他の下書きが意図せず公開されません。通常の `Publish` でリストが空の場合は従来どおりすべて公開します。
 
 ## 権限
 
@@ -123,6 +125,7 @@ gRPC サービス `kasu.v1.Review` と HTTP/JSON（`POST`、同じメッセー�
 | `UpdateReview`（`version` の CAS） | `/v1/review/update` |
 | `AddRevision`（`expected_revision` の CAS） | `/v1/review/add-revision` |
 | `RebaseReview` | `/v1/review/rebase` |
+| `PublishSelected` | `/v1/review/publish-selected` |
 | `ListComments` / `SaveDraft` / `EditComment` / `ResolveThread` / `Publish` | `/v1/review/list-comments`、`save-draft`、`edit-comment`、`resolve-thread`、`publish` |
 | `GetSubmitStatus` / `Submit` | `/v1/review/submit-status`、`/v1/review/submit` |
 

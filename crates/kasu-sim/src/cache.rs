@@ -323,6 +323,14 @@ impl Store for WriteFault {
     fn hot(&self, key: Key) -> std::result::Result<Option<Frame>, Status> {
         self.inner.hot(key)
     }
+    fn hot_scoped(
+        &self,
+        repo: &[u8],
+        identity: &str,
+        key: Key,
+    ) -> std::result::Result<Option<Frame>, Status> {
+        self.inner.hot_scoped(repo, identity, key)
+    }
     fn get(&self, key: Key) -> std::result::Result<Option<Frame>, Status> {
         self.inner.get(key)
     }

@@ -130,26 +130,47 @@ fn connect_client(options: PostgresOptions) -> Result<Client> {
     client
         .batch_execute("SET idle_in_transaction_session_timeout='30s'; SET synchronous_commit=on;")
         .map_err(pg_error)?;
+    if schema_version(&mut client)? == Some(2) {
+        return Ok(client);
+    }
     let mut tx = client.transaction().map_err(pg_error)?;
     tx.query_one("SELECT pg_advisory_xact_lock(1801548659)", &[])
         .map_err(pg_error)?;
-    tx.batch_execute(include_str!("postgres/schema.sql"))
-        .map_err(pg_error)?;
-    tx.batch_execute(include_str!("postgres/review.sql"))
-        .map_err(pg_error)?;
-    if tx
-        .query_one(
-            "SELECT version FROM kasu.schema_version WHERE singleton",
-            &[],
-        )
-        .map_err(pg_error)?
-        .get::<_, i64>(0)
-        != 1
-    {
-        return Err(invalid("unsupported PostgreSQL storage schema version"));
+    match schema_version(&mut tx)? {
+        None | Some(1) => {
+            tx.batch_execute(include_str!("postgres/schema.sql"))
+                .map_err(pg_error)?;
+            tx.batch_execute(include_str!("postgres/review.sql"))
+                .map_err(pg_error)?;
+            tx.execute(
+                "UPDATE kasu.schema_version SET version=2 WHERE singleton",
+                &[],
+            )
+            .map_err(pg_error)?;
+        }
+        Some(2) => {}
+        Some(_) => return Err(invalid("unsupported PostgreSQL storage schema version")),
     }
     tx.commit().map_err(pg_error)?;
     Ok(client)
+}
+fn schema_version(client: &mut impl GenericClient) -> Result<Option<i64>> {
+    let exists: bool = client
+        .query_one("SELECT to_regclass('kasu.schema_version') IS NOT NULL", &[])
+        .map_err(pg_error)?
+        .get(0);
+    if !exists {
+        return Ok(None);
+    }
+    Ok(Some(
+        client
+            .query_one(
+                "SELECT version FROM kasu.schema_version WHERE singleton",
+                &[],
+            )
+            .map_err(pg_error)?
+            .get(0),
+    ))
 }
 // Do not surface SQL parameter values, connection strings or server DETAIL fields.
 fn pg_error(error: ::postgres::Error) -> Error {

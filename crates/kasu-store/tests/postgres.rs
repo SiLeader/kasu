@@ -47,6 +47,24 @@ fn git(expected: GitRefState, n: u8) -> GitRefUpdate {
 
 #[test]
 #[ignore = "requires KASU_TEST_POSTGRES"]
+fn postgres_reopening_current_schema_does_not_lock_data_tables() {
+    let store = open();
+    let mut client = postgres::Client::connect(&options().dsn, postgres::NoTls).unwrap();
+    let mut tx = client.transaction().unwrap();
+    tx.batch_execute("LOCK TABLE kasu.ref_log IN ROW EXCLUSIVE MODE")
+        .unwrap();
+    let mut options = options();
+    options.lock_timeout = std::time::Duration::from_millis(100);
+    let second = PostgresStore::connect(options).unwrap();
+    assert_eq!(
+        second.get(b"migration-lock-test").unwrap(),
+        store.get(b"migration-lock-test").unwrap()
+    );
+    tx.rollback().unwrap();
+}
+
+#[test]
+#[ignore = "requires KASU_TEST_POSTGRES"]
 fn postgres_binary_immutable_keys_tombstones_and_reopen() {
     let store = open();
     let repo = repo("bytes");
