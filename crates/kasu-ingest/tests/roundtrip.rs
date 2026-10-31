@@ -407,6 +407,7 @@ fn cli_registers_repositories_and_imports_them_independently() {
     let dir = tempfile::tempdir().unwrap();
     let source: PathBuf = dir.path().join("empty.git");
     init(&source);
+    git(&source, &["symbolic-ref", "HEAD", "refs/heads/trunk"], b"");
     let destination = dir.path().join("native");
     let ingest = |args: &[&str]| {
         Command::new(env!("CARGO_BIN_EXE_kasu-ingest"))
@@ -452,6 +453,12 @@ fn cli_registers_repositories_and_imports_them_independently() {
     assert_eq!(key("legacy").as_bytes(), b"legacy");
     let app = key("team/app");
     assert!(!app.is_legacy());
+    for key in [key("legacy"), app.clone()] {
+        assert_eq!(
+            meta.repository(&key).unwrap().unwrap().default_branch,
+            b"trunk"
+        );
+    }
     assert!(
         meta.resolve_git(app.as_bytes(), b"HEAD")
             .unwrap()
@@ -463,6 +470,15 @@ fn cli_registers_repositories_and_imports_them_independently() {
             .unwrap()
             .value
             .is_none()
+    );
+    let mut configured = meta.repository(&app).unwrap().unwrap();
+    configured.default_branch = b"release".to_vec();
+    meta.update_repository(&configured, "default_branch", b"test", 0)
+        .unwrap();
+    assert!(with("team/app", false).0);
+    assert_eq!(
+        meta.repository(&app).unwrap().unwrap().default_branch,
+        b"release"
     );
     assert!(!with("bad name", true).0);
 }

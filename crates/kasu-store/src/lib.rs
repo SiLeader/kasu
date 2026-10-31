@@ -107,6 +107,11 @@ pub struct RefUpdate {
     pub expected: RefState,
     pub new: Option<ChangesetId>,
 }
+pub(crate) fn ref_ancestors(name: &[u8]) -> impl Iterator<Item = &[u8]> {
+    name.iter()
+        .enumerate()
+        .filter_map(|(i, byte)| (*byte == b'/').then_some(&name[..i]))
+}
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RefLog {
     pub seq: u64,

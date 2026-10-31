@@ -9,12 +9,16 @@ cargo run -p kasu-ingest -- <Git リポジトリ> <保存ディレクトリ> <�
 未登録のリポジトリは `--create` で作成してから取り込みます（`kasu-ingest --create <Git リポジトリ> <保存ディレクトリ> team-a/infra`）。
 `--create` なしの未登録名はエラーで、レジストリが空の場合だけ名前を legacy キーとして登録します
 （[マルチリポジトリ](multi-repository_ja.md#起動と移行)）。リポジトリが異なる取り込みは並行実行できます。
+新規登録時は、取り込み元の symbolic HEAD が指すブランチを `default_branch` に設定します。unborn ブランチも対象です。
+再取り込みでは、既存リポジトリに設定された既定ブランチを変更しません。
 
 Git の bare／working repository を gix で読み、親・依存オブジェクトを先に処理して Changeset に変換します。
 保存先は `meta.db`（SQLite）と `objects/`（zstd の content-addressed ストア）です。
 `RUST_LOG` で tracing のログレベルを指定できます。
 
 branch は `refs/heads/*` という名前のネイティブ ref に変換します。tag と HEAD は Git 専用の ref に保存します。
+サーバーはレジストリの `default_branch` を HEAD として広告し、保存済みの取り込み元 HEAD はロスレスな export 用に保持します。
+取り込み元が detached HEAD の場合、公開する既定ブランチを Admin API で明示的に設定してください。
 取り込み中は不変データだけを書き込み、接続性・型・tree の再現性の検証後に、全 ref と対応するログを
 単一トランザクションで公開します。CAS の競合時には全 ref を更新せずエラーを返します。
 同じ取り込みの繰り返しは冪等で、ref が同じなら ref_log も増えません。

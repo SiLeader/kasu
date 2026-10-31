@@ -271,6 +271,48 @@ impl Running {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn git_push_rejects_conflicting_ref_prefixes_without_breaking_clone() {
+    let running = Running::new(WritePolicy::default(), |path| {
+        std::fs::write(path.join("file"), b"content").unwrap();
+        commit(path, "initial");
+    })
+    .await;
+    success(running.push(&["HEAD:refs/heads/topic"]).await);
+    let rejected = running.push(&["HEAD:refs/heads/topic/sub"]).await;
+    assert!(!rejected.status.success());
+    assert!(String::from_utf8_lossy(&rejected.stderr).contains("ref name conflicts"));
+    let rejected = running
+        .push(&[
+            "--atomic",
+            "HEAD:refs/heads/other",
+            "HEAD:refs/heads/other/sub",
+        ])
+        .await;
+    assert!(!rejected.status.success());
+    assert!(
+        running
+            .meta
+            .resolve(b"repo", b"refs/heads/other")
+            .unwrap()
+            .target
+            .is_none()
+    );
+    let cloned = running._temp.path().join("cloned");
+    success(command(
+        &running.path,
+        &[
+            "-c",
+            "http.extraHeader=Authorization: Bearer secret",
+            "clone",
+            &running.url,
+            cloned.to_str().unwrap(),
+        ],
+        b"",
+    ));
+    assert_eq!(std::fs::read(cloned.join("file")).unwrap(), b"content");
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn git_push_initial_incremental_tags_force_delete_and_partial_rejection() {
     let running = Running::new(
         WritePolicy {

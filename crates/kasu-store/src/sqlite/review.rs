@@ -1,4 +1,4 @@
-use super::{SqliteStore, registry, resolve};
+use super::{SqliteStore, check_ref_namespace, registry, resolve};
 use crate::*;
 use rusqlite::{Connection, OptionalExtension, TransactionBehavior, params};
 
@@ -275,6 +275,9 @@ impl ReviewStore for SqliteStore {
                 ],
             )
             .map_err(storage_error)?;
+            if update.new.is_some() {
+                check_ref_namespace(&tx, repo, &update.name)?;
+            }
         }
         tx.execute(
             "INSERT INTO reviews(repo,number,version,state,target,head,author,data) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(repo,number) DO UPDATE SET version=excluded.version,state=excluded.state,target=excluded.target,head=excluded.head,author=excluded.author,data=excluded.data",

@@ -30,15 +30,24 @@ pub fn list_refs(
     store: &dyn GitRefStore,
     projection: &ProjectionId,
 ) -> Result<Vec<AdvertisedRef>> {
-    list_refs_with_head(engine, ctx, store, projection, b"refs/heads/main")
+    list_refs_inner(engine, ctx, store, projection, None)
 }
-/// Advertise refs with `head` as the HEAD symref unless HEAD is stored explicitly.
+/// Advertise the registry's default branch as HEAD, overriding an imported HEAD.
 pub fn list_refs_with_head(
     engine: &Engine,
     ctx: &Ctx<'_>,
     store: &dyn GitRefStore,
     projection: &ProjectionId,
     head: &[u8],
+) -> Result<Vec<AdvertisedRef>> {
+    list_refs_inner(engine, ctx, store, projection, Some(head))
+}
+fn list_refs_inner(
+    engine: &Engine,
+    ctx: &Ctx<'_>,
+    store: &dyn GitRefStore,
+    projection: &ProjectionId,
+    head: Option<&[u8]>,
 ) -> Result<Vec<AdvertisedRef>> {
     let mut refs = BTreeMap::new();
     for (name, state) in store.list(&projection.repo, b"refs/heads/")? {
@@ -75,9 +84,18 @@ pub fn list_refs_with_head(
             refs.insert(name, value);
         }
     }
-    refs.entry(b"HEAD".to_vec()).or_insert(GitRef::Symbolic {
-        target: head.to_vec(),
-    });
+    if let Some(head) = head {
+        refs.insert(
+            b"HEAD".to_vec(),
+            GitRef::Symbolic {
+                target: head.to_vec(),
+            },
+        );
+    } else {
+        refs.entry(b"HEAD".to_vec()).or_insert(GitRef::Symbolic {
+            target: b"refs/heads/main".to_vec(),
+        });
+    }
     Ok(refs
         .into_iter()
         .map(|(name, value)| AdvertisedRef { name, value })

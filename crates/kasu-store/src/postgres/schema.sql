@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS kasu.refs (
     kind SMALLINT NOT NULL CHECK(kind IN (0,1)), name BYTEA NOT NULL, value BYTEA,
     version BIGINT NOT NULL CHECK(version>=0), PRIMARY KEY(repo,kind,id)
 );
+CREATE INDEX IF NOT EXISTS refs_name_prefix ON kasu.refs (repo, substring(name from 1 for 96)) WHERE value IS NOT NULL;
 CREATE TABLE IF NOT EXISTS kasu.log_counters (
     repo BYTEA NOT NULL REFERENCES kasu.repositories(id), stream SMALLINT NOT NULL CHECK(stream IN (0,1)),
     value BIGINT NOT NULL CHECK(value>=0), PRIMARY KEY(repo,stream)

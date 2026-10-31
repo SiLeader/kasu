@@ -1,6 +1,6 @@
 use super::{
-    PostgresStore, lock_refs, native_state, next_version, number, pg_error, registry, scope,
-    unsigned, write_native,
+    PostgresStore, check_ref_namespace, lock_refs, native_state, next_version, number, pg_error,
+    registry, scope, unsigned, write_native,
 };
 use crate::*;
 use ::postgres::{GenericClient, Row};
@@ -204,6 +204,9 @@ impl ReviewStore for PostgresStore {
                     actor,
                     write.time,
                 )?;
+                if update.new.is_some() {
+                    check_ref_namespace(&mut tx, &repo, &update.name)?;
+                }
             }
             tx.execute(
                 "INSERT INTO kasu.reviews(repo,number,version,state,target,head,author,data) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(repo,number) DO UPDATE SET version=excluded.version,state=excluded.state,target=excluded.target,head=excluded.head,author=excluded.author,data=excluded.data",

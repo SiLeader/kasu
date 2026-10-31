@@ -1,7 +1,12 @@
 use crate::*;
 use ::postgres::{Client, Config, GenericClient, Row, Transaction, config::SslMode};
 use rustls::pki_types::{CertificateDer, pem::PemObject};
-use std::{collections::BTreeSet, path::PathBuf, sync::Mutex, time::Duration};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    path::PathBuf,
+    sync::Mutex,
+    time::Duration,
+};
 mod registry;
 mod review;
 mod webhook;
@@ -240,18 +245,55 @@ fn git_state(client: &mut impl GenericClient, repo: &[u8], name: &[u8]) -> Resul
         })
         .unwrap_or(Ok(GitRefState::default()))
 }
+fn check_ref_namespace(client: &mut impl GenericClient, repo: &[u8], name: &[u8]) -> Result<()> {
+    for ancestor in ref_ancestors(name) {
+        for kind in [0, 1] {
+            if ref_row(client, repo, ancestor, kind)?
+                .is_some_and(|row| row.get::<_, Option<Vec<u8>>>(1).is_some())
+            {
+                return Err(invalid("ref name conflicts with an existing ancestor"));
+            }
+        }
+    }
+    let prefix = [name, b"/"].concat();
+    let indexed = &prefix[..prefix.len().min(registry::KEY_INDEX_BYTES)];
+    let exists: bool = client
+        .query_one(
+            "SELECT EXISTS(SELECT 1 FROM kasu.refs WHERE repo=$1 AND value IS NOT NULL AND substring(name from 1 for 96)>=$2 AND ($3::BYTEA IS NULL OR substring(name from 1 for 96)<$3) AND name>=$4 AND name<$5)",
+            &[&repo, &indexed, &prefix_end(indexed), &prefix, &prefix_end(&prefix)],
+        )
+        .map_err(pg_error)?
+        .get(0);
+    if exists {
+        return Err(invalid("ref name conflicts with an existing descendant"));
+    }
+    Ok(())
+}
 fn lock_refs(
     tx: &mut Transaction<'_>,
     repo: &[u8],
     refs: impl IntoIterator<Item = (i16, Vec<u8>)>,
 ) -> Result<()> {
-    let sorted: BTreeSet<_> = refs.into_iter().collect();
-    for (kind, name) in sorted {
+    // Shared ancestor locks allow sibling writes, but serialize a ref with
+    // creation/deletion of its descendants, including across both ref models.
+    let mut sorted = BTreeMap::new();
+    for (kind, name) in refs {
+        for ancestor in ref_ancestors(&name) {
+            sorted.entry((0, ancestor.to_vec())).or_insert(false);
+        }
+        sorted.insert((0, name.clone()), true);
+        sorted.insert((kind, name), true);
+    }
+    for ((kind, name), exclusive) in sorted {
         let id = hash(&name);
         tx.execute("INSERT INTO kasu.refs(repo,kind,id,name,value,version) VALUES ($1,$2,$3,$4,NULL,0) ON CONFLICT DO NOTHING", &[&repo, &kind, &id, &name]).map_err(pg_error)?;
         let row = tx
             .query_one(
-                "SELECT name FROM kasu.refs WHERE repo=$1 AND kind=$2 AND id=$3 FOR UPDATE",
+                if exclusive {
+                    "SELECT name FROM kasu.refs WHERE repo=$1 AND kind=$2 AND id=$3 FOR UPDATE"
+                } else {
+                    "SELECT name FROM kasu.refs WHERE repo=$1 AND kind=$2 AND id=$3 FOR SHARE"
+                },
                 &[&repo, &kind, &id],
             )
             .map_err(pg_error)?;
@@ -522,6 +564,7 @@ impl RefStore for PostgresStore {
                     actor,
                     time,
                 )?;
+                check_ref_namespace(&mut tx, &repo, &commit.name)?;
             }
             tx.execute(
                 "INSERT INTO kasu.land_results(repo,key,fingerprint,response) VALUES ($1,$2,$3,$4)",
@@ -614,6 +657,14 @@ impl GitRefStore for PostgresStore {
             }
             for (update, state) in git.iter().zip(&git_states) {
                 write_git(&mut tx, &repo, update, state.version, actor, time)?;
+            }
+            for name in native
+                .iter()
+                .filter(|u| u.new.is_some())
+                .map(|u| &u.name)
+                .chain(git.iter().filter(|u| u.new.is_some()).map(|u| &u.name))
+            {
+                check_ref_namespace(&mut tx, &repo, name)?;
             }
             tx.commit().map_err(pg_error)?;
             Ok(RefPublicationResult::Applied {

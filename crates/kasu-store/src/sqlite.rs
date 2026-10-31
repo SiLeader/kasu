@@ -86,6 +86,32 @@ fn resolve(connection: &Connection, repo: &[u8], name: &[u8]) -> Result<RefState
         None => Ok(RefState::default()),
     }
 }
+fn check_ref_namespace(connection: &Connection, repo: &[u8], name: &[u8]) -> Result<()> {
+    for ancestor in ref_ancestors(name) {
+        let exists: bool = connection
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM refs WHERE repo=?1 AND name=?2 AND target IS NOT NULL UNION ALL SELECT 1 FROM git_refs WHERE repo=?1 AND name=?2 AND value IS NOT NULL)",
+                params![repo, ancestor],
+                |r| r.get(0),
+            )
+            .map_err(storage_error)?;
+        if exists {
+            return Err(invalid("ref name conflicts with an existing ancestor"));
+        }
+    }
+    let prefix = [name, b"/"].concat();
+    let exists: bool = connection
+        .query_row(
+            "SELECT EXISTS(SELECT 1 FROM refs WHERE repo=?1 AND name>=?2 AND name<?3 AND target IS NOT NULL UNION ALL SELECT 1 FROM git_refs WHERE repo=?1 AND name>=?2 AND name<?3 AND value IS NOT NULL)",
+            params![repo, prefix, prefix_end(&prefix)],
+            |r| r.get(0),
+        )
+        .map_err(storage_error)?;
+    if exists {
+        return Err(invalid("ref name conflicts with an existing descendant"));
+    }
+    Ok(())
+}
 impl MetaStore for SqliteStore {
     fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
         self.lock()?
@@ -199,6 +225,7 @@ impl RefStore for SqliteStore {
                 ],
             )
             .map_err(storage_error)?;
+            check_ref_namespace(&tx, repo, &commit.name)?;
         }
         tx.execute(
             "INSERT INTO land_results(repo,key,fingerprint,response) VALUES (?,?,?,?)",
@@ -307,6 +334,9 @@ impl RefStore for SqliteStore {
                 ],
             )
             .map_err(storage_error)?;
+        }
+        for update in updates.iter().filter(|u| u.new.is_some()) {
+            check_ref_namespace(&tx, repo, &update.name)?;
         }
         tx.commit().map_err(storage_error)?;
         tracing::debug!(count = updates.len(), "ref transaction committed");
@@ -498,6 +528,14 @@ impl GitRefStore for SqliteStore {
             )
             .map_err(storage_error)?;
         }
+        for name in native
+            .iter()
+            .filter(|u| u.new.is_some())
+            .map(|u| &u.name)
+            .chain(git.iter().filter(|u| u.new.is_some()).map(|u| &u.name))
+        {
+            check_ref_namespace(&tx, repo, name)?;
+        }
         tx.commit().map_err(storage_error)?;
         Ok(RefPublicationResult::Applied {
             native: native_states,
@@ -594,6 +632,9 @@ impl GitRefStore for SqliteStore {
                 ],
             )
             .map_err(storage_error)?;
+        }
+        for update in updates.iter().filter(|u| u.new.is_some()) {
+            check_ref_namespace(&tx, repo, &update.name)?;
         }
         tx.commit().map_err(storage_error)?;
         Ok(GitCasResult::Applied(result))

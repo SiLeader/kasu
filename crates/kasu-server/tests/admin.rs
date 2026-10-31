@@ -33,6 +33,68 @@ fn main_line(advert: &[u8]) -> String {
         .unwrap()
 }
 
+#[tokio::test]
+async fn default_branch_update_overrides_a_stored_imported_head() {
+    let f = Fixture::new(&["app"]);
+    let id = f
+        .commit("operator", "app", None, &[(b"file", b"content")])
+        .await;
+    let record = f.record("app");
+    let key = record.key.as_bytes();
+    f.store
+        .compare_and_swap(
+            key,
+            &[RefUpdate {
+                name: b"refs/heads/release".to_vec(),
+                expected: RefState::default(),
+                new: Some(ChangesetId(id.try_into().unwrap())),
+            }],
+            b"test",
+            0,
+        )
+        .unwrap();
+    f.store
+        .compare_git(
+            key,
+            &[GitRefUpdate {
+                name: b"HEAD".to_vec(),
+                expected: GitRefState::default(),
+                new: Some(GitRef::Symbolic {
+                    target: b"refs/heads/main".to_vec(),
+                }),
+            }],
+            b"import",
+            0,
+        )
+        .unwrap();
+    let (status, response) = f
+        .call(
+            Some("operator"),
+            "/v1/admin/update-repository",
+            &p::UpdateRepositoryRequest {
+                name: "app".into(),
+                expected_config_version: record.config_version,
+                default_branch: Some(b"release".to_vec()),
+                config_json: None,
+                state: None,
+            },
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{response}");
+    let (status, advertisement) = f
+        .get(
+            Some("operator"),
+            "/app.git/info/refs?service=git-upload-pack",
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK);
+    let advertisement = String::from_utf8(advertisement).unwrap();
+    assert!(
+        advertisement.contains("symref=HEAD:refs/heads/release"),
+        "{advertisement}"
+    );
+}
+
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn lifecycle_create_rename_delete_purge_and_recreate() {
     let f = Fixture::new(&[]);

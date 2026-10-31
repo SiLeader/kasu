@@ -6,6 +6,60 @@ use kasu_store::*;
 use proptest::prelude::*;
 
 #[test]
+fn configured_head_overrides_imported_head_without_changing_lossless_export() {
+    let dir = tempfile::tempdir().unwrap();
+    let store = SqliteStore::memory().unwrap();
+    let blobs = FsBlobStore::open(dir.path()).unwrap();
+    let engine = Engine::standard();
+    let ctx = Ctx {
+        repo: Repository {
+            meta: &store,
+            blobs: &blobs,
+        },
+    };
+    let projection = ProjectionId::full(b"repo".as_slice());
+    for imported in [
+        GitRef::Symbolic {
+            target: b"refs/heads/trunk".to_vec(),
+        },
+        GitRef::Direct {
+            target: GitOid([1; 20]),
+            peeled: None,
+            kind: GitKind::Commit,
+        },
+    ] {
+        store
+            .compare_git(
+                b"repo",
+                &[GitRefUpdate {
+                    name: b"HEAD".to_vec(),
+                    expected: store.resolve_git(b"repo", b"HEAD").unwrap(),
+                    new: Some(imported.clone()),
+                }],
+                b"import",
+                0,
+            )
+            .unwrap();
+        assert_eq!(
+            list_refs(&engine, &ctx, &store, &projection).unwrap()[0].value,
+            imported,
+        );
+        assert_eq!(
+            list_refs_with_head(&engine, &ctx, &store, &projection, b"refs/heads/release").unwrap()
+                [0]
+            .value,
+            GitRef::Symbolic {
+                target: b"refs/heads/release".to_vec()
+            },
+        );
+        assert_eq!(
+            store.resolve_git(b"repo", b"HEAD").unwrap().value,
+            Some(imported)
+        );
+    }
+}
+
+#[test]
 fn native_projection_is_deterministic_and_sorts_directories_like_git() {
     let dir = tempfile::tempdir().unwrap();
     let meta = SqliteStore::memory().unwrap();

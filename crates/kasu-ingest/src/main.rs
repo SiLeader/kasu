@@ -21,7 +21,12 @@ fn now() -> Result<i64> {
 /// The key to import into. An unregistered name is created with `--create`;
 /// an empty registry registers it as a legacy repository (one release of
 /// compatibility with installations that predate the registry).
-fn repository_key(store: &dyn RepositoryStore, name: &RepoName, create: bool) -> Result<RepoKey> {
+fn repository_key(
+    store: &dyn RepositoryStore,
+    name: &RepoName,
+    create: bool,
+    default_branch: Option<&[u8]>,
+) -> Result<RepoKey> {
     let now = now()?;
     if let Some(entry) = store.resolve_repository_name(name, now)? {
         return Ok(entry.key);
@@ -35,7 +40,10 @@ fn repository_key(store: &dyn RepositoryStore, name: &RepoName, create: bool) ->
             "repository {name} is not registered; pass --create to create it"
         )));
     };
-    let record = RepositoryRecord::new(key, name.clone(), b"kasu-ingest", now);
+    let mut record = RepositoryRecord::new(key, name.clone(), b"kasu-ingest", now);
+    if let Some(branch) = default_branch {
+        record.default_branch = branch.to_vec();
+    }
     match store.create_repository(&record)? {
         RepositoryWrite::Applied(record) => Ok(record.key),
         // Another importer registered the name concurrently.
@@ -54,13 +62,18 @@ fn run() -> Result<()> {
     if args.len() != 3 {
         return Err(invalid(USAGE));
     }
+    let source = gix::open(&args[0]).map_err(kasu_git::git_error)?;
+    let head = source.head().map_err(kasu_git::git_error)?;
+    let default_branch = head
+        .referent_name()
+        .and_then(|name| name.as_bstr().strip_prefix(b"refs/heads/"));
     let destination = PathBuf::from(&args[1]);
     let Storage {
         database: meta,
         blobs,
     } = Storage::from_env(&destination)?;
     let name = RepoName::from_bytes(args[2].as_encoded_bytes())?;
-    let key = repository_key(meta.as_ref(), &name, create)?;
+    let key = repository_key(meta.as_ref(), &name, create, default_branch)?;
     let mut engine = Engine::standard();
     register_git(&mut engine);
     let importer = Importer {

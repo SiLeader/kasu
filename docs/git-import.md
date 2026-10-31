@@ -9,12 +9,16 @@ cargo run -p kasu-ingest -- <Git repository> <storage directory> <repository nam
 An unregistered repository is created with `--create` before importing (`kasu-ingest --create <Git repository> <storage directory> team-a/infra`).
 An unregistered name without `--create` is an error; only when the registry is empty is the name registered as a legacy key
 ([multiple repositories](multi-repository.md#startup-and-migration)). Imports into different repositories can run concurrently.
+For a newly registered repository, a symbolic source HEAD initializes `default_branch`, including when the branch is unborn.
+Reimporting does not replace an existing repository's configured default branch.
 
 Git bare / working repositories are read with gix, and parents and dependent objects are processed first and converted into Changesets.
 Data is stored in `meta.db` (SQLite) and `objects/` (a zstd content-addressed store).
 `RUST_LOG` sets the tracing log level.
 
 Branches are converted to native refs named `refs/heads/*`. Tags and HEAD are stored as Git-only refs.
+The server advertises the registry's `default_branch` as its HEAD; the stored source HEAD remains available for lossless export.
+For a detached source HEAD, choose the hosted default branch explicitly through the Admin API.
 During import only immutable data is written; after connectivity, type, and tree reproducibility are verified, every ref and the corresponding logs
 are published in a single transaction. On a CAS conflict, no ref is updated and an error is returned.
 Repeating the same import is idempotent; if the refs are unchanged, the ref_log does not grow.
