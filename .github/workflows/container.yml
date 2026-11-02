@@ -1,0 +1,137 @@
+name: Container
+# Builds and pushes the server and web images to ghcr.io/sileader/kasu/<component>.
+#
+# * Called from release.yml with an explicit version: tags are <version>
+#   (and latest for a stable release).
+# * Run by hand (workflow_dispatch): tags are <Cargo.toml version>-<suffix> and
+#   <Cargo.toml version>-<suffix>-<short sha>, never a release version or latest.
+on:
+  workflow_dispatch:
+    inputs:
+      suffix:
+        description: Suffix appended to the Cargo.toml version (tag <version>-<suffix>)
+        type: string
+        default: dev
+  workflow_call:
+    inputs:
+      version:
+        description: Release version, used as the image tag
+        type: string
+        required: true
+      latest:
+        description: Also tag the images as latest
+        type: boolean
+        default: false
+permissions:
+  contents: read
+env:
+  IMAGE_PREFIX: ghcr.io/sileader/kasu
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      tags: ${{ steps.tags.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: tags
+        env:
+          # Set only when called from release.yml. github.event_name is the
+          # caller's event there, so it cannot tell the two entry points apart.
+          RELEASE_VERSION: ${{ inputs.version }}
+          LATEST: ${{ inputs.latest }}
+          SUFFIX: ${{ inputs.suffix }}
+        run: |
+          valid='^[0-9A-Za-z][0-9A-Za-z._-]*$'
+          if [ -n "$RELEASE_VERSION" ]; then
+            [[ $RELEASE_VERSION =~ $valid ]] || { echo "invalid version: $RELEASE_VERSION"; exit 1; }
+            tags=("$RELEASE_VERSION")
+            [ "$LATEST" = true ] && tags+=(latest)
+          else
+            [[ $SUFFIX =~ $valid ]] || { echo "invalid suffix: $SUFFIX"; exit 1; }
+            base=$(python3 -c 'import tomllib; print(tomllib.load(open("Cargo.toml", "rb"))["workspace"]["package"]["version"])')
+            tags=("$base-$SUFFIX" "$base-$SUFFIX-${GITHUB_SHA::7}")
+          fi
+          echo "tags=$(printf '%s\n' "${tags[@]}" | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
+          printf 'image tags: %s\n' "${tags[*]}"
+
+  # Each architecture builds natively and pushes by digest; merge joins them.
+  build:
+    name: build ${{ matrix.component }} (${{ matrix.platform.arch }})
+    needs: plan
+    runs-on: ${{ matrix.platform.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [server, web]
+        platform:
+          - { arch: amd64, runner: ubuntu-latest }
+          - { arch: arm64, runner: ubuntu-24.04-arm }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          target: ${{ matrix.component }}
+          platforms: linux/${{ matrix.platform.arch }}
+          # Attestations would turn each digest into an index and break the merge.
+          provenance: false
+          outputs: type=image,name=${{ env.IMAGE_PREFIX }}/${{ matrix.component }},push-by-digest=true,name-canonical=true,push=true
+      - name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/digests"
+          touch "$RUNNER_TEMP/digests/${DIGEST#sha256:}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.component }}-${{ matrix.platform.arch }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    name: publish ${{ matrix.component }}
+    needs: [plan, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [server, web]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: digests-${{ matrix.component }}-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/digests
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create multi-architecture manifest
+        env:
+          IMAGE: ${{ env.IMAGE_PREFIX }}/${{ matrix.component }}
+          TAGS: ${{ needs.plan.outputs.tags }}
+        run: |
+          cd "$RUNNER_TEMP/digests"
+          args=()
+          for tag in $(jq -r '.[]' <<<"$TAGS"); do args+=(-t "$IMAGE:$tag"); done
+          sources=()
+          for digest in *; do sources+=("$IMAGE@sha256:$digest"); done
+          docker buildx imagetools create "${args[@]}" "${sources[@]}"
+          docker buildx imagetools inspect "$IMAGE:$(jq -r '.[0]' <<<"$TAGS")"

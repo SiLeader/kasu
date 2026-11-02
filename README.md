@@ -101,7 +101,7 @@ The implementation includes the native CLI, server APIs, Git gateway, cache hier
 | Multiple repositories | [Registry, grants, Admin API, lifecycle](docs/multi-repository.md) |
 | Access control and projections | [Accounts](docs/repository-accounts.md), [directory reads](docs/directory-read-acl.md), [Git projections](docs/git-projection.md), [projection accounts](docs/projection-accounts.md) |
 | Storage and caches | [PostgreSQL/S3](docs/production-storage.md), [cache hierarchy](docs/cache-hierarchy.md), [disk cache](docs/disk-cache.md) |
-| Operations and automation | [Server limits and metrics](docs/server-runtime.md), [tracing](docs/telemetry.md), [webhooks](docs/webhooks.md), [CI bots](docs/automation.md) |
+| Operations and automation | [Server limits and metrics](docs/server-runtime.md), [tracing](docs/telemetry.md), [webhooks](docs/webhooks.md), [CI bots](docs/automation.md), [releases and container images](docs/release.md) |
 | Verification | [GitOps E2E](docs/gitops-e2e.md), [simulations](docs/simulations/README.md), [benchmarks](docs/benchmarks/README.md), [KV evaluation](docs/benchmarks/kv-evaluation.md) |
 
 ## Development
