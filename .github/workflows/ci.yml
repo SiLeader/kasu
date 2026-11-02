@@ -1,6 +1,7 @@
 name: CI
 on:
   push:
+    branches: [master]
   pull_request:
 permissions:
   contents: read
@@ -19,6 +20,7 @@ jobs:
           components: rustfmt, clippy
       - run: sudo apt-get update && sudo apt-get install -y protobuf-compiler python3
       - run: python3 -m unittest discover -s tools/automation -v
+      - run: python3 -m unittest discover -s tools/release -v
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings

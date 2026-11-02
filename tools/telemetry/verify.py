@@ -179,7 +179,11 @@ def verify(binary, out):
             warm = [s for s in spans if s["trace_id"] == cli_roots[1]["trace_id"]]
             services = lambda rows: {s["resource"]["service.name"] for s in rows}
             assert services(cold) == {"kasu-cli", "kasu-daemon", "kasu-cache", "kasu-server"}, services(cold)
-            assert services(warm) == {"kasu-cli", "kasu-daemon", "kasu-server"}, services(warm)
+            # Every layer revalidates the repository identity upstream, so the cache
+            # appears in a warm trace; objects themselves still come from the daemon's disk.
+            assert services(warm) == {"kasu-cli", "kasu-daemon", "kasu-cache", "kasu-server"}, services(warm)
+            fetched = [s for s in warm if s["resource"]["service.name"] in {"kasu-cache", "kasu-server"} and s["attributes"].get("method") in {"GetTrees", "GetBlobs"}]
+            assert not fetched, fetched
             by_id = {s["span_id"]: s for s in cold}
             for span in cold:
                 if span["parent_span_id"]:

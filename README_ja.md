@@ -99,7 +99,7 @@ KASU_WEB_PUBLIC_URL=http://127.0.0.1:50090 cargo run -p kasu-web
 | マルチリポジトリ | [レジストリ・grant・Admin API・ライフサイクル](docs/multi-repository_ja.md) |
 | アクセス制御・射影 | [アカウント](docs/repository-accounts_ja.md)、[ディレクトリ読み取り](docs/directory-read-acl_ja.md)、[Git 射影](docs/git-projection_ja.md)、[射影アカウント](docs/projection-accounts_ja.md) |
 | ストレージ・キャッシュ | [PostgreSQL／S3](docs/production-storage_ja.md)、[キャッシュ階層](docs/cache-hierarchy_ja.md)、[ディスクキャッシュ](docs/disk-cache_ja.md) |
-| 運用・自動化 | [サーバー制限・メトリクス](docs/server-runtime_ja.md)、[tracing](docs/telemetry_ja.md)、[Webhook](docs/webhooks_ja.md)、[CI bot](docs/automation_ja.md) |
+| 運用・自動化 | [サーバー制限・メトリクス](docs/server-runtime_ja.md)、[tracing](docs/telemetry_ja.md)、[Webhook](docs/webhooks_ja.md)、[CI bot](docs/automation_ja.md)、[リリースとコンテナイメージ](docs/release_ja.md) |
 | 検証 | [GitOps E2E](docs/gitops-e2e_ja.md)、[シミュレーション](docs/simulations/README_ja.md)、[ベンチマーク](docs/benchmarks/README_ja.md)、[KV 評価](docs/benchmarks/kv-evaluation_ja.md) |
 
 ## 開発
