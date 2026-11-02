@@ -6,15 +6,19 @@ Releases are cut by the `Release` GitHub Actions workflow (`.github/workflows/re
 
 ## Cutting a release
 
-1. Set the new version everywhere it is declared, then commit it to the default branch:
-   - `version` in `[workspace.package]` of the root `Cargo.toml`
-   - the `version` of every path dependency: the `kasu-*` entries of `[workspace.dependencies]` and `kasu-daemon` in `crates/kasu-cli/Cargo.toml`
-   - `Cargo.lock` (run `cargo update --workspace`)
-2. Check it locally: `python3 tools/release/check_version.py <version>`.
-3. In the Actions tab, run **Release** from the default branch with `version` set to the version without a leading `v`, for example `0.2.0`.
+1. In the Actions tab, run **Release** from the default branch with `version` set to the version without a leading `v`, for example `0.2.0`.
+2. If the repository already declares that version everywhere, the release is built and published (below).
+3. If not, nothing is released. The workflow opens a pull request `release/set-version-<version>` that sets the version and ends successfully. Merge it, then run **Release** again.
 
-The workflow fails before building anything if the version has a leading `v`, any of the places above disagrees, the tag `v<version>` already exists, or it was started from another branch.
-Otherwise it runs these jobs:
+The version is declared in these places, and `python3 tools/release/check_version.py <version>` checks them locally (`tools/release/set_version.py <version>` rewrites them):
+- `version` in `[workspace.package]` of the root `Cargo.toml`, and in any member that declares its own
+- the `version` of every path dependency: the `kasu-*` entries of `[workspace.dependencies]` and `kasu-daemon` in `crates/kasu-cli/Cargo.toml`
+- the workspace members in `Cargo.lock`
+
+The pull request is created with the workflow's `GITHUB_TOKEN`, so the repository setting *Allow GitHub Actions to create and approve pull requests* (Settings, Actions, General) must be on, and CI does not start on that pull request by itself (GitHub runs no workflows for events caused by `GITHUB_TOKEN`); close and reopen it to start CI.
+The workflow fails, without opening a pull request, if the version has a leading `v` or is otherwise not a semantic version, the tag `v<version>` already exists, it was started from another branch, or a version declaration the script cannot rewrite remains.
+
+When the versions match it runs these jobs:
 
 | Job | Result |
 |---|---|

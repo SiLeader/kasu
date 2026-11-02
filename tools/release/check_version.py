@@ -3,6 +3,9 @@
 
 Usage: check_version.py <version> [repository-root]
 
+Exit status: 0 when everything matches, 1 when something differs (set_version.py
+can fix that), 2 for a malformed version or arguments.
+
 Compared against <version>:
   * [workspace.package].version in the root Cargo.toml
   * the version of every workspace member
@@ -40,13 +43,21 @@ def dependency_tables(manifest):
                 yield target[kind]
 
 
-def check(root, version):
-    """Return a list of human-readable mismatches (empty when consistent)."""
+def invalid_version(version):
+    """Return a message when version is not a semantic version, else None."""
     if not SEMVER.match(version):
-        return [
+        return (
             f"{version!r} is not a semantic version such as 1.2.3 or 1.2.3-rc.1 "
             "(no leading 'v')"
-        ]
+        )
+    return None
+
+
+def check(root, version):
+    """Return a list of human-readable mismatches (empty when consistent)."""
+    problem = invalid_version(version)
+    if problem:
+        return [problem]
     errors = []
     root_manifest = load(root / "Cargo.toml")
     workspace = root_manifest["workspace"]
@@ -98,6 +109,10 @@ def main(argv):
         print(__doc__, file=sys.stderr)
         return 2
     root = Path(argv[2]) if len(argv) == 3 else Path(__file__).resolve().parents[2]
+    problem = invalid_version(argv[1])
+    if problem:
+        print(problem, file=sys.stderr)
+        return 2
     errors = check(root, argv[1])
     if errors:
         print(f"release version {argv[1]} does not match the repository:")

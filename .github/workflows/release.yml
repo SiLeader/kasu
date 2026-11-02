@@ -1,12 +1,15 @@
 name: Release
 # Creates the GitHub release v<version>: CLI archives for Linux and macOS as
 # assets, plus the server and web container images (see container.yml).
-# Run it from the default branch with the version in Cargo.toml, e.g. 0.1.0.
+# Run it from the default branch with the version to release, e.g. 0.1.0.
+# If Cargo.toml, Cargo.lock or the path dependency versions do not match, the
+# release is not made: a pull request that sets them to <version> is opened
+# instead, and the workflow is run again after it is merged.
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: Version to release, without a leading v (must match Cargo.toml and Cargo.lock)
+        description: Version to release, without a leading v, e.g. 0.1.0
         type: string
         required: true
 permissions:
@@ -18,6 +21,7 @@ jobs:
       version: ${{ steps.meta.outputs.version }}
       tag: ${{ steps.meta.outputs.tag }}
       prerelease: ${{ steps.meta.outputs.prerelease }}
+      consistent: ${{ steps.meta.outputs.consistent }}
     steps:
       - uses: actions/checkout@v4
       - id: meta
@@ -30,22 +34,67 @@ jobs:
             echo "::error::releases must be run from $DEFAULT_BRANCH, not $REF_NAME"
             exit 1
           fi
-          python3 tools/release/check_version.py "$VERSION"
           tag="v$VERSION"
           if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
             echo "::error::tag $tag already exists"
             exit 1
           fi
+          # Exit 1 is a mismatch that fix-version repairs; anything else is fatal.
+          set +e
+          python3 tools/release/check_version.py "$VERSION"
+          status=$?
+          set -e
+          case $status in
+            0) consistent=true ;;
+            1) consistent=false ;;
+            *) exit "$status" ;;
+          esac
           {
             echo "version=$VERSION"
             echo "tag=$tag"
+            echo "consistent=$consistent"
             # A version with a suffix (0.2.0-rc.1) is a pre-release and never becomes latest.
             if [[ $VERSION == *-* ]]; then echo "prerelease=true"; else echo "prerelease=false"; fi
           } >> "$GITHUB_OUTPUT"
 
+  fix-version:
+    name: open version pull request
+    needs: verify
+    if: needs.verify.outputs.consistent == 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ needs.verify.outputs.version }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          branch="release/set-version-$VERSION"
+          existing=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state open --json url --jq '.[0].url // empty')
+          if [ -n "$existing" ]; then
+            echo "A pull request already sets the version: $existing" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          python3 tools/release/set_version.py "$VERSION"
+          # Dependency tables the script cannot rewrite are reported here.
+          python3 tools/release/check_version.py "$VERSION"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git commit -a -m "Set version to $VERSION"
+          git push origin "$branch"
+          url=$(gh pr create --repo "$GITHUB_REPOSITORY" --base "$DEFAULT_BRANCH" --head "$branch" \
+            --title "Set version to $VERSION" \
+            --body "The Release workflow was run for $VERSION, but the versions in the repository did not match. This updates \`Cargo.toml\`, the path dependency versions, and \`Cargo.lock\`. Run the Release workflow again after merging.")
+          echo "No release was made. Merge $url, then run the Release workflow again." | tee -a "$GITHUB_STEP_SUMMARY"
+
   cli:
     name: cli (${{ matrix.label }})
     needs: verify
+    if: needs.verify.outputs.consistent == 'true'
     runs-on: ${{ matrix.os }}
     env:
       RUSTC_WRAPPER: ""
@@ -90,6 +139,7 @@ jobs:
 
   containers:
     needs: verify
+    if: needs.verify.outputs.consistent == 'true'
     permissions:
       contents: read
       packages: write
@@ -100,6 +150,7 @@ jobs:
 
   release:
     needs: [verify, cli, containers]
+    if: needs.verify.outputs.consistent == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
