@@ -37,7 +37,7 @@
 | `ghcr.io/sileader/kasu/server:<version>` | `kasu-server`(`production` feature でビルド。PostgreSQL と S3 に対応)と `kasu-ingest`。データは `/data` に保存 | 50051 (gRPC)、50080 (HTTP) |
 | `ghcr.io/sileader/kasu/web:<version>` | `kasu-web`。`KASU_WEB_*` 変数で設定([Web UI](web-ui_ja.md)) | 50090 |
 
-server イメージは `kasu-server /data 0.0.0.0:50051 0.0.0.0:50080` で起動します。イメージ名の後ろに引数を渡すと、この既定値を置き換えます。
+server イメージは `kasu-server /data 0.0.0.0:50051 0.0.0.0:50080` で起動します。イメージ名の後ろに引数を渡すと、この既定値を置き換えます。デプロイのシナリオ(開発、1 ノード、高可用性)については [Docker による kasu のデプロイ](deployments/README_ja.md)を参照してください。
 
 ```sh
 docker run --rm -p 50051:50051 -p 50080:50080 -v kasu-data:/data \

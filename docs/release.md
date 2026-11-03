@@ -37,7 +37,7 @@ A version with a suffix, such as `0.2.0-rc.1`, becomes a pre-release and its ima
 | `ghcr.io/sileader/kasu/server:<version>` | `kasu-server` (built with the `production` feature: PostgreSQL and S3) and `kasu-ingest`. Stores data in `/data` | 50051 (gRPC), 50080 (HTTP) |
 | `ghcr.io/sileader/kasu/web:<version>` | `kasu-web`, configured with `KASU_WEB_*` variables ([Web UI](web-ui.md)) | 50090 |
 
-The server image starts `kasu-server /data 0.0.0.0:50051 0.0.0.0:50080`; arguments after the image name replace those defaults.
+The server image starts `kasu-server /data 0.0.0.0:50051 0.0.0.0:50080`; arguments after the image name replace those defaults. For deployment scenarios (development, single node, high availability), see [Deploying kasu with Docker](deployments/README.md).
 
 ```sh
 docker run --rm -p 50051:50051 -p 50080:50080 -v kasu-data:/data \
