@@ -85,11 +85,21 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
           git commit -a -m "Set version to $VERSION"
-          git push origin "$branch"
-          url=$(gh pr create --repo "$GITHUB_REPOSITORY" --base "$DEFAULT_BRANCH" --head "$branch" \
+          # No pull request is open for this branch (checked above), so a branch
+          # left behind by an earlier run is stale and is replaced.
+          git push --force origin "$branch"
+          err=$(mktemp)
+          if url=$(gh pr create --repo "$GITHUB_REPOSITORY" --base "$DEFAULT_BRANCH" --head "$branch" \
             --title "Set version to $VERSION" \
-            --body "The Release workflow was run for $VERSION, but the versions in the repository did not match. This updates \`Cargo.toml\`, the path dependency versions, and \`Cargo.lock\`. Run the Release workflow again after merging.")
-          echo "No release was made. Merge $url, then run the Release workflow again." | tee -a "$GITHUB_STEP_SUMMARY"
+            --body "The Release workflow was run for $VERSION, but the versions in the repository did not match. This updates \`Cargo.toml\`, the path dependency versions, and \`Cargo.lock\`. Run the Release workflow again after merging." 2>"$err"); then
+            echo "No release was made. Merge $url, then run the Release workflow again." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            # Typically the repository setting that lets Actions create pull requests is off.
+            cat "$err" >&2
+            compare="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/compare/$DEFAULT_BRANCH...$branch?expand=1"
+            echo "::warning::Could not open the version pull request: $(tr '\n' ' ' < "$err")"
+            echo "No release was made. The branch \`$branch\` was pushed; open the pull request at $compare, merge it, then run the Release workflow again." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
 
   cli:
     name: cli (${{ matrix.label }})

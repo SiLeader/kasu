@@ -15,7 +15,7 @@
 - すべての path 依存の `version`。`[workspace.dependencies]` の `kasu-*` と、`crates/kasu-cli/Cargo.toml` の `kasu-daemon`
 - `Cargo.lock` 内のワークスペースメンバー
 
-プルリクエストはワークフローの `GITHUB_TOKEN` で作成するため、リポジトリ設定 *Allow GitHub Actions to create and approve pull requests*(Settings、Actions、General)を有効にしておく必要があります。また、そのプルリクエストでは CI が自動では起動しません(`GITHUB_TOKEN` が起こしたイベントではワークフローが実行されない)。閉じて開き直すと CI が起動します。
+プルリクエストはワークフローの `GITHUB_TOKEN` で作成するため、リポジトリ設定 *Allow GitHub Actions to create and approve pull requests*(Settings、Actions、General)を有効にしておく必要があります。無効の場合でも、ワークフローはブランチをプッシュし、プルリクエストを手動で開くためのリンクを警告として表示し、リリースせずに終了します。以前の実行が残した、開いているプルリクエストのないブランチは上書きされます。また、そのプルリクエストでは CI が自動では起動しません(`GITHUB_TOKEN` が起こしたイベントではワークフローが実行されない)。閉じて開き直すと CI が起動します。
 先頭に `v` が付いているなどセマンティックバージョンでない、タグ `v<version>` が既に存在する、デフォルトブランチ以外から起動した、スクリプトが書き換えられないバージョン宣言が残っている、のいずれかの場合は、プルリクエストを作らずに失敗します。
 
 バージョンが一致している場合は、次のジョブを実行します。

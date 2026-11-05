@@ -15,7 +15,7 @@ The version is declared in these places, and `python3 tools/release/check_versio
 - the `version` of every path dependency: the `kasu-*` entries of `[workspace.dependencies]` and `kasu-daemon` in `crates/kasu-cli/Cargo.toml`
 - the workspace members in `Cargo.lock`
 
-The pull request is created with the workflow's `GITHUB_TOKEN`, so the repository setting *Allow GitHub Actions to create and approve pull requests* (Settings, Actions, General) must be on, and CI does not start on that pull request by itself (GitHub runs no workflows for events caused by `GITHUB_TOKEN`); close and reopen it to start CI.
+The pull request is created with the workflow's `GITHUB_TOKEN`, so the repository setting *Allow GitHub Actions to create and approve pull requests* (Settings, Actions, General) must be on. If it is off, the workflow still pushes the branch, reports a warning with a link to open the pull request by hand, and ends without releasing. A branch left by an earlier run without an open pull request is overwritten. CI does not start on that pull request by itself (GitHub runs no workflows for events caused by `GITHUB_TOKEN`); close and reopen it to start CI.
 The workflow fails, without opening a pull request, if the version has a leading `v` or is otherwise not a semantic version, the tag `v<version>` already exists, it was started from another branch, or a version declaration the script cannot rewrite remains.
 
 When the versions match it runs these jobs:
