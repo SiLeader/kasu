@@ -23,7 +23,7 @@ cd work
 
 After adding the binary to PATH, it can be run as `kasu`.
 The server is a gRPC URL. HTTPS is verified with WebPKI trust roots.
-The token is passed through the environment variable or `--token` and is never stored in the working copy.
+The token is passed through the environment variable or `--token`, or stored once with `kasu login` in a [credential helper](credential-helpers.md) (the OS keychain, Secret Service, `pass`); it is never stored in the working copy. `--token` / `KASU_TOKEN` take precedence over the helper.
 Name and email can also be given with `--author-name` / `--author-email`.
 `-C <dir>` specifies the working copy to operate on, and commands can also run from anywhere beneath it.
 Path arguments are relative to the repository root.
@@ -36,6 +36,7 @@ Path arguments are relative to the repository root.
 | `clone <server> <repo> [directory]` | Checks out the repository's default branch. The directory defaults to the last segment of the name |
 | `repo list [--prefix P]` / `repo create <name> [--default-branch B]` / `repo show <name>` | Lists, creates, and shows repositories via the [Admin API](multi-repository.md#admin-api) |
 | `review list [--state S]` / `review show <n>` / `review create --title T [--target R] [IDs…]` / `review vote <n> approve\|request-changes\|none [-m M]` / `review comment <n> <message>` / `review update <n> [--title T] [--close\|--reopen]` / `review rebase <n>` / `review submit <n> [--method rebase\|squash]` | [Reviews](review.md) of Changeset stacks (`--server`, `--repo` or the working copy). Without IDs, `create` proposes the working copy's current Changeset. `land` on a protected ref fails with a hint to use `review create` |
+| `login [server] [--helper H] [--token-stdin] [--no-verify]` / `logout [server] [--all]` | Stores / removes the PAT in a [credential helper](credential-helpers.md) |
 | `status` / `diff` | Compares real files at startup. Detects regular files, executable bits, symlinks, deletions, and additions |
 | `status --watch` | Watches for changes with notify's FSEvents / inotify and reruns the full state comparison |
 | `commit -m <message>` | Checks Blob existence / streams uploads, and creates a Changeset on the server |

@@ -41,6 +41,16 @@ fn endpoint(url: &str) -> Result<tonic::transport::Endpoint> {
         .connect_timeout(std::time::Duration::from_secs(10))
         .timeout(std::time::Duration::from_secs(30)))
 }
+/// Asks `server` who `token` belongs to (`Identity.WhoAmI`).
+pub async fn whoami(server: &str, token: &str) -> Result<p::Principal> {
+    let mut client =
+        kasu_proto::v1::identity_client::IdentityClient::new(endpoint(server)?.connect().await?);
+    let mut request = Request::new(p::WhoAmIRequest {});
+    request
+        .metadata_mut()
+        .insert("authorization", kasu_object::bearer(token)?);
+    Ok(client.who_am_i(request).await?.into_inner())
+}
 /// Reviews on one server (kasu.v1.Review).
 pub struct Reviews {
     pub client: kasu_proto::v1::review_client::ReviewClient<Channel>,
@@ -100,11 +110,21 @@ impl Admin {
     }
 }
 impl Remote {
+    /// Connects with one token for both the server and the objects endpoint.
     pub async fn connect(
         server: &str,
         objects: &str,
         repo: Vec<u8>,
         token: Option<&str>,
+    ) -> Result<Self> {
+        Self::connect_with(server, objects, repo, &crate::auth::Tokens::shared(token)).await
+    }
+    /// Connects with separately resolved tokens for the server and the objects endpoint.
+    pub async fn connect_with(
+        server: &str,
+        objects: &str,
+        repo: Vec<u8>,
+        tokens: &crate::auth::Tokens,
     ) -> Result<Self> {
         let channel = endpoint(server)?.connect().await?;
         let object_channel = if objects == server {
@@ -118,7 +138,7 @@ impl Remote {
             writer: WriterClient::new(channel).max_decoding_message_size(256 * 1024 * 1024),
             objects: kasu_object::Client::new(
                 object_channel,
-                token,
+                tokens.objects(),
                 if objects.starts_with("unix://") {
                     Some(kasu_object::Layer::Daemon)
                 } else {
@@ -126,7 +146,7 @@ impl Remote {
                 },
             )?,
             repo,
-            authorization: token.map(kasu_object::bearer).transpose()?,
+            authorization: tokens.server().map(kasu_object::bearer).transpose()?,
         })
     }
     pub fn request<T>(&self, value: T) -> Request<T> {
