@@ -50,6 +50,8 @@ working copy には PAT を保存しません。
 `--helper`（login／logout のみ）、`KASU_CREDENTIAL_HELPER`、login 時にそのサーバーへ記録したヘルパー、`config.json` の `credential_helper`、
 プラットフォーム既定（macOS は `osxkeychain`、Linux は `secretservice`）の順です。
 既定が使えない場合（SSH 先で D-Bus セッションがない等）は **平文へ自動で落とさず** エラーにし、`--helper pass` または `--helper file` を案内します。
+ただし `logout` では、ヘルパーが未設定でプラットフォーム既定が利用不可の場合は警告だけを表示して正常終了します。
+明示的に選択したヘルパーや記録済みヘルパーの失敗は、引き続き 0 以外の終了コードになります。
 
 | ヘルパー | OS | 保存先 | 暗号化 |
 |---|---|---|---|

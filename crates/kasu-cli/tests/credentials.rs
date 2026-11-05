@@ -44,6 +44,7 @@ async fn kasu(env: &Env, args: &[&str], stdin: Option<&str>, token: Option<&str>
             .env_remove("KASU_TOKEN")
             .env_remove("KASU_SERVER")
             .env_remove("KASU_CREDENTIAL_HELPER")
+            .env_remove("DBUS_SESSION_BUS_ADDRESS")
             .envs(extra)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -170,7 +171,7 @@ async fn login_stores_a_verified_token_that_later_commands_use() {
     assert!(logout.status.success(), "{}", text(&logout.stderr));
     assert!(text(&logout.stdout).contains("Logged out of"));
     let again = kasu(&env, &["logout", &url], None, None).await;
-    assert!(again.status.success());
+    assert!(again.status.success(), "{}", text(&again.stderr));
     assert!(text(&again.stdout).contains("No stored credentials"));
     let after = kasu(&env, &["repo", "--server", &url, "list"], None, None).await;
     assert!(!after.status.success());
@@ -347,6 +348,53 @@ async fn unusable_stored_pats_are_skipped_and_errors_keep_their_reason() {
             .any(|l| l.starts_with("kasu: ") && !l.contains("warning")),
         "{message}"
     );
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[cfg(target_os = "linux")]
+async fn logout_without_dbus_only_ignores_an_unconfigured_default() {
+    let server = "http://127.0.0.1:9";
+    for source in ["default", "explicit", "environment", "global", "server"] {
+        let temp = tempfile::tempdir().unwrap();
+        let mut env = Env::new(temp.path());
+        let mut args = vec!["logout", server, "--json"];
+        match source {
+            "explicit" => args.extend(["--helper", "secretservice"]),
+            "environment" => env
+                .extra
+                .push(("KASU_CREDENTIAL_HELPER".into(), "secretservice".into())),
+            "global" => write_config(&env, r#"{"version":1,"credential_helper":"secretservice"}"#),
+            "server" => write_config(
+                &env,
+                r#"{"version":1,"servers":{"http://127.0.0.1:9":{"credential_helper":"secretservice"}}}"#,
+            ),
+            _ => {}
+        }
+        let out = kasu(&env, &args, None, None).await;
+        let message = text(&out.stderr);
+        assert_eq!(
+            out.status.success(),
+            source == "default",
+            "{source}: {message}"
+        );
+        assert!(message.contains("no D-Bus session"), "{source}: {message}");
+        let json: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap();
+        assert_eq!(json[0]["removed"], false);
+        if source == "default" {
+            assert!(json[0].get("error").is_none());
+        } else {
+            assert!(
+                json[0]["error"]
+                    .as_str()
+                    .unwrap()
+                    .contains("no D-Bus session")
+            );
+        }
+        if source == "server" {
+            let config = std::fs::read_to_string(env.config.join("config.json")).unwrap();
+            assert!(config.contains(server), "{config}");
+        }
+    }
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

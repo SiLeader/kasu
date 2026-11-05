@@ -102,6 +102,13 @@ fn objects_source(server: &str, objects: &str) -> ObjectsSource {
     }
 }
 
+fn helper_configured(explicit: Option<&str>, key: &ServerKey, config: &Config) -> bool {
+    explicit.is_some()
+        || std::env::var_os("KASU_CREDENTIAL_HELPER").is_some()
+        || config.credential_helper.is_some()
+        || config.servers.contains_key(key.as_str())
+}
+
 async fn lookup(key: &ServerKey) -> Option<Credential> {
     let config = match Config::load() {
         Ok(config) => config,
@@ -116,9 +123,7 @@ async fn lookup(key: &ServerKey) -> Option<Credential> {
     }
     // A platform-default helper that cannot run (no D-Bus session on a CI
     // box) must not make commands noisy when nothing was ever stored.
-    let configured = std::env::var_os("KASU_CREDENTIAL_HELPER").is_some()
-        || config.credential_helper.is_some()
-        || config.servers.contains_key(key.as_str());
+    let configured = helper_configured(None, key, &config);
     let result = async { Helper::open(&name, &config)?.get(key).await }.await;
     match result {
         Ok(Some(found)) => match validate_pat(&found.secret) {
@@ -425,6 +430,16 @@ pub async fn logout(req: LogoutRequest<'_>) -> Result<()> {
         };
         match erased {
             Ok(removed) => report.push((key, name, removed)),
+            Err(e)
+                if !helper_configured(req.helper, &key, &config)
+                    && matches!(
+                        e.downcast_ref::<kasu_credential::Error>(),
+                        Some(kasu_credential::Error::NotAvailable(_))
+                    ) =>
+            {
+                eprintln!("kasu: warning: {e}; no credential helper was configured for {key}");
+                report.push((key, name, false));
+            }
             Err(e) => failures.push((key, name, e.to_string())),
         }
     }

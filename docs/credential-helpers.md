@@ -54,6 +54,8 @@ In order: `--helper` (login/logout only), `KASU_CREDENTIAL_HELPER`, the helper r
 `credential_helper` in `config.json`, then the platform default (`osxkeychain` on macOS, `secretservice` on Linux).
 When the default is unusable (for example no D-Bus session over SSH) kasu **does not fall back to plain text**; it fails
 and suggests `--helper pass` or `--helper file`.
+For `logout`, an unavailable platform default with no configured helper only prints a warning and succeeds;
+an explicitly selected or recorded helper that fails still produces a non-zero exit status.
 
 | Helper | OS | Stored in | Encrypted |
 |---|---|---|---|
