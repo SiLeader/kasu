@@ -15,6 +15,7 @@ kasu は Anthropic の社内 VCS **Scion**（参考: <https://www.anthropic.com/
 | [05-roadmap.md](05-roadmap.md) | マイルストーン・テスト戦略・リスク |
 | [06-multi-repository.md](06-multi-repository.md) | 1 サーバーでの複数リポジトリ管理（レジストリ・隔離・権限・ライフサイクル） |
 | [webui/](webui/README.md) | Web UI（`kasu-web`）とレビュー機能の仕様・実装計画 |
+| [credential-helper/](credential-helper/README.md) | CLI の認証情報ヘルパー（PAT の保存、`kasu login` / `kasu logout`）の仕様・実装計画 |
 
 ## ゴール
 

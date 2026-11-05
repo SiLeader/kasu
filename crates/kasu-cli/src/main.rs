@@ -111,6 +111,47 @@ enum Command {
         revision: Option<OsString>,
         path: Option<PathBuf>,
     },
+    /// Store a personal access token for SERVER in a credential helper.
+    ///
+    /// The token is read without echo from the terminal, or from standard
+    /// input with --token-stdin (never from the command line). It is checked
+    /// with Identity.WhoAmI and saved in the helper chosen by --helper,
+    /// KASU_CREDENTIAL_HELPER, the config file, or the platform default
+    /// (osxkeychain on macOS, secretservice on Linux).
+    ///
+    /// Commands resolve the token as: --token, KASU_TOKEN, the credential
+    /// helper, then none. SERVER defaults to KASU_SERVER, the working copy's
+    /// server, or http://127.0.0.1:50051.
+    Login {
+        #[arg(env = "KASU_SERVER")]
+        server: Option<String>,
+        /// Helper name: osxkeychain, secretservice, pass, file, or an
+        /// external kasu-credential-<name>.
+        #[arg(long)]
+        helper: Option<String>,
+        /// Read the token from standard input.
+        #[arg(long)]
+        token_stdin: bool,
+        /// Store the token without asking the server to verify it.
+        #[arg(long)]
+        no_verify: bool,
+    },
+    /// Remove the stored token for SERVER (the token stays valid on the server).
+    Logout {
+        #[arg(env = "KASU_SERVER")]
+        server: Option<String>,
+        #[arg(long)]
+        helper: Option<String>,
+        /// Remove the tokens of every recorded server.
+        #[arg(long)]
+        all: bool,
+    },
+    /// Run a built-in credential helper over the JSON protocol.
+    #[command(hide = true)]
+    Credential {
+        name: String,
+        operation: String,
+    },
 }
 #[derive(Subcommand)]
 enum RepoAction {
@@ -286,11 +327,15 @@ async fn main() {
     drop(telemetry);
     if let Err(error) = result {
         eprintln!("kasu: {error}");
+        if let Some(hint) = kasu_cli::auth::unauthenticated_hint(&error) {
+            eprintln!("{hint}");
+        }
         std::process::exit(1);
     }
 }
 async fn repo(cli: &Cli, server: &str, action: &RepoAction) -> Result<()> {
-    let mut admin = kasu_cli::Admin::connect(server, cli.token.as_deref()).await?;
+    let token = kasu_cli::auth::token_for(cli.token.as_deref(), server).await;
+    let mut admin = kasu_cli::Admin::connect(server, token.as_ref().map(|t| t.as_str())).await?;
     let show = |r: &p::Repository| {
         let state = p::RepositoryState::try_from(r.state)
             .map(|s| s.as_str_name())
@@ -372,7 +417,9 @@ async fn review(cli: &Cli, server: &str, repo: Option<&str>, action: &ReviewActi
             return Err("set --repo or KASU_REPO, or run inside a working copy".into());
         }
     };
-    let mut reviews = kasu_cli::Reviews::connect(server, cli.token.as_deref()).await?;
+    let token = kasu_cli::auth::token_for(cli.token.as_deref(), server).await;
+    let mut reviews =
+        kasu_cli::Reviews::connect(server, token.as_ref().map(|t| t.as_str())).await?;
     let get = |number: u64| p::GetReviewRequest {
         repo: repo.clone(),
         number,
@@ -631,6 +678,18 @@ async fn review(cli: &Cli, server: &str, repo: Option<&str>, action: &ReviewActi
     }
     Ok(())
 }
+/// The server `login`/`logout` act on: the argument, else the working copy's
+/// server, else the default.
+fn auth_server(cli: &Cli, server: &Option<String>) -> String {
+    server
+        .clone()
+        .or_else(|| {
+            WorkingCopy::open(&cli.directory)
+                .ok()
+                .map(|c| c.state.server)
+        })
+        .unwrap_or_else(|| kasu_cli::auth::DEFAULT_SERVER.to_owned())
+}
 async fn run(cli: &Cli) -> Result<()> {
     #[cfg(target_os = "linux")]
     if let Command::Mount {
@@ -652,15 +711,17 @@ async fn run(cli: &Cli) -> Result<()> {
         } else {
             cli.directory.join(backing)
         };
+        let objects = cli.objects.as_deref().unwrap_or(server);
+        let tokens = kasu_cli::auth::tokens_for(cli.token.as_deref(), server, objects).await;
         return kasu_cli::virtual_fs::mount(kasu_cli::virtual_fs::MountRequest {
             server,
-            objects: cli.objects.as_deref().unwrap_or(server),
+            objects,
             repo: repo.as_bytes().to_vec(),
             revision: revision.as_bytes(),
             mountpoint: &destination,
             backing: &backing,
             sparse: SparseProfile::new(sparse.iter().map(|p| profile_path(p)).collect())?,
-            token: cli.token.as_deref(),
+            tokens: &tokens,
         })
         .await;
     }
@@ -674,13 +735,9 @@ async fn run(cli: &Cli) -> Result<()> {
     } = &cli.command
     {
         let objects = cli.objects.as_deref().unwrap_or(server);
-        let mut remote = Remote::connect(
-            server,
-            objects,
-            repo.as_bytes().to_vec(),
-            cli.token.as_deref(),
-        )
-        .await?;
+        let tokens = kasu_cli::auth::tokens_for(cli.token.as_deref(), server, objects).await;
+        let mut remote =
+            Remote::connect_with(server, objects, repo.as_bytes().to_vec(), &tokens).await?;
         let destination = if destination.is_absolute() {
             destination.clone()
         } else {
@@ -697,6 +754,41 @@ async fn run(cli: &Cli) -> Result<()> {
         .await?;
         println!("{}", copy.state.id()?);
         return Ok(());
+    }
+    match &cli.command {
+        Command::Login {
+            server,
+            helper,
+            token_stdin,
+            no_verify,
+        } => {
+            return kasu_cli::auth::login(kasu_cli::auth::LoginRequest {
+                server: &auth_server(cli, server),
+                helper: helper.as_deref(),
+                token_stdin: *token_stdin,
+                no_verify: *no_verify,
+                json: cli.json,
+                token_overrides: cli.token.is_some(),
+            })
+            .await;
+        }
+        Command::Logout {
+            server,
+            helper,
+            all,
+        } => {
+            return kasu_cli::auth::logout(kasu_cli::auth::LogoutRequest {
+                server: &auth_server(cli, server),
+                helper: helper.as_deref(),
+                all: *all,
+                json: cli.json,
+            })
+            .await;
+        }
+        Command::Credential { name, operation } => {
+            return kasu_cli::auth::credential(name, operation).await;
+        }
+        _ => {}
     }
     if let Command::Repo { server, action } = &cli.command {
         return repo(cli, server, action).await;
@@ -725,9 +817,11 @@ async fn run(cli: &Cli) -> Result<()> {
         } else {
             cli.directory.join(destination)
         };
+        let objects = cli.objects.as_deref().unwrap_or(server);
+        let tokens = kasu_cli::auth::tokens_for(cli.token.as_deref(), server, objects).await;
         let revision = match revision {
             Some(revision) => revision.as_bytes().to_vec(),
-            None => match kasu_cli::Admin::connect(server, cli.token.as_deref()).await {
+            None => match kasu_cli::Admin::connect(server, tokens.server()).await {
                 Ok(mut admin) => admin
                     .default_branch(repo)
                     .await
@@ -735,14 +829,8 @@ async fn run(cli: &Cli) -> Result<()> {
                 Err(_) => b"main".to_vec(),
             },
         };
-        let objects = cli.objects.as_deref().unwrap_or(server);
-        let mut remote = Remote::connect(
-            server,
-            objects,
-            repo.as_bytes().to_vec(),
-            cli.token.as_deref(),
-        )
-        .await?;
+        let mut remote =
+            Remote::connect_with(server, objects, repo.as_bytes().to_vec(), &tokens).await?;
         let copy = WorkingCopy::checkout(
             &mut remote,
             server.clone(),
@@ -765,18 +853,27 @@ async fn run(cli: &Cli) -> Result<()> {
             if cli.json {
                 emit(&copy.changes()?)?;
             } else {
-                copy.hydrate_diff(cli.token.as_deref()).await?;
+                let tokens = kasu_cli::auth::tokens_for(
+                    cli.token.as_deref(),
+                    &copy.state.server,
+                    cli.objects.as_deref().unwrap_or(&copy.state.objects),
+                )
+                .await;
+                copy.hydrate_diff(&tokens).await?;
                 print!("{}", copy.diff_text()?);
             }
             return Ok(());
         }
         _ => {}
     }
-    let mut remote = Remote::connect(
+    let objects = cli.objects.as_deref().unwrap_or(&copy.state.objects);
+    let tokens =
+        kasu_cli::auth::tokens_for(cli.token.as_deref(), &copy.state.server, objects).await;
+    let mut remote = Remote::connect_with(
         &copy.state.server,
-        cli.objects.as_deref().unwrap_or(&copy.state.objects),
+        objects,
         copy.state.repo.clone(),
-        cli.token.as_deref(),
+        &tokens,
     )
     .await?;
     match &cli.command {

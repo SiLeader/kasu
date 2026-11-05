@@ -2425,6 +2425,7 @@ dependencies = [
  "hex",
  "kasu-cache",
  "kasu-core",
+ "kasu-credential",
  "kasu-daemon",
  "kasu-derived",
  "kasu-object",
@@ -2442,6 +2443,7 @@ dependencies = [
  "tokio-stream",
  "tonic",
  "tracing",
+ "zeroize",
 ]
 
 [[package]]
@@ -2455,6 +2457,23 @@ dependencies = [
  "proptest",
  "sha1",
  "thiserror",
+]
+
+[[package]]
+name = "kasu-credential"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "getrandom 0.3.4",
+ "proptest",
+ "rustix",
+ "security-framework",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "zeroize",
 ]
 
 [[package]]

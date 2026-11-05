@@ -184,12 +184,12 @@ impl WorkingCopy {
         let _ = temp.keep();
         Self::open(&destination)
     }
-    pub async fn remote(&self, token: Option<&str>) -> Result<Remote> {
-        Remote::connect(
+    pub async fn remote(&self, tokens: &crate::auth::Tokens) -> Result<Remote> {
+        Remote::connect_with(
             &self.state.server,
             &self.state.objects,
             self.state.repo.clone(),
-            token,
+            tokens,
         )
         .await
     }

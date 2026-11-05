@@ -308,7 +308,7 @@ impl WorkingCopy {
             .await?;
         self.transition(snapshot, state)
     }
-    pub async fn hydrate_diff(&self, token: Option<&str>) -> Result<()> {
+    pub async fn hydrate_diff(&self, tokens: &crate::auth::Tokens) -> Result<()> {
         let mut missing = std::collections::BTreeSet::new();
         for change in self.changes()? {
             if let Some(raw) = change.before
@@ -324,7 +324,7 @@ impl WorkingCopy {
             }
         }
         if !missing.is_empty() {
-            let mut remote = self.remote(token).await?;
+            let mut remote = self.remote(tokens).await?;
             for blob in missing {
                 remote.fetch(&self.cache, ObjectId(blob.0), false).await?;
             }

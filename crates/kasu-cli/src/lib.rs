@@ -1,3 +1,4 @@
+pub mod auth;
 mod commands;
 mod filesystem;
 mod remote;

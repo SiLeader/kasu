@@ -64,6 +64,8 @@ export KASU_TOKEN=dev-token
 ./target/debug/kasu -C native-work status
 ```
 
+Instead of exporting `KASU_TOKEN`, run `./target/debug/kasu login` once to store the token in your OS keychain or `pass` ([credential helpers](docs/credential-helpers.md)).
+
 See the [native CLI guide](docs/native-cli.md) for editing, committing, rebasing, and landing changes, and the [Git import guide](docs/git-import.md) for supported inputs and limits. `dev-token` is an example credential for local use.
 
 One server can host many repositories. Repository names may contain `/`; each repository has its own refs, Git OIDs, permissions, and configuration, while identical objects are stored once:

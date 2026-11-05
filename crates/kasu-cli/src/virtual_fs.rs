@@ -32,7 +32,7 @@ pub struct MountRequest<'a> {
     pub mountpoint: &'a Path,
     pub backing: &'a Path,
     pub sparse: SparseProfile,
-    pub token: Option<&'a str>,
+    pub tokens: &'a crate::auth::Tokens,
 }
 fn command(program: &str, args: &[&std::ffi::OsStr]) -> Result<()> {
     let output = Command::new(program).args(args).output()?;
@@ -148,7 +148,7 @@ pub async fn mount(q: MountRequest<'_>) -> Result<()> {
         .open(backing.join("mount.lock"))?;
     lock.try_lock()
         .map_err(|_| invalid("virtual working copy is already mounted"))?;
-    let mut remote = Remote::connect(q.server, q.objects, q.repo.clone(), q.token).await?;
+    let mut remote = Remote::connect_with(q.server, q.objects, q.repo.clone(), q.tokens).await?;
     let manifest = if fresh {
         if mounted(&mountpoint)?.is_some() {
             return Err(invalid("mountpoint is already mounted"));

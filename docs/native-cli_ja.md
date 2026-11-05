@@ -23,7 +23,7 @@ cd work
 
 バイナリを PATH に追加すると、以降は `kasu` として実行できます。
 接続先は gRPC URL です。HTTPS は WebPKI trust roots で検証します。
-トークンは環境変数または `--token` で渡し、working copy には保存しません。
+トークンは環境変数または `--token` で渡すか、`kasu login` で一度だけ[認証情報ヘルパー](credential-helpers_ja.md)（OS のキーチェーン、Secret Service、`pass`）に保存します。working copy には保存しません。`--token`／`KASU_TOKEN` がヘルパーより優先されます。
 名前・メールは `--author-name`／`--author-email` でも指定できます。
 `-C <dir>` は実行する working copy を指定し、その配下からも実行できます。
 パス引数はリポジトリの root からの相対パスです。
@@ -36,6 +36,7 @@ cd work
 | `clone <server> <repo> [directory]` | リポジトリの既定 branch を checkout。directory の既定は名前の最後のセグメント |
 | `repo list [--prefix P]`／`repo create <name> [--default-branch B]`／`repo show <name>` | [Admin API](multi-repository_ja.md#admin-api) でリポジトリを一覧・作成・表示 |
 | `review list [--state S]` / `review show <n>` / `review create --title T [--target R] [ID…]` / `review vote <n> approve\|request-changes\|none [-m M]` / `review comment <n> <メッセージ>` / `review update <n> [--title T] [--close\|--reopen]` / `review rebase <n>` / `review submit <n> [--method rebase\|squash]` | Changeset スタックの [レビュー](review_ja.md)（`--server`、`--repo` または working copy）。ID を省略した `create` は working copy の現在の Changeset を提案する。保護 ref への `land` は `review create` を案内して失敗する |
+| `login [server] [--helper H] [--token-stdin] [--no-verify]`／`logout [server] [--all]` | PAT を[認証情報ヘルパー](credential-helpers_ja.md)に保存／削除 |
 | `status`／`diff` | 起動時に実ファイルを比較。通常ファイル、実行ビット、symlink、削除・追加を検出 |
 | `status --watch` | notify の FSEvents／inotify で変更を監視し、全状態比較を再実行 |
 | `commit -m <message>` | Blob の存在確認／ストリーム upload と、サーバーでの Changeset 作成 |
